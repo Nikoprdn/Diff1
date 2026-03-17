@@ -656,13 +656,15 @@ function vuLoop() {
 // Connecte le VU mètre au premier diffuseur qui joue
 const _origToggle0 = D[0].togglePlay.bind(D[0]);
 D[0].togglePlay = function() {
+  if (!audioCtx) initVU(D[0].audio);
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   _origToggle0();
-  if (!audioCtx && D[0].playing) initVU(D[0].audio);
 };
 const _origToggle1 = D[1].togglePlay.bind(D[1]);
 D[1].togglePlay = function() {
+  if (!audioCtx) initVU(D[1].audio);
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   _origToggle1();
-  if (!audioCtx && D[1].playing) initVU(D[1].audio);
 };
 
 vuLoop();
