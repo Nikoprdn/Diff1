@@ -10,22 +10,22 @@
   :root {
     --mono: 'Share Tech Mono', monospace;
     --display: 'Oswald', sans-serif;
-    --brand-red:  #E4032E;
-    --brand-black: #000000;
-    --brand-gray: #37333E;
-    --brand-gray2: #28252e;
-    --brand-gray3: #1c1a20;
-    --border-c: #4a4550;
-    --text-main: #f0eef4;
-    --text-dim:  #8a8490;
+    --brand-red:   #e03020;
+    --brand-black: #080d18;
+    --brand-gray:  #0d1428;
+    --brand-gray2: #111c38;
+    --brand-gray3: #0c1530;
+    --border-c:    #1e3060;
+    --text-main:   #ddeeff;
+    --text-dim:    #5a7090;
   }
   html, body { background: var(--brand-black) !important; min-height: 100vh; }
 
   /* ── Navbar ── */
-  .navbar.is-console { background: var(--brand-gray); border-bottom: 2px solid var(--brand-red); }
-  .navbar-brand .navbar-item { font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--brand-red); letter-spacing: 2px; }
+  .navbar.is-console { background: var(--brand-gray); border-bottom: 1px solid var(--border-c); }
+  .navbar-brand .navbar-item { font-family: var(--display); font-size: 20px; font-weight: 700; color: #00d4f0; letter-spacing: 2px; }
   .navbar-end .navbar-item { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
-  .clock-display { font-family: var(--mono); font-size: 22px; color: var(--text-main); letter-spacing: 3px; }
+  .clock-display { font-family: var(--mono); font-size: 22px; color: #00d4f0; letter-spacing: 3px; }
 
   /* ── Section background ── */
   .section.is-console { padding: 1rem; background: var(--brand-black); }
@@ -42,7 +42,7 @@
   .diff-badge { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 2px; padding: 2px 10px; border-radius: 4px; }
 
   /* ── ON AIR bar ── */
-  .notification.is-onair { background: var(--brand-gray2); border: 1px solid var(--border-c); border-top: 2px solid var(--brand-red); border-radius: 0; padding: 0.5rem 1rem; margin: 0; display: flex; align-items: center; justify-content: space-between; }
+  .notification.is-onair { background: var(--brand-gray2); border: 1px solid var(--border-c); border-top: none; border-radius: 0; padding: 0.5rem 1rem; margin: 0; display: flex; align-items: center; justify-content: space-between; }
   .onair-title { font-family: var(--display); font-size: 22px; font-weight: 700; color: var(--text-main); letter-spacing: 3px; }
   .dot-live { display: inline-block; width: 8px; height: 8px; background: var(--brand-red); border-radius: 50%; animation: blink 1s step-start infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
@@ -57,27 +57,27 @@
   .table.is-radio { background: transparent; width: 100%; }
   .table.is-radio thead th { background: var(--brand-gray3); color: var(--text-dim); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; border-color: var(--border-c) !important; padding: 6px 10px; font-weight: 400; }
   .table.is-radio tbody tr { border-bottom: 1px solid var(--border-c); cursor: pointer; position: relative; overflow: hidden; }
-  .table.is-radio tbody tr:hover td { background: #2a2730; }
+  .table.is-radio tbody tr:hover td { background: #0e1830; }
   .table.is-radio tbody td { border-color: var(--border-c) !important; color: var(--text-dim); padding: 0 10px; height: 48px; vertical-align: middle; white-space: nowrap; }
-  .table.is-radio tbody tr.row-active { background: #2a0008; border-left: 3px solid var(--brand-red); }
+  .table.is-radio tbody tr.row-active { background: #160505; border-left: 3px solid var(--brand-red); }
   .table.is-radio tbody tr.row-active td { position: relative; z-index: 1; }
-  .table.is-radio tbody tr.row-active::before { content: ''; position: absolute; inset: 0; background: #3a000e; z-index: 0; transform-origin: left; transform: scaleX(var(--prog,0)); transition: transform 1s linear; }
-  .table.is-radio tbody tr.row-next { background: #1e1c22; border-left: 3px solid var(--border-c); }
+  .table.is-radio tbody tr.row-active::before { content: ''; position: absolute; inset: 0; background: #2a0808; z-index: 0; transform-origin: left; transform: scaleX(var(--prog,0)); transition: transform 1s linear; }
+  .table.is-radio tbody tr.row-next { background: #071408; border-left: 3px solid #006630; }
 
   /* Cell helpers */
   .cell-num  { width:36px; font-family:var(--mono); font-size:12px; text-align:center; }
   .cell-num.is-playing { color: var(--brand-red) !important; }
-  .cell-time { width:82px; font-family:var(--mono); font-size:12px; color:var(--text-dim) !important; }
-  .cell-sub  { font-size:9px; color:#5a5060 !important; display:block; }
+  .cell-time { width:82px; font-family:var(--mono); font-size:12px; color:#0099b8 !important; }
+  .cell-sub  { font-size:9px; color:#3a5070 !important; display:block; }
   .cell-title { min-width:180px; }
   .cell-artist { font-family:var(--display); font-size:15px; font-weight:600; color:var(--text-main) !important; display:block; line-height:1.1; }
   .cell-song   { font-size:11px; color:var(--text-dim) !important; display:block; }
-  .cell-simple { font-size:13px; color:#9a98a0 !important; }
-  .row-active .cell-artist, .row-active .cell-simple { color:var(--brand-red) !important; }
-  .row-active .cell-num  { color:var(--brand-red) !important; }
-  .row-active .cell-cd   { color:var(--brand-red) !important; font-size:15px !important; }
-  .row-next .cell-artist, .row-next .cell-simple { color:#c0bec8 !important; }
-  .row-next .cell-cd { color:#c0bec8 !important; }
+  .cell-simple { font-size:13px; color:#7a98b8 !important; }
+  .row-active .cell-artist, .row-active .cell-simple { color:#ff6060 !important; }
+  .row-active .cell-num  { color:#ff4040 !important; }
+  .row-active .cell-cd   { color:#ff5050 !important; font-size:15px !important; }
+  .row-next .cell-artist, .row-next .cell-simple { color:#40d870 !important; }
+  .row-next .cell-cd { color:#40d870 !important; }
   .cell-dur { width:72px; font-family:var(--mono); font-size:12px; text-align:right; }
   .cell-cd  { width:92px; font-family:var(--mono); font-size:13px; text-align:right; padding-right:12px !important; }
   .cell-bar { width:5px; padding:0 !important; }
@@ -89,9 +89,9 @@
   .progress.is-elapsed::-moz-progress-bar { background: var(--brand-red); }
 
   /* ── Separator ── */
-  .console-sep { height: 24px; background: var(--brand-black); border-top: 1px solid var(--border-c); border-bottom: 1px solid var(--border-c); display: flex; align-items: center; padding: 0 1rem; gap: 1rem; }
-  .sep-line  { flex:1; height:1px; background:var(--brand-gray); }
-  .sep-label { font-family:var(--mono); font-size:9px; color:var(--text-dim); letter-spacing:3px; }
+  .console-sep { height: 24px; background: #060b16; border-top: 1px solid #0d1830; border-bottom: 1px solid #0d1830; display: flex; align-items: center; padding: 0 1rem; gap: 1rem; }
+  .sep-line  { flex:1; height:1px; background:#111c38; }
+  .sep-label { font-family:var(--mono); font-size:9px; color:#1e3060; letter-spacing:3px; }
 
   /* ── Columns ── */
   .columns.is-console { margin: 0; }
@@ -100,20 +100,20 @@
   /* ── Buttons ── */
   .button { font-family: var(--mono) !important; font-size: 11px !important; letter-spacing: 1px !important; border-radius: 2px !important; }
   .button.is-dark { background: transparent !important; border-color: var(--border-c) !important; color: var(--text-dim) !important; }
-  .button.is-dark:hover { border-color: var(--brand-red) !important; color: var(--text-main) !important; }
-  .button.is-success { background: transparent !important; border-color: #00c050 !important; color: #00c050 !important; }
-  .button.is-success:hover { background: #0d1a10 !important; }
+  .button.is-dark:hover { border-color: #00d4f0 !important; color: var(--text-main) !important; }
+  .button.is-success { background: transparent !important; border-color: #00d96a !important; color: #00d96a !important; }
+  .button.is-success:hover { background: #052210 !important; }
   .button.is-danger  { background: transparent !important; border-color: var(--brand-red) !important; color: var(--brand-red) !important; }
-  .button.is-danger:hover  { background: #1a0008 !important; }
+  .button.is-danger:hover  { background: #200808 !important; }
   .tag { font-family: var(--mono) !important; font-size: 10px !important; letter-spacing: 1px !important; border-radius: 2px !important; }
 
   /* ── VU Mètre ── */
-  .vu-section { background: var(--brand-gray3); border-top: 2px solid var(--brand-red); padding: 0.75rem 1rem; position: sticky; bottom: 0; z-index: 10; }
+  .vu-section { background: #060b16; border-top: 2px solid var(--border-c); padding: 0.75rem 1rem; position: sticky; bottom: 0; z-index: 10; }
   .vu-wrap { background: var(--brand-gray); border: 1px solid var(--border-c); border-radius: 8px; padding: 0.75rem 1.25rem; display: flex; align-items: stretch; gap: 1.5rem; }
   .vu-label-block { display: flex; flex-direction: column; justify-content: space-between; min-width: 52px; }
   .vu-main-title { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
   .vu-db-group { display: flex; flex-direction: column; }
-  .vu-db-val { font-family: var(--mono); font-size: 20px; color: var(--text-main); letter-spacing: 1px; line-height: 1; }
+  .vu-db-val { font-family: var(--mono); font-size: 20px; color: #00d4f0; letter-spacing: 1px; line-height: 1; }
   .vu-db-unit { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-top: 2px; }
   .vu-channel-v { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; max-width: 80px; }
   .vu-ch-label { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
@@ -128,8 +128,8 @@
   .rm-vol-wrap { display:flex; flex-direction:column; gap:4px; justify-content:center; }
   .rm-vol-label { font-family:var(--mono); font-size:8px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; }
   input[type=range].rm-vol { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:var(--border-c); outline:none; }
-  input[type=range].rm-vol::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--brand-red); cursor:pointer; }
-  input[type=range].rm-vol::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:var(--brand-red); cursor:pointer; border:none; }
+  input[type=range].rm-vol::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#00d4f0; cursor:pointer; }
+  input[type=range].rm-vol::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:#00d4f0; cursor:pointer; border:none; }
   .rm-vol-val { font-family:var(--mono); font-size:10px; color:var(--text-main); text-align:center; }
 </style>
 </head>
@@ -140,9 +140,9 @@
   <div class="navbar-brand">
     <a class="navbar-item">
       <svg width="22" height="22" viewBox="0 0 32 32" fill="none" style="margin-right:8px">
-        <circle cx="16" cy="16" r="14" stroke="#E4032E" stroke-width="1.5"/>
-        <circle cx="16" cy="16" r="6"  stroke="#E4032E" stroke-width="1.5"/>
-        <circle cx="16" cy="16" r="2"  fill="#E4032E"/>
+        <circle cx="16" cy="16" r="14" stroke="#00d4f0" stroke-width="1.5"/>
+        <circle cx="16" cy="16" r="6"  stroke="#00d4f0" stroke-width="1.5"/>
+        <circle cx="16" cy="16" r="2"  fill="#00d4f0"/>
       </svg>
       MA RADIO
     </a>
@@ -152,7 +152,7 @@
       <div class="clock-display" id="global-clock">00:00:00</div>
     </div>
     <div class="navbar-item">
-      <span class="tag" style="background:var(--brand-gray);color:var(--text-dim);border:1px solid var(--border-c);font-family:var(--mono);font-size:10px">MONTRÉAL · GMT+1</span>
+      <span class="tag" style="background:#111c38;color:#5a7090;border:1px solid #1e3060;font-family:var(--mono);font-size:10px">MONTRÉAL · GMT+1</span>
     </div>
   </div>
 </nav>
@@ -166,12 +166,12 @@
 
         <!-- Card header: station info + timers -->
         <div class="card-header" style="display:flex;align-items:stretch">
-          <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid var(--border-c)">
-            <span class="tag diff-badge" style="background:#3a0010;color:var(--brand-red);border:1px solid var(--brand-red)">DIFF 1</span>
+          <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
+            <span class="tag diff-badge" style="background:#1a2a00;color:#f5c400;border:1px solid #3a4a00">DIFF 1</span>
           </div>
-          <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid var(--border-c)">
+          <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
             <p class="card-header-title" style="padding:0;font-size:14px">MA RADIO — STUDIO 1</p>
-            <p style="font-family:var(--mono);font-size:9px;color:var(--text-dim);padding-left:0">RADIO01_EST</p>
+            <p style="font-family:var(--mono);font-size:9px;color:#3a5070;padding-left:0">RADIO01_EST</p>
           </div>
           <div class="timer-group">
             <div class="timer-box">
@@ -249,12 +249,12 @@
       <div class="card is-dark-card">
 
         <div class="card-header" style="display:flex;align-items:stretch">
-          <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid var(--border-c)">
-            <span class="tag diff-badge" style="background:#3a0010;color:var(--brand-red);border:1px solid var(--brand-red)">DIFF 2</span>
+          <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
+            <span class="tag diff-badge" style="background:#001a2a;color:#00d4f0;border:1px solid #003a5a">DIFF 2</span>
           </div>
-          <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid var(--border-c)">
+          <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
             <p class="card-header-title" style="padding:0;font-size:14px">MA RADIO — STUDIO 2</p>
-            <p style="font-family:var(--mono);font-size:9px;color:var(--text-dim)">RADIO02_EST</p>
+            <p style="font-family:var(--mono);font-size:9px;color:#3a5070">RADIO02_EST</p>
           </div>
           <div class="timer-group">
             <div class="timer-box">
@@ -598,7 +598,7 @@ function paintBars(idL, idR, aL, aR, dbId, gainNode) {
   const el = document.getElementById(dbId);
   if (el) {
     el.textContent = db > -60 ? db.toFixed(1) : '—∞';
-    el.style.color = db > -3 ? '#E4032E' : db > -10 ? '#f5c400' : '#f0eef4';
+    el.style.color = db > -3 ? '#e03020' : db > -10 ? '#f5c400' : '#00d4f0';
   }
 }
 
