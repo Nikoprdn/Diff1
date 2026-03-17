@@ -145,6 +145,87 @@
   /* ── Columns tight ── */
   .columns.is-console { margin: 0; }
   .columns.is-console .column { padding: 0; }
+
+  /* ── VU Mètre ── */
+  .vu-section {
+    background: #060b16;
+    border-top: 2px solid #1e3060;
+    padding: 0.75rem 1rem;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+  .vu-wrap {
+    background: #0d1428;
+    border: 1px solid #1e3060;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+  }
+  .vu-label-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-width: 60px;
+  }
+  .vu-main-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #3a5070;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .vu-db-val {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: #00d4f0;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .vu-db-unit {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: #3a5070;
+    margin-top: 2px;
+  }
+  .vu-channel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .vu-ch-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: #3a5070;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  .vu-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 56px;
+  }
+  .vu-col {
+    flex: 1;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    transition: height 0.04s ease-out, background 0.1s;
+  }
+  .vu-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+  }
+  .vu-scale span {
+    font-family: var(--mono);
+    font-size: 7px;
+    color: #1e3060;
+  }
 </style>
 </head>
 <body>
@@ -333,6 +414,37 @@
   </div>
 </section>
 
+<!-- ══════ VU MÈTRE ══════ -->
+<div class="vu-section">
+  <div class="vu-wrap">
+
+    <div class="vu-label-block">
+      <div class="vu-main-title">VU MÈTRE</div>
+      <div class="vu-db-val" id="vu-db">—∞</div>
+      <div class="vu-db-unit">dB</div>
+    </div>
+
+    <!-- Canal Gauche -->
+    <div class="vu-channel">
+      <div class="vu-ch-label">L</div>
+      <div class="vu-bars" id="vu-bars-L"></div>
+      <div class="vu-scale">
+        <span>-60</span><span>-40</span><span>-20</span><span>-12</span><span>-6</span><span>0</span>
+      </div>
+    </div>
+
+    <!-- Canal Droit -->
+    <div class="vu-channel">
+      <div class="vu-ch-label">R</div>
+      <div class="vu-bars" id="vu-bars-R"></div>
+      <div class="vu-scale">
+        <span>-60</span><span>-40</span><span>-20</span><span>-12</span><span>-6</span><span>0</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════
 // CONFIGURATION — modifie ici tes pistes
@@ -457,6 +569,103 @@ class Diffuser {
 }
 
 const D = CONFIGS.map(cfg=>new Diffuser(cfg));
+
+// ── VU Mètre ──
+const NUM_BARS = 32;
+let audioCtx = null, analyserL = null, analyserR = null;
+let vuActive = false;
+
+function colColor(i, total) {
+  const pct = i / total;
+  if (pct > 0.9) return '#e03020';
+  if (pct > 0.75) return '#f5c400';
+  return '#00d96a';
+}
+
+function buildBars(containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  for (let i = 0; i < NUM_BARS; i++) {
+    const col = document.createElement('div');
+    col.className = 'vu-col';
+    col.style.height = '2px';
+    col.style.background = colColor(i, NUM_BARS);
+    el.appendChild(col);
+  }
+}
+
+function initVU(audioEl) {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src      = audioCtx.createMediaElementSource(audioEl);
+    const splitter = audioCtx.createChannelSplitter(2);
+    const merger   = audioCtx.createChannelMerger(2);
+    analyserL = audioCtx.createAnalyser();
+    analyserR = audioCtx.createAnalyser();
+    analyserL.fftSize = 256;
+    analyserR.fftSize = 256;
+    analyserL.smoothingTimeConstant = 0.75;
+    analyserR.smoothingTimeConstant = 0.75;
+
+    // src → splitter → analyserL/R → merger → destination
+    src.connect(splitter);
+    splitter.connect(analyserL, 0);
+    splitter.connect(analyserR, 1);
+    analyserL.connect(merger, 0, 0);
+    analyserR.connect(merger, 0, 1);
+    merger.connect(audioCtx.destination);
+
+    buildBars('vu-bars-L');
+    buildBars('vu-bars-R');
+  }
+  vuActive = true;
+}
+
+function getRMS(analyser) {
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) sum += (data[i] / 255) ** 2;
+  return Math.sqrt(sum / data.length);
+}
+
+function updateBars(containerId, rms) {
+  const cols = document.querySelectorAll(`#${containerId} .vu-col`);
+  const level = Math.min(1, rms * 3.5);
+  const active = Math.round(level * NUM_BARS);
+  cols.forEach((col, i) => {
+    const h = i < active ? Math.max(2, (i / NUM_BARS) * 56 + 4) : 2;
+    col.style.height = h + 'px';
+    col.style.opacity = i < active ? '1' : '0.12';
+  });
+}
+
+function vuLoop() {
+  requestAnimationFrame(vuLoop);
+  if (!vuActive || !analyserL || !analyserR) return;
+  const rmsL = getRMS(analyserL);
+  const rmsR = getRMS(analyserR);
+  updateBars('vu-bars-L', rmsL);
+  updateBars('vu-bars-R', rmsR);
+  const avg = (rmsL + rmsR) / 2;
+  const db = avg > 0 ? Math.max(-60, 20 * Math.log10(avg)) : -Infinity;
+  document.getElementById('vu-db').textContent = isFinite(db) ? db.toFixed(1) : '—∞';
+  document.getElementById('vu-db').style.color = db > -6 ? '#e03020' : db > -18 ? '#f5c400' : '#00d4f0';
+}
+
+// Connecte le VU mètre au premier diffuseur qui joue
+const _origToggle0 = D[0].togglePlay.bind(D[0]);
+D[0].togglePlay = function() {
+  _origToggle0();
+  if (!audioCtx && D[0].playing) initVU(D[0].audio);
+};
+const _origToggle1 = D[1].togglePlay.bind(D[1]);
+D[1].togglePlay = function() {
+  _origToggle1();
+  if (!audioCtx && D[1].playing) initVU(D[1].audio);
+};
+
+vuLoop();
 
 setInterval(()=>{
   document.getElementById('global-clock').textContent=nowClock();
