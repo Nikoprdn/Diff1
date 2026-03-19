@@ -596,6 +596,22 @@
   .pl-collapsed .pl-chevron { transform:rotate(-90deg); }
 
   /* ── Macros CSS (déjà existant, complété) ── */
+  /* ── VU strip latéral sur chaque diffuseur ── */
+  .card.is-dark-card { position:relative; }
+  .vu-strip {
+    position:absolute; top:0; right:-9px; bottom:0;
+    width:7px; border-radius:0 4px 4px 0;
+    display:flex; flex-direction:column-reverse; gap:1px;
+    padding:2px 0; overflow:hidden; z-index:5;
+    background:rgba(6,11,22,.9);
+    border:1px solid var(--border); border-left:none;
+  }
+  .vu-strip-bar {
+    width:100%; border-radius:1px;
+    min-height:2px; flex:1;
+    opacity:0.08; transition:opacity .05s ease-out;
+  }
+
   .card.is-pub-card { background:#181c20; border:1px solid #2a2e34; border-radius:8px; box-shadow:none; position:relative; }
   .card.is-pub-card .card-header { background:#1f2328; border-bottom:1px solid #2a2e34; box-shadow:none; border-radius:8px 8px 0 0; }
   .card.is-pub-card .card-header-title { color:#b0b8c0; font-family:var(--display); font-size:13px; letter-spacing:1px; padding:.5rem .75rem; }
@@ -770,6 +786,7 @@
     <span class="card-footer-item">Durée écoulée&nbsp;<strong id="c1-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
     <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="c1-total" style="color:#ddeeff;font-family:var(--mono);font-size:18px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="c1-suffix" style="color:#00d4f0;font-family:var(--display);font-size:16px;font-weight:700">A</span></span>
   </div>
+  <div class="vu-strip" id="vu-strip-d0"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
   <!-- Popup rendez-vous DIFF 1 -->
   <div class="rdv-popup" id="rdv-popup-0">
     <div class="rdv-popup-inner">
@@ -855,6 +872,7 @@
     <span class="card-footer-item">Durée écoulée&nbsp;<strong id="c2-micros" style="color:#9b5de5;font-family:var(--mono)">00:00</strong></span>
     <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="c2-total" style="color:#ddeeff;font-family:var(--mono);font-size:18px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="c2-suffix" style="color:#9b5de5;font-family:var(--display);font-size:16px;font-weight:700">A</span></span>
   </div>
+  <div class="vu-strip" id="vu-strip-d1"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
   <!-- Popup rendez-vous DIFF 2 -->
   <div class="rdv-popup" id="rdv-popup-1">
     <div class="rdv-popup-inner">
@@ -935,6 +953,7 @@
     <span class="card-footer-item">Écoulé&nbsp;<strong id="pn-micros" style="color:#4a5260;font-family:var(--mono)">00:00</strong></span>
     <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="pn-total" style="color:#7a8088;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="pn-suffix" style="color:#6a7280;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
   </div>
+<div class="vu-strip" id="vu-strip-nat"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
 </div>
 </div><!-- /NATIONAL -->
 
@@ -1005,6 +1024,7 @@
     <span class="card-footer-item">Écoulé&nbsp;<strong id="ps-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
     <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="ps-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="ps-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
   </div>
+<div class="vu-strip" id="vu-strip-sat"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
 </div>
 
 <!-- PUB DAB+ -->
@@ -1070,6 +1090,7 @@
     <span class="card-footer-item">Écoulé&nbsp;<strong id="pd-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
     <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="pd-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="pd-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
   </div>
+<div class="vu-strip" id="vu-strip-dab"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
 </div>
 
 <!-- PUB Hz -->
@@ -1135,6 +1156,7 @@
     <span class="card-footer-item">Écoulé&nbsp;<strong id="ph-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
     <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="ph-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="ph-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
   </div>
+<div class="vu-strip" id="vu-strip-hz"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
 </div>
 
 </div><!-- /grid PUB -->
@@ -1786,15 +1808,21 @@ class Diffuser{
 
   _startTrack(i){
     const t=this.tracks[i];
-    // Si c'est une macro, l'exécuter et passer à la suivante
+    // Si c'est une macro, l'exécuter et supprimer + passer à la suivante
     if(t && t.isMacro){
       if(typeof fireMacroTrack==='function') fireMacroTrack(t.macroKey, this.idx);
-      // Auto-avance vers la piste suivante
+      // Supprimer la macro et démarrer la piste 0 suivante
       setTimeout(()=>{
         if(this.playing){
-          const next=(i+1)%this.tracks.length;
-          if(next!==i) this._play(next);
-          else { this.playing=false; this.render(); }
+          // Supprimer cette macro de la playlist
+          this.tracks.splice(i,1);
+          this.durs.splice(i,1);
+          this.audios.splice(i,1);
+          this.ci=0;
+          this._chainDone.clear();
+          if(this.tracks.length) this._startTrack(0);
+          else { this.playing=false; }
+          this.render();
         }
       },200);
       return;
@@ -1802,6 +1830,30 @@ class Diffuser{
     const audio=this.audios[i];
     if(!audio)return;
     audio.currentTime=this._inOf(i);
+    // Quand le son se termine naturellement → le supprimer et jouer piste 0
+    audio.onended=()=>{
+      if(!this.playing)return;
+      // Supprimer la piste qui vient de se terminer (ci=0 toujours)
+      const removeIdx=this.ci; // toujours 0
+      if(t.file && t.file.startsWith('blob:')) URL.revokeObjectURL(t.file);
+      this.tracks.splice(removeIdx,1);
+      this.durs.splice(removeIdx,1);
+      const oldAudio=this.audios.splice(removeIdx,1)[0];
+      if(oldAudio){ oldAudio.onended=null; }
+      this.ci=0;
+      this._chainDone.clear();
+      // Mettre à jour le compteur fichiers
+      const cfg=CONFIGS[this.idx];
+      if(cfg){
+        cfg.tracks=this.tracks;
+        const n=this.tracks.length;
+        const fdzEl=document.getElementById(cfg.fdzCount);
+        if(fdzEl) fdzEl.textContent=n?n+' fichier'+(n>1?'s':''):'Aucun fichier';
+      }
+      if(this.tracks.length){ this._startTrack(0); }
+      else { this.playing=false; }
+      this.render();
+    };
     audio.play().catch(e=>console.warn(e));
   }
 
@@ -1809,11 +1861,11 @@ class Diffuser{
     if(!this.tracks.length)return;
     if(!this.playing){
       this.playing=true;
+      this.ci=0; // Toujours démarrer depuis la première piste
       this._chainDone.clear();
-      this._startTrack(this.ci);
+      this._startTrack(0);
       this.render();
     } else {
-      // Pause toutes les pistes en cours
       this.audios.forEach(a=>{if(a&&!a.paused)a.pause();});
       this.playing=false;
       this.render();
@@ -1834,23 +1886,9 @@ class Diffuser{
     if(btn)btn.classList.toggle('active',this.auto);
   }
 
-  nextTrack(){
-    if(!this.tracks.length)return;
-    const n=(this.ci+1)%this.tracks.length;
-    if(this.playing){this.audios.forEach(a=>{if(a&&!a.paused)a.pause();});this.ci=n;this._chainDone.clear();this._startTrack(n);}
-    else{this.ci=n;}
-    this.render();
-  }
-
-  prevTrack(){
-    if(!this.tracks.length)return;
-    const p=(this.ci-1+this.tracks.length)%this.tracks.length;
-    if(this.playing){this.audios.forEach(a=>{if(a&&!a.paused)a.pause();});this.ci=p;this._chainDone.clear();this._startTrack(p);}
-    else{this.ci=p;}
-    this.render();
-  }
-
-  jumpTo(i){
+  nextTrack(){} // désactivé — lecture séquentielle auto
+  prevTrack(){} // désactivé — lecture séquentielle auto
+  jumpTo(i){ // garde pour usage interne uniquement
     if(this.playing){this.audios.forEach(a=>{if(a&&!a.paused)a.pause();});this.ci=i;this._chainDone.clear();this._startTrack(i);}
     else{this.ci=i;}
     this.render();
@@ -1969,202 +2007,152 @@ function rmToggle(){
 }
 function rmStop(){rmAudio.pause();rmAudio.src='';rmPlaying=false;vu2=null;document.getElementById('rm-play-btn').textContent='▶ PLAY';document.getElementById('rm-dot').style.opacity='0';document.getElementById('rm-status').textContent='ARRÊT';}
 
-// ── Wiring VU DIFF 1 & 2 (sticky) — lecture seule, pas de routage départ ──
-let vu1=null, vuD2=null;
-// Note: _t0 et _t1 sont définis plus bas dans le bloc de routage départ
-
-// ══════════════════════════════════════════════════════════════════
-// ROUTAGE AUDIO — 3 DÉPARTS : SAT / DAB+ / Hz
-// ──────────────────────────────────────────────────────────────────
-// Chaque départ = somme de 4 sources :
-//   DIFF 1  + DIFF 2  + NATIONAL  + PUB dédié (SAT/DAB+/Hz)
+// ══════════════════════════════════════════════════════════════
+// ROUTAGE AUDIO — Architecture finale
+// ──────────────────────────────────────────────────────────────
+// DIFF 1, DIFF 2, NATIONAL → les 3 départs (SAT + DAB+ + Hz)
+// PUB SAT → SAT uniquement
+// PUB DAB+ → DAB+ uniquement
+// PUB Hz → Hz uniquement
 //
-// Schéma par départ :
-//   srcDiff1 ──→ gainD1_sat ──┐
-//   srcDiff2 ──→ gainD2_sat ──┤→ monGn_sat → destination
-//   srcNat   ──→ gainNat_sat ─┤
-//   srcPubSat ──→ gainPub_sat ┘
-//
-// Un AudioContext ne peut créer qu'une seule MediaElementSource par
-// élément audio. On crée donc une source par diffuseur UNE SEULE FOIS,
-// puis on la distribue sur les 3 départs via des GainNodes.
-// ══════════════════════════════════════════════════════════════════
+// Règle WebAudio : 1 seule MediaElementSource par AudioElement.
+// On crée la source UNE FOIS, puis on la distribue via GainNodes.
+// ══════════════════════════════════════════════════════════════
 
-let vuSat=null, vuDab=null, vuHz=null, vuNat=null;
+let vu1=null, vuD2=null; // Analyseurs VU sticky (barre du haut)
 
 // Sources MediaElement (une par diffuseur, créée au premier play)
 const SRCS={d0:null, d1:null, nat:null, sat:null, dab:null, hz:null};
 
-// Initialisé une seule fois : un monGn par départ
+// MonGn par départ — sortie vers les hauts-parleurs (solo possible)
+// MON_GAINS déjà déclaré plus haut : {sat:null, dab:null, hz:null}
+
 function ensureMonGn(dep){
-  if(MON_GAINS[dep]) return;
+  if(MON_GAINS[dep]) return MON_GAINS[dep];
   const ctx=getCtx();
   const mn=ctx.createGain(); mn.gain.value=1;
   MON_GAINS[dep]=mn;
   mn.connect(ctx.destination);
   applyListenMode();
+  return mn;
 }
 
-// Crée une MediaElementSource pour un Audio element (une seule fois)
-function getOrCreateSrc(key, audioEl){
+// ── Créer ou récupérer la MediaElementSource d'un diffuseur ──
+function ensureSrc(key, audioEl){
   if(SRCS[key]) return SRCS[key];
-  const ctx=getCtx();
-  SRCS[key]=ctx.createMediaElementSource(audioEl);
-  return SRCS[key];
-}
-
-// Connecte une source à un départ (via un gainNode dédié)
-// Retourne le gainNode pour pouvoir le couper si besoin
-function connectSrcToDepart(src, dep){
-  ensureMonGn(dep);
-  const ctx=getCtx();
-  const gn=ctx.createGain(); gn.gain.value=0.7; // gain de mix 0.7 pour éviter saturation
-  src.connect(gn);
-  gn.connect(MON_GAINS[dep]);
-  return gn;
-}
-
-// Table des gains de mix déjà créés (évite les doublons)
-const MIX_TABLE={}; // 'src_dep' → gainNode
-
-function ensureSrcOnDepart(srcKey, dep, audioEl){
-  const tableKey=srcKey+'_'+dep;
-  if(MIX_TABLE[tableKey]) return MIX_TABLE[tableKey];
-  const src=getOrCreateSrc(srcKey, audioEl);
-  const gn=connectSrcToDepart(src, dep);
-  MIX_TABLE[tableKey]=gn;
-  return gn;
-}
-
-// ── Câbler DIFF 1 sur les 3 départs ──
-function wireDiff1ToDeparts(){
-  const audioEl=D[0].audios[D[0].ci];
-  if(!audioEl) return;
-  ['sat','dab','hz'].forEach(dep=>ensureSrcOnDepart('d0', dep, audioEl));
-}
-
-// ── Câbler DIFF 2 sur les 3 départs ──
-function wireDiff2ToDeparts(){
-  const audioEl=D[1].audios[D[1].ci];
-  if(!audioEl) return;
-  ['sat','dab','hz'].forEach(dep=>ensureSrcOnDepart('d1', dep, audioEl));
-}
-
-// ── Câbler NATIONAL sur les 3 départs ──
-function wireNatToDeparts(){
-  const audioEl=D[5].audios[D[5].ci];
-  if(!audioEl) return;
-  ['sat','dab','hz'].forEach(dep=>ensureSrcOnDepart('nat', dep, audioEl));
-}
-
-// ── Câbler un PUB sur SON départ ──
-function wirePubToDepart(srcKey, dep, audioEl){
-  ensureSrcOnDepart(srcKey, dep, audioEl);
-}
-
-// ── Overrides togglePlay ──
-// DIFF 1 : VU sticky + routage vers les 3 départs
-const _t0b=D[0].togglePlay.bind(D[0]);
-D[0].togglePlay=function(){
-  const audioEl=D[0].audios[D[0].ci];
-  if(audioEl){
-    getCtx().resume();
-    if(!vu1){ vu1=wireVU(audioEl,'vu1-L','vu1-R'); }
-    if(!SRCS.d0){ wireDiff1ToDeparts(); }
-  }
-  getCtx().resume(); _t0b();
-};
-
-// DIFF 2 : VU sticky + routage vers les 3 départs
-const _t1b=D[1].togglePlay.bind(D[1]);
-D[1].togglePlay=function(){
-  const audioEl=D[1].audios[D[1].ci];
-  if(audioEl){
-    getCtx().resume();
-    if(!vuD2){ vuD2=wireVU(audioEl,'vu-d2-L','vu-d2-R'); }
-    if(!SRCS.d1){ wireDiff2ToDeparts(); }
-  }
-  getCtx().resume(); _t1b();
-};
-
-// PUB SAT (D[2])
-const _t2=D[2].togglePlay.bind(D[2]);
-D[2].togglePlay=function(){
-  if(!SRCS.sat && D[2].audios[D[2].ci]){
-    getCtx().resume();
-    const vu=wireVUAnalyserOnly(D[2].audios[D[2].ci],'vu-sat-L','vu-sat-R','sat');
-    vuSat=vu;
-    wirePubToDepart('sat','sat',D[2].audios[D[2].ci]);
-  }
-  getCtx().resume(); _t2();
-};
-
-// PUB DAB+ (D[3])
-const _t3=D[3].togglePlay.bind(D[3]);
-D[3].togglePlay=function(){
-  if(!SRCS.dab && D[3].audios[D[3].ci]){
-    getCtx().resume();
-    const vu=wireVUAnalyserOnly(D[3].audios[D[3].ci],'vu-dab-L','vu-dab-R','dab');
-    vuDab=vu;
-    wirePubToDepart('dab','dab',D[3].audios[D[3].ci]);
-  }
-  getCtx().resume(); _t3();
-};
-
-// PUB Hz (D[4])
-const _t4=D[4].togglePlay.bind(D[4]);
-D[4].togglePlay=function(){
-  if(!SRCS.hz && D[4].audios[D[4].ci]){
-    getCtx().resume();
-    const vu=wireVUAnalyserOnly(D[4].audios[D[4].ci],'vu-hz-L','vu-hz-R','hz');
-    vuHz=vu;
-    wirePubToDepart('hz','hz',D[4].audios[D[4].ci]);
-  }
-  getCtx().resume(); _t4();
-};
-
-// NATIONAL (D[5]) — source unique sur les 3 départs
-const _t5=D[5].togglePlay.bind(D[5]);
-D[5].togglePlay=function(){
-  const audioEl=D[5].audios[D[5].ci];
-  if(audioEl && !SRCS.nat){
-    getCtx().resume();
-    wireNatToDeparts();
-    // Analyser VU NATIONAL séparé (on ne peut pas réutiliser la source)
-    // On crée des analyseurs branchés APRES la source
+  if(!audioEl) return null;
+  try{
     const ctx=getCtx();
-    const src=SRCS.nat; // déjà créé par wireNatToDeparts
-    if(src){
-      const aL=ctx.createAnalyser(), aR=ctx.createAnalyser();
-      aL.fftSize=1024; aR.fftSize=1024; aL.smoothingTimeConstant=0.8; aR.smoothingTimeConstant=0.8;
-      // Pas de splitter supplémentaire — juste connecter pour mesure (ne sort pas)
-      vuNat={aL, aR, gn:MIX_TABLE['nat_sat']||null};
-    }
-  }
-  getCtx().resume(); _t5();
-};
+    SRCS[key]=ctx.createMediaElementSource(audioEl);
+    return SRCS[key];
+  }catch(e){ return null; }
+}
 
-// ── wireVUAnalyserOnly : crée analyseurs + route vers monGn d'un départ ──
-// La source est créée via getOrCreateSrc (réutilisable)
-function wireVUAnalyserOnly(audioEl, idL, idR, srcKey){
+// ── Brancher une source sur un départ (GainNode vers monGn) ──
+// Retourne l'analyser L créé
+const ROUTE_DONE=new Set(); // 'srcKey_dep' déjà branché
+function routeSrcToDepart(srcKey, dep, audioEl){
+  const rkey=srcKey+'_'+dep;
+  if(ROUTE_DONE.has(rkey)) return null;
+  const src=ensureSrc(srcKey, audioEl);
+  if(!src) return null;
   const ctx=getCtx();
-  const src=getOrCreateSrc(srcKey, audioEl);
-  const gn=ctx.createGain(); gn.gain.value=1;
-  const sp=ctx.createChannelSplitter(2), mg=ctx.createChannelMerger(2);
+  const mn=ensureMonGn(dep);
+  const gn=ctx.createGain(); gn.gain.value=0.7;
   const aL=ctx.createAnalyser(), aR=ctx.createAnalyser();
   aL.fftSize=1024; aR.fftSize=1024; aL.smoothingTimeConstant=0.8; aR.smoothingTimeConstant=0.8;
-  src.connect(gn); gn.connect(sp); sp.connect(aL,0); sp.connect(aR,1);
+  const sp=ctx.createChannelSplitter(2), mg=ctx.createChannelMerger(2);
+  src.connect(gn); gn.connect(sp);
+  sp.connect(aL,0); sp.connect(aR,1);
   aL.connect(mg,0,0); aR.connect(mg,0,1);
-  // Connecter au monGn du départ
-  ensureMonGn(srcKey);
-  mg.connect(MON_GAINS[srcKey]);
-  // Override la source déjà créée (wireVUAnalyserOnly prend la main)
-  SRCS[srcKey]=src; // déjà set mais ok
-  buildBars(idL); buildBars(idR);
+  mg.connect(mn);
+  ROUTE_DONE.add(rkey);
   return {aL, aR, gn};
 }
 
+// ── Wiring DIFF 1 : VU sticky + 3 départs ──
+const _t0_orig=D[0].togglePlay.bind(D[0]);
+D[0].togglePlay=function(){
+  const el=D[0].audios[D[0].ci];
+  if(el && !SRCS.d0){
+    getCtx().resume();
+    // VU sticky
+    vu1=wireVU(el,'vu1-L','vu1-R');
+    // 3 départs
+    ['sat','dab','hz'].forEach(dep=>routeSrcToDepart('d0',dep,el));
+  }
+  getCtx().resume(); _t0_orig();
+};
+
+// ── Wiring DIFF 2 : VU sticky + 3 départs ──
+const _t1_orig=D[1].togglePlay.bind(D[1]);
+D[1].togglePlay=function(){
+  const el=D[1].audios[D[1].ci];
+  if(el && !SRCS.d1){
+    getCtx().resume();
+    vuD2=wireVU(el,'vu-d2-L','vu-d2-R');
+    ['sat','dab','hz'].forEach(dep=>routeSrcToDepart('d1',dep,el));
+  }
+  getCtx().resume(); _t1_orig();
+};
+
+// ── Wiring PUB SAT : VU analyseur + départ SAT ──
+let vuSat=null, vuDab=null, vuHz=null, vuNat=null;
+const _t2_orig=D[2].togglePlay.bind(D[2]);
+D[2].togglePlay=function(){
+  const el=D[2].audios[D[2].ci];
+  if(el && !SRCS.sat){
+    getCtx().resume();
+    const r=routeSrcToDepart('sat','sat',el);
+    if(r) vuSat=r;
+    buildBars('vu-sat-L'); buildBars('vu-sat-R');
+  }
+  getCtx().resume(); _t2_orig();
+};
+
+// ── Wiring PUB DAB+ : VU analyseur + départ DAB+ ──
+const _t3_orig=D[3].togglePlay.bind(D[3]);
+D[3].togglePlay=function(){
+  const el=D[3].audios[D[3].ci];
+  if(el && !SRCS.dab){
+    getCtx().resume();
+    const r=routeSrcToDepart('dab','dab',el);
+    if(r) vuDab=r;
+    buildBars('vu-dab-L'); buildBars('vu-dab-R');
+  }
+  getCtx().resume(); _t3_orig();
+};
+
+// ── Wiring PUB Hz : VU analyseur + départ Hz ──
+const _t4_orig=D[4].togglePlay.bind(D[4]);
+D[4].togglePlay=function(){
+  const el=D[4].audios[D[4].ci];
+  if(el && !SRCS.hz){
+    getCtx().resume();
+    const r=routeSrcToDepart('hz','hz',el);
+    if(r) vuHz=r;
+    buildBars('vu-hz-L'); buildBars('vu-hz-R');
+  }
+  getCtx().resume(); _t4_orig();
+};
+
+// ── Wiring NATIONAL : 3 départs (pas de VU sticky dédié) ──
+const _t5_orig=D[5].togglePlay.bind(D[5]);
+D[5].togglePlay=function(){
+  const el=D[5].audios[D[5].ci];
+  if(el && !SRCS.nat){
+    getCtx().resume();
+    // Créer analyseurs pour le strip latéral (en passant par le premier départ)
+    const r=routeSrcToDepart('nat','sat',el);
+    if(r) vuNat=r; // analyseur partagé pour le strip
+    routeSrcToDepart('nat','dab',el);
+    routeSrcToDepart('nat','hz',el);
+  }
+  getCtx().resume(); _t5_orig();
+};
+
 // ── Initialiser les barres SAT/DAB+/Hz ──
+
 ['sat','dab','hz'].forEach(id=>{buildBars(`vu-${id}-L`);buildBars(`vu-${id}-R`);});
 
 // ── Mix flux de diffusion ──
@@ -2733,6 +2721,108 @@ function fireMacroTrack(macroKey){
   const m=MACROS[macroKey];if(!m)return;
   m.run();
 }
+
+// ══════════════════════════════════════
+// VU STRIPS LATÉRAUX SUR CHAQUE DIFFUSEUR
+// ══════════════════════════════════════
+const STRIP_NUM_BARS = 16;
+
+// Peindre un strip vertical à partir d'un analyser
+function paintStrip(stripId, analyser){
+  const el = document.getElementById(stripId);
+  if(!el || !analyser) return;
+  const bars = el.querySelectorAll('.vu-strip-bar');
+  if(!bars.length) return;
+  const data = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(data);
+  let s=0; for(const v of data) s+=v*v;
+  const rms = Math.sqrt(s/data.length);
+  const db = rms>0 ? Math.max(-60, 20*Math.log10(rms)) : -60;
+  const active = Math.round(((db+60)/60)*STRIP_NUM_BARS);
+  bars.forEach((b,i) => b.style.opacity = i < active ? '1' : '0.08');
+}
+
+// Analysers dédiés aux strips (séparés des analyseurs VU-mètres)
+const STRIP_ANALYSERS = {}; // {d0, d1, nat, sat, dab, hz}
+
+function wireStrip(key, audioEl){
+  if(STRIP_ANALYSERS[key]) return; // déjà wiré
+  if(!audioEl) return;
+  try{
+    const ctx = getCtx();
+    // Réutiliser l'analyser VU existant si disponible (évite createMediaElementSource x2)
+    const existingVU = {d0:vu1, d1:vuD2, sat:vuSat, dab:vuDab, hz:vuHz}[key];
+    if(existingVU && existingVU.aL){
+      STRIP_ANALYSERS[key] = existingVU.aL; // réutiliser l'analyser L existant
+      return;
+    }
+    // Sinon créer un analyser branché sur la source déjà créée
+    const src = SRCS[key] || null;
+    if(src){
+      const an = ctx.createAnalyser();
+      an.fftSize = 512; an.smoothingTimeConstant = 0.7;
+      src.connect(an);
+      STRIP_ANALYSERS[key] = an;
+    }
+  }catch(e){ console.warn('wireStrip', key, e); }
+}
+
+// Boucle de mise à jour des strips
+function stripLoop(){
+  requestAnimationFrame(stripLoop);
+  // Mise à jour dynamique des analyseurs (les VU peuvent être créés après)
+  if(!STRIP_ANALYSERS.d0  && vu1)   STRIP_ANALYSERS.d0  = vu1.aL;
+  if(!STRIP_ANALYSERS.d1  && vuD2)  STRIP_ANALYSERS.d1  = vuD2.aL;
+  if(!STRIP_ANALYSERS.nat && vuNat) STRIP_ANALYSERS.nat = vuNat.aL;
+  if(!STRIP_ANALYSERS.sat && vuSat) STRIP_ANALYSERS.sat = vuSat.aL;
+  if(!STRIP_ANALYSERS.dab && vuDab) STRIP_ANALYSERS.dab = vuDab.aL;
+  if(!STRIP_ANALYSERS.hz  && vuHz)  STRIP_ANALYSERS.hz  = vuHz.aL;
+  paintStrip('vu-strip-d0',  STRIP_ANALYSERS.d0);
+  paintStrip('vu-strip-d1',  STRIP_ANALYSERS.d1);
+  paintStrip('vu-strip-nat', STRIP_ANALYSERS.nat);
+  paintStrip('vu-strip-sat', STRIP_ANALYSERS.sat);
+  paintStrip('vu-strip-dab', STRIP_ANALYSERS.dab);
+  paintStrip('vu-strip-hz',  STRIP_ANALYSERS.hz);
+}
+stripLoop();
+
+// Patch togglePlay pour wirer le strip au premier PLAY
+// DIFF 1
+const _ts0 = D[0].togglePlay.bind(D[0]);
+D[0].togglePlay = function(){
+  if(D[0].audios[D[0].ci]) wireStrip('d0', D[0].audios[D[0].ci]);
+  _ts0();
+};
+// DIFF 2
+const _ts1 = D[1].togglePlay.bind(D[1]);
+D[1].togglePlay = function(){
+  if(D[1].audios[D[1].ci]) wireStrip('d1', D[1].audios[D[1].ci]);
+  _ts1();
+};
+// PUB SAT
+const _ts2 = D[2].togglePlay.bind(D[2]);
+D[2].togglePlay = function(){
+  if(D[2].audios[D[2].ci]) wireStrip('sat', D[2].audios[D[2].ci]);
+  _ts2();
+};
+// PUB DAB+
+const _ts3 = D[3].togglePlay.bind(D[3]);
+D[3].togglePlay = function(){
+  if(D[3].audios[D[3].ci]) wireStrip('dab', D[3].audios[D[3].ci]);
+  _ts3();
+};
+// PUB Hz
+const _ts4 = D[4].togglePlay.bind(D[4]);
+D[4].togglePlay = function(){
+  if(D[4].audios[D[4].ci]) wireStrip('hz', D[4].audios[D[4].ci]);
+  _ts4();
+};
+// NATIONAL
+const _ts5 = D[5].togglePlay.bind(D[5]);
+D[5].togglePlay = function(){
+  if(D[5].audios[D[5].ci]) wireStrip('nat', D[5].audios[D[5].ci]);
+  _ts5();
+};
 
 setTimeout(bindMacroDropZones,500);
 
