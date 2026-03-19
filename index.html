@@ -546,6 +546,9 @@
   }
   .listen-btn:hover { border-color:var(--cyan-dim); color:var(--txt); }
   .listen-btn.active { background:#0a1c28; border-color:var(--cyan); color:var(--cyan); }
+  .listen-btn.silence-alarm { background:#2a0808 !important; border-color:var(--red) !important; color:var(--red) !important; animation:silence-blink .6s step-start infinite; }
+  .sil-dot { display:none; width:5px; height:5px; border-radius:50%; background:var(--red); margin-left:4px; vertical-align:middle; animation:silence-blink .6s step-start infinite; }
+  .sil-dot.active { display:inline-block; }
 
   /* ── Alarme silence navbar ── */
   .navbar-silence-alerts { display:flex; align-items:center; gap:6px; }
@@ -580,22 +583,19 @@
     </a>
   </div>
   <div class="navbar-end">
-    <!-- Alarmes silence -->
-    <div class="navbar-item">
-      <div class="navbar-silence-alerts">
-        <span class="sil-nav-badge" id="sil-nav-sat">⚠ SAT</span>
-        <span class="sil-nav-badge" id="sil-nav-dab">⚠ DAB+</span>
-        <span class="sil-nav-badge" id="sil-nav-hz">⚠ Hz</span>
-      </div>
-    </div>
-    <!-- Mode écoute -->
     <div class="navbar-item">
       <div class="listen-mode-wrap">
         <span class="listen-mode-label">Écoute</span>
-        <button class="listen-btn"        id="listen-mix" onclick="setListenMode('mix')">MIX</button>
-        <button class="listen-btn active" id="listen-sat" onclick="setListenMode('sat')">SAT</button>
-        <button class="listen-btn"        id="listen-dab" onclick="setListenMode('dab')">DAB+</button>
-        <button class="listen-btn"        id="listen-hz"  onclick="setListenMode('hz')">Hz</button>
+        <button class="listen-btn" id="listen-mix" onclick="setListenMode('mix')">MIX</button>
+        <button class="listen-btn active" id="listen-sat" onclick="setListenMode('sat')">
+          SAT<span class="sil-dot" id="sil-nav-sat"></span>
+        </button>
+        <button class="listen-btn" id="listen-dab" onclick="setListenMode('dab')">
+          DAB+<span class="sil-dot" id="sil-nav-dab"></span>
+        </button>
+        <button class="listen-btn" id="listen-hz" onclick="setListenMode('hz')">
+          Hz<span class="sil-dot" id="sil-nav-hz"></span>
+        </button>
       </div>
     </div>
     <div class="navbar-item"><div class="clock-display" id="global-clock">00:00:00</div></div>
@@ -1660,11 +1660,49 @@ function wireVU(audioEl,idL,idR){
   const sp=ctx.createChannelSplitter(2),mg=ctx.createChannelMerger(2);
   const aL=ctx.createAnalyser(),aR=ctx.createAnalyser();
   aL.fftSize=1024;aR.fftSize=1024;aL.smoothingTimeConstant=0.8;aR.smoothingTimeConstant=0.8;
+  // monGn = gain de monitoring (hauts-parleurs) — indépendant de la mesure VU
+  const monGn=ctx.createGain();monGn.gain.value=1;
   src.connect(gn);gn.connect(sp);sp.connect(aL,0);sp.connect(aR,1);
-  aL.connect(mg,0,0);aR.connect(mg,0,1);mg.connect(ctx.destination);
+  aL.connect(mg,0,0);aR.connect(mg,0,1);mg.connect(monGn);monGn.connect(ctx.destination);
   buildBars(idL);buildBars(idR);
-  return{aL,aR,gn};
+  return{aL,aR,gn,monGn};
 }
+
+// ── Mode écoute Solo : SAT / DAB+ / Hz / MIX ──
+// monGn = gain vers les hauts-parleurs, indépendant de la mesure VU et de la détection silence
+let listenMode='mix';
+const MON_GAINS={sat:null, dab:null, hz:null}; // monGn de chaque source PUB
+
+function registerMonGain(key, monGn){
+  MON_GAINS[key]=monGn;
+  // Appliquer le mode courant immédiatement
+  applyListenMode();
+}
+
+function setListenMode(mode){
+  listenMode=mode;
+  applyListenMode();
+  // UI boutons
+  ['mix','sat','dab','hz'].forEach(k=>{
+    const btn=document.getElementById('listen-'+k);
+    if(btn) btn.classList.toggle('active',k===mode);
+  });
+}
+
+function applyListenMode(){
+  const ctx=getCtx();
+  const now=ctx.currentTime;
+  Object.entries(MON_GAINS).forEach(([key,mn])=>{
+    if(!mn)return;
+    const target=(listenMode==='mix'||listenMode===key)?1.0:0.0;
+    mn.gain.cancelScheduledValues(now);
+    mn.gain.setTargetAtTime(target,now,0.03);
+  });
+}
+
+// Rétrocompat : registerVUGain ne fait plus rien (remplacé par registerMonGain)
+function registerVUGain(){}
+const VU_GAINS={sat:null,dab:null,hz:null};
 
 // ── Radio Monaco ──
 const rmAudio=new Audio(); rmAudio.crossOrigin='anonymous';
@@ -1697,54 +1735,19 @@ D[1].togglePlay=function(){
 let vuSat=null, vuDab=null, vuHz=null;
 const _t2=D[2].togglePlay.bind(D[2]);
 D[2].togglePlay=function(){
-  if(!vuSat){getCtx().resume();vuSat=wireVU(D[2].audios[D[2].ci]||new Audio(),'vu-sat-L','vu-sat-R');registerVUGain('sat',vuSat.gn);}
+  if(!vuSat){getCtx().resume();vuSat=wireVU(D[2].audios[D[2].ci]||new Audio(),'vu-sat-L','vu-sat-R');registerMonGain('sat',vuSat.monGn);registerVUGain('sat',vuSat.gn);}
   getCtx().resume(); _t2();
 };
 const _t3=D[3].togglePlay.bind(D[3]);
 D[3].togglePlay=function(){
-  if(!vuDab){getCtx().resume();vuDab=wireVU(D[3].audios[D[3].ci]||new Audio(),'vu-dab-L','vu-dab-R');registerVUGain('dab',vuDab.gn);}
+  if(!vuDab){getCtx().resume();vuDab=wireVU(D[3].audios[D[3].ci]||new Audio(),'vu-dab-L','vu-dab-R');registerMonGain('dab',vuDab.monGn);registerVUGain('dab',vuDab.gn);}
   getCtx().resume(); _t3();
 };
 const _t4=D[4].togglePlay.bind(D[4]);
 D[4].togglePlay=function(){
-  if(!vuHz){getCtx().resume();vuHz=wireVU(D[4].audios[D[4].ci]||new Audio(),'vu-hz-L','vu-hz-R');registerVUGain('hz',vuHz.gn);}
+  if(!vuHz){getCtx().resume();vuHz=wireVU(D[4].audios[D[4].ci]||new Audio(),'vu-hz-L','vu-hz-R');registerMonGain('hz',vuHz.monGn);registerVUGain('hz',vuHz.gn);}
   getCtx().resume(); _t4();
 };
-
-// ── Mode écoute Solo/Mix : SAT / DAB+ / Hz / MIX ──
-// Solo : coupe le gain des autres VU sources (pas de reconnexion — agit sur les gainNodes VU)
-// MIX  : tous les gains au niveau normal
-let listenMode='sat';
-
-// Gains des sources VU (on les ajuste pour le solo)
-// Clé → gainNode créé par wireVU pour chaque source
-const VU_GAINS={sat:null, dab:null, hz:null}; // remplis au premier PLAY des PUB
-
-function setListenMode(mode){
-  listenMode=mode;
-  // Appliquer le solo / mix sur les gainNodes des PUB diffuseurs
-  const ctx=getCtx ? getCtx() : null;
-  const now=ctx?ctx.currentTime:0;
-  Object.entries(VU_GAINS).forEach(([key,gn])=>{
-    if(!gn) return;
-    const targetGain = (mode==='mix' || mode===key) ? 1.0 : 0.0;
-    gn.gain.setTargetAtTime(targetGain, now, 0.05);
-  });
-  // UI
-  ['mix','sat','dab','hz'].forEach(k=>{
-    const btn=document.getElementById('listen-'+k);
-    if(btn) btn.classList.toggle('active',k===mode);
-  });
-}
-
-// Appelé lors du wiring VU des PUB pour enregistrer leur gainNode
-function registerVUGain(key, gainNode){
-  VU_GAINS[key]=gainNode;
-  // Appliquer le mode courant immédiatement
-  if(listenMode!=='mix' && listenMode!==key){
-    gainNode.gain.value=0;
-  }
-}
 
 // ── Initialiser les barres SAT/DAB+/Hz ──
 ['sat','dab','hz'].forEach(id=>{buildBars(`vu-${id}-L`);buildBars(`vu-${id}-R`);});
@@ -1872,10 +1875,12 @@ function checkSilence(key,db){
       s.alertTime=new Date();
       const timeStr=s.alertTime.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
       if(wrap) wrap.classList.add('silence-warn');
-      if(badge)badge.classList.add('active');
-      // Badge navbar
-      const navBadge=document.getElementById('sil-nav-'+key);
-      if(navBadge) navBadge.classList.add('active');
+      if(badge) badge.classList.add('active');
+      // Point rouge + bouton clignotant dans la navbar
+      const navDot=document.getElementById('sil-nav-'+key);
+      if(navDot) navDot.classList.add('active');
+      const listenBtn=document.getElementById('listen-'+key);
+      if(listenBtn) listenBtn.classList.add('silence-alarm');
       // Bip immédiat + répétition toutes les 8s
       playBip();
       s.bipTimer=setInterval(playBip,8000);
@@ -1887,10 +1892,14 @@ function checkSilence(key,db){
     if(s.alerting){
       s.alerting=false;
       const returnTime=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-      const alertTimeStr=s.alertTime?s.alertTime.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
       if(s.bipTimer){clearInterval(s.bipTimer);s.bipTimer=null;}
       if(wrap) wrap.classList.remove('silence-warn');
-      if(badge)badge.classList.remove('active');
+      if(badge) badge.classList.remove('active');
+      // Retirer point rouge + clignotement
+      const navDot=document.getElementById('sil-nav-'+key);
+      if(navDot) navDot.classList.remove('active');
+      const listenBtn=document.getElementById('listen-'+key);
+      if(listenBtn) listenBtn.classList.remove('silence-alarm');
       // Mail retour à la normale
       sendSilenceEmail(key,'end',returnTime);
     }
