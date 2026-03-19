@@ -480,6 +480,13 @@
   }
   .macro-run-btn:hover { border-color:var(--yellow); color:var(--yellow); }
   .macro-run-btn.running { background:#1a1400; border-color:var(--yellow); color:var(--yellow); animation:blink .6s step-start infinite; }
+  .macro-draggable { cursor:grab; user-select:none; }
+  .macro-draggable:active { cursor:grabbing; }
+  /* Macros dans la playlist */
+  .playlist-macro-row { background:#14181c; border-left:3px solid var(--yellow) !important; }
+  .playlist-macro-row .cell-simple { color:var(--yellow) !important; }
+  /* Zone de drop dans les playlists */
+  .table.is-radio tbody.drag-over-active { outline:2px dashed var(--yellow); outline-offset:-2px; }
 
   /* ── RDV simplifié ── */
   .rdv-simple-card {
@@ -593,6 +600,7 @@
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('diffusion')">▶ Diffusion</button>
   <button class="tab-btn"        onclick="switchTab('rdv')">⏱ Rendez-vous</button>
+  <button class="tab-btn"        onclick="switchTab('macros')">⚡ Macros</button>
 </div>
 
 <!-- Panneau Diffusion -->
@@ -1022,43 +1030,46 @@
   </div>
 
 </div>
-</div><!-- /tab-rdv -->color:#00d4f0;border:1px solid #0066aa">DIFF EXT.</span>
-        <span class="rdv-status" id="rdv-status-5">EN ATTENTE</span>
+</div><!-- /tab-rdv -->
+
+<!-- Panneau Macros -->
+<div id="tab-macros" class="tab-panel">
+<div class="rdv-section" style="min-height:80vh">
+  <div class="rdv-title">Macros</div>
+  <p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:1rem;letter-spacing:1px;">
+    Glisse une macro dans n'importe quelle playlist pour l'insérer comme action déclenchée à la lecture.
+    Tu peux aussi l'exécuter immédiatement avec ▶.
+  </p>
+  <div class="macro-grid">
+
+    <!-- START NAT -->
+    <div class="macro-card macro-draggable" draggable="true"
+         ondragstart="macroDragStart(event,'nat')"
+         ondragend="macroDragEnd(event)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="diff-badge" style="background:#1c1c1c;color:#909090;border:1px solid #404040;letter-spacing:3px;font-size:10px">START NAT</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);cursor:grab">⠿ glisser</span>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;color:#3a5070;letter-spacing:1px;margin-bottom:6px">nikoprdn.github.io/Diff2</div>
-      <div class="rdv-row">
-        <span class="rdv-label">Horaire</span>
-        <input class="rdv-input" type="text" id="rdv-time-5" value="00:30:00" placeholder="HH:MM:SS" maxlength="8">
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Fenêtre</span>
-        <div class="rdv-window-wrap">
-          <button class="rdv-win-btn" onclick="rdvWinAdj(5,-1)">−</button>
-          <span class="rdv-win-val" id="rdv-win-val-5">± 4 min</span>
-          <button class="rdv-win-btn" onclick="rdvWinAdj(5,+1)">+</button>
-        </div>
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Cible</span>
-        <div class="rdv-target-wrap" id="rdv-targets-5">
-          <button class="rdv-target-btn sel" data-rdv="5" data-target="0" onclick="rdvToggleTarget(5,0)">DIFF 1</button>
-          <button class="rdv-target-btn" data-rdv="5" data-target="1" onclick="rdvToggleTarget(5,1)">DIFF 2</button>
-          <button class="rdv-target-btn" data-rdv="5" data-target="2" onclick="rdvToggleTarget(5,2)">PUB SAT</button>
-          <button class="rdv-target-btn" data-rdv="5" data-target="3" onclick="rdvToggleTarget(5,3)">PUB DAB+</button>
-          <button class="rdv-target-btn" data-rdv="5" data-target="4" onclick="rdvToggleTarget(5,4)">PUB Hz</button>
-          <button class="rdv-target-btn" data-rdv="5" data-target="ext" onclick="rdvToggleTarget(5,'ext')">EXT.</button>
-          <button class="rdv-target-btn" data-rdv="5" data-target="all" onclick="rdvToggleTarget(5,'all')">TOUS</button>
-        </div>
-      </div>
-      <div class="rdv-countdown" id="rdv-cd-5">—</div>
-      <div class="rdv-actions">
-        <button class="rdv-arm-btn" id="rdv-arm-btn-5" onclick="rdvToggleArm(5)">⏱ ARMER</button>
-        <button class="rdv-cancel-btn" onclick="rdvCancel(5)">✕</button>
-      </div>
+      <div class="macro-desc">Lance le diffuseur NATIONAL (D[5])</div>
+      <button class="macro-run-btn" id="macro-nat-btn" onclick="runMacro('nat')">▶ EXÉCUTER</button>
     </div>
+
+    <!-- START LOC -->
+    <div class="macro-card macro-draggable" draggable="true"
+         ondragstart="macroDragStart(event,'loc')"
+         ondragend="macroDragEnd(event)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="diff-badge" style="background:#0d1020;color:#6a8890;border:1px solid #1a3040;letter-spacing:3px;font-size:10px">START LOC</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);cursor:grab">⠿ glisser</span>
+      </div>
+      <div class="macro-desc">Lance PUB SAT · PUB DAB+ · PUB Hz</div>
+      <button class="macro-run-btn" id="macro-loc-btn" onclick="runMacro('loc')">▶ EXÉCUTER</button>
+    </div>
+
   </div>
 </div>
-</div><!-- /tab-rdv -->
+</div><!-- /tab-macros -->
+
 
 <!-- FLUX DE DIFFUSION — tout en bas -->
 <div style="height:2rem;background:var(--bg)"></div>
@@ -1304,6 +1315,26 @@ class Diffuser{
       // Clamp OUT à 98% max pour qu'elle soit toujours visible
       const outPct=Math.min(98,(this._outOf(i)/dur*100)).toFixed(1);
       const delBtn=`<button onclick="event.stopPropagation();diffRemoveTrack(${this.idx},${i})" style="background:transparent;border:none;color:#3a4050;cursor:pointer;font-size:11px;padding:0 4px;line-height:1;transition:color .1s" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#3a4050'" title="Supprimer">✕</button>`;
+
+      // ── Piste MACRO : affichage spécial ──
+      if(t.isMacro){
+        tr.classList.add('playlist-macro-row');
+        tr.innerHTML=`
+          <td class="cell-num" style="color:var(--yellow)">${isActive?'⚡':(i+1)}</td>
+          <td class="cell-time" style="font-family:var(--mono);font-size:10px;color:var(--yellow);letter-spacing:1px">MACRO</td>
+          <td class="cell-title" style="display:flex;align-items:center;gap:4px">${delBtn}
+            <span style="font-family:var(--display);font-size:13px;font-weight:700;color:var(--yellow);letter-spacing:2px">${t.title}</span>
+          </td>
+          <td class="cell-wv" style="padding:4px 12px!important">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute)">→ s'exécute à la lecture</span>
+          </td>
+          <td class="cell-dur" style="color:var(--txt-mute);font-size:10px">—</td>
+          <td class="cell-cd" style="color:var(--yellow);font-family:var(--mono);font-size:11px;text-align:right;padding-right:10px">ACTION</td>
+          <td class="cell-bar"><span class="color-bar" style="background:#6a5a00"></span></td>`;
+        tbody.appendChild(tr);
+        return;
+      }
+
       tr.innerHTML=`
         <td class="cell-num${isActive?' is-playing':''}">${isActive?'▶':(i+1)}</td>
         <td class="cell-time"><span>${hhmm}</span><span class="cell-sub">${sub}</span></td>
@@ -1441,6 +1472,20 @@ class Diffuser{
   }
 
   _startTrack(i){
+    const t=this.tracks[i];
+    // Si c'est une macro, l'exécuter et passer à la suivante
+    if(t && t.isMacro){
+      if(typeof fireMacroTrack==='function') fireMacroTrack(t.macroKey);
+      // Auto-avance vers la piste suivante
+      setTimeout(()=>{
+        if(this.playing){
+          const next=(i+1)%this.tracks.length;
+          if(next!==i) this._play(next);
+          else { this.playing=false; this.render(); }
+        }
+      },200);
+      return;
+    }
     const audio=this.audios[i];
     if(!audio)return;
     audio.currentTime=this._inOf(i);
@@ -1839,9 +1884,14 @@ setInterval(()=>{document.getElementById('global-clock').textContent=nowClock();
 function switchTab(name){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
+  const panel=document.getElementById('tab-'+name);
+  if(panel) panel.classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>{
-    if(b.textContent.toLowerCase().includes(name==='rdv'?'rendez':'diffusion')) b.classList.add('active');
+    const txt=b.textContent.toLowerCase();
+    const match=(name==='rdv'&&txt.includes('rendez'))||
+                (name==='diffusion'&&txt.includes('diffusion'))||
+                (name==='macros'&&txt.includes('macro'));
+    if(match) b.classList.add('active');
   });
 }
 
@@ -2059,4 +2109,63 @@ function rdvCancel(idx){
   if(popup) popup.classList.remove('visible');
 }
 function rdvToggleTarget(){}
+
+// ══════════════════════════════════════
+// DRAG & DROP MACROS → PLAYLISTS
+// ══════════════════════════════════════
+let _draggingMacroKey=null;
+
+function macroDragStart(event,key){
+  _draggingMacroKey=key;
+  event.dataTransfer.setData('text/plain','macro:'+key);
+  event.dataTransfer.effectAllowed='copy';
+}
+function macroDragEnd(event){
+  document.querySelectorAll('.table.is-radio tbody').forEach(tb=>tb.classList.remove('drag-over-active'));
+}
+
+function bindMacroDropZones(){
+  CONFIGS.forEach((cfg,diffIdx)=>{
+    const tbody=document.getElementById(cfg.ids.body);
+    if(!tbody)return;
+    tbody.addEventListener('dragover',e=>{
+      if(!_draggingMacroKey)return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect='copy';
+      tbody.classList.add('drag-over-active');
+    });
+    tbody.addEventListener('dragleave',()=>tbody.classList.remove('drag-over-active'));
+    tbody.addEventListener('drop',e=>{
+      e.preventDefault();
+      tbody.classList.remove('drag-over-active');
+      const data=e.dataTransfer.getData('text/plain');
+      if(!data.startsWith('macro:'))return;
+      const key=data.replace('macro:','');
+      insertMacroInDiff(diffIdx,key);
+      _draggingMacroKey=null;
+    });
+  });
+}
+
+function insertMacroInDiff(diffIdx,macroKey){
+  const m=MACROS[macroKey];if(!m)return;
+  const d=D[diffIdx];if(!d)return;
+  const macroTrack={file:null,title:m.label,color:'#6a5a00',inCue:0,outCue:null,isMacro:true,macroKey:macroKey};
+  d.tracks.push(macroTrack);
+  d.durs.push(0);
+  d.audios.push(null);
+  const n=d.tracks.length;
+  const fdzEl=document.getElementById(CONFIGS[diffIdx].fdzCount);
+  if(fdzEl) fdzEl.textContent=n+' fichier'+(n>1?'s':'');
+  d.render();
+}
+
+function fireMacroTrack(macroKey){
+  const m=MACROS[macroKey];if(!m)return;
+  m.run();
+}
+
+setTimeout(bindMacroDropZones,500);
 </script>
+</body>
+</html>
