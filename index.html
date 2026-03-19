@@ -516,6 +516,37 @@
   .rdv-win-sign.active { border-color:var(--cyan); color:var(--cyan); background:#0a1c28; }
   .rdv-win-minutes { font-family:var(--mono); font-size:12px; color:var(--yellow); min-width:52px; text-align:center; }
 
+
+  /* ── Menu déroulant Macros sur diffuseurs ── */
+  .macro-dropdown-wrap { position:relative; display:inline-block; }
+  .macro-dropdown-btn {
+    background:transparent; border:1px solid var(--border); color:var(--txt-mute);
+    font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:2px;
+    cursor:pointer; letter-spacing:1px; transition:all .15s; display:flex; align-items:center; gap:4px;
+  }
+  .macro-dropdown-btn:hover { border-color:var(--yellow); color:var(--yellow); }
+  .macro-dropdown-btn.open { border-color:var(--yellow); color:var(--yellow); background:#1a1400; }
+  .macro-dropdown-menu {
+    display:none; position:absolute; top:calc(100% + 4px); right:0;
+    background:var(--s1); border:1px solid var(--yellow); border-radius:4px;
+    z-index:200; min-width:160px; box-shadow:0 6px 20px rgba(0,0,0,.6);
+  }
+  .macro-dropdown-menu.open { display:block; }
+  .macro-dropdown-item {
+    display:flex; align-items:center; gap:8px;
+    padding:7px 12px; cursor:pointer; border-bottom:1px solid var(--border);
+    font-family:var(--mono); font-size:10px; letter-spacing:1px; color:var(--txt-dim);
+    transition:background .1s;
+  }
+  .macro-dropdown-item:last-child { border-bottom:none; }
+  .macro-dropdown-item:hover { background:#1a1400; color:var(--yellow); }
+  .macro-dropdown-item .mdrop-badge {
+    font-size:8px; padding:1px 5px; border-radius:1px;
+    border:1px solid currentColor; letter-spacing:2px;
+  }
+  .macro-dropdown-item .mdrop-desc { font-size:8px; color:var(--txt-mute); margin-top:1px; }
+  .macro-dropdown-item.flash { background:#1a2a00; color:var(--green); }
+
   /* ── Cards PUB (gris neutre) ── */
   .card.is-pub-card { background:#181c20; border:1px solid #2a2e34; border-radius:8px; box-shadow:none; position:relative; }
   .card.is-pub-card .card-header { background:#1f2328; border-bottom:1px solid #2a2e34; box-shadow:none; border-radius:8px 8px 0 0; }
@@ -599,7 +630,6 @@
       </div>
     </div>
     <div class="navbar-item"><div class="clock-display" id="global-clock">00:00:00</div></div>
-    <div class="navbar-item"><span class="tag" style="background:#111c38;color:#5a7090;border:1px solid #1e3060">MONTRÉAL · GMT+1</span></div>
   </div>
 </nav>
 
@@ -626,7 +656,6 @@
       <span class="tag diff-badge" style="background:#1a2a00;color:#f5c400;border:1px solid #3a4a00">DIFF 1</span>
     </div>
     <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
-      <p class="card-header-title" style="padding:0;font-size:14px">MA RADIO — STUDIO 1</p>
       <p style="font-family:var(--mono);font-size:9px;color:#3a5070;padding-left:0">RADIO01_EST</p>
     </div>
     <div class="timer-group">
@@ -644,6 +673,17 @@
       <button class="button is-dark is-small" onclick="D[0].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[0].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-0" onclick="D[0].toggleAuto()">AUTO</button>
+      <div class="macro-dropdown-wrap">
+        <button class="macro-dropdown-btn" id="mdrop-btn-0" onclick="toggleMacroMenu(0)">⚡ MACRO ▾</button>
+        <div class="macro-dropdown-menu" id="mdrop-menu-0">
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(0,'nat');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(0,'loc');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
+          </div>
+        </div>
+      </div>
       <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060">PISTE <strong id="c1-counter" style="color:#5a7090;margin-left:4px">0/0</strong></span>
     </div>
   </div>
@@ -695,7 +735,6 @@
       <span class="tag diff-badge" style="background:#160d2a;color:#9b5de5;border:1px solid #6a3aaa">DIFF 2</span>
     </div>
     <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
-      <p class="card-header-title" style="padding:0;font-size:14px">MA RADIO — STUDIO 2</p>
       <p style="font-family:var(--mono);font-size:9px;color:#3a5070">RADIO02_EST</p>
     </div>
     <div class="timer-group">
@@ -713,6 +752,17 @@
       <button class="button is-dark is-small" onclick="D[1].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[1].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-1" onclick="D[1].toggleAuto()">AUTO</button>
+      <div class="macro-dropdown-wrap">
+        <button class="macro-dropdown-btn" id="mdrop-btn-1" onclick="toggleMacroMenu(1)">⚡ MACRO ▾</button>
+        <div class="macro-dropdown-menu" id="mdrop-menu-1">
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(1,'nat');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(1,'loc');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
+          </div>
+        </div>
+      </div>
       <span class="tag" style="background:#160d2a;color:#7a5aaa;border:1px solid #6a3aaa">PISTE <strong id="c2-counter" style="color:#6a3aaa;margin-left:4px">0/0</strong></span>
     </div>
   </div>
@@ -785,6 +835,17 @@
       <button class="button is-dark is-small" onclick="D[5].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[5].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-5" onclick="D[5].toggleAuto()">AUTO</button>
+      <div class="macro-dropdown-wrap">
+        <button class="macro-dropdown-btn" id="mdrop-btn-5" onclick="toggleMacroMenu(5)">⚡ MACRO ▾</button>
+        <div class="macro-dropdown-menu" id="mdrop-menu-5">
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(5,'nat');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(5,'loc');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
+          </div>
+        </div>
+      </div>
       <span class="tag" style="background:#141618;color:#3a4048;border:1px solid #2a2e34;font-size:9px">PISTE <strong id="pn-counter" style="color:#4a5260;margin-left:3px">0/0</strong></span>
     </div>
   </div>
@@ -838,6 +899,17 @@
       <button class="button is-dark is-small" onclick="D[2].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[2].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-2" onclick="D[2].toggleAuto()">AUTO</button>
+      <div class="macro-dropdown-wrap">
+        <button class="macro-dropdown-btn" id="mdrop-btn-2" onclick="toggleMacroMenu(2)">⚡ MACRO ▾</button>
+        <div class="macro-dropdown-menu" id="mdrop-menu-2">
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(2,'nat');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(2,'loc');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
+          </div>
+        </div>
+      </div>
       <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="ps-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
     </div>
   </div>
@@ -886,6 +958,17 @@
       <button class="button is-dark is-small" onclick="D[3].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[3].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-3" onclick="D[3].toggleAuto()">AUTO</button>
+      <div class="macro-dropdown-wrap">
+        <button class="macro-dropdown-btn" id="mdrop-btn-3" onclick="toggleMacroMenu(3)">⚡ MACRO ▾</button>
+        <div class="macro-dropdown-menu" id="mdrop-menu-3">
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(3,'nat');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(3,'loc');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
+          </div>
+        </div>
+      </div>
       <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="pd-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
     </div>
   </div>
@@ -934,6 +1017,17 @@
       <button class="button is-dark is-small" onclick="D[4].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[4].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-4" onclick="D[4].toggleAuto()">AUTO</button>
+      <div class="macro-dropdown-wrap">
+        <button class="macro-dropdown-btn" id="mdrop-btn-4" onclick="toggleMacroMenu(4)">⚡ MACRO ▾</button>
+        <div class="macro-dropdown-menu" id="mdrop-menu-4">
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(4,'nat');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(4,'loc');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
+          </div>
+        </div>
+      </div>
       <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="ph-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
     </div>
   </div>
@@ -2179,6 +2273,43 @@ function rdvCancel(idx){
   if(popup) popup.classList.remove('visible');
 }
 function rdvToggleTarget(){}
+
+// ══════════════════════════════════════
+// MENUS DÉROULANTS MACROS SUR DIFFUSEURS
+// ══════════════════════════════════════
+function toggleMacroMenu(idx){
+  const menu=document.getElementById('mdrop-menu-'+idx);
+  const btn=document.getElementById('mdrop-btn-'+idx);
+  if(!menu||!btn)return;
+  const isOpen=menu.classList.contains('open');
+  // Fermer tous les menus ouverts
+  document.querySelectorAll('.macro-dropdown-menu.open').forEach(m=>m.classList.remove('open'));
+  document.querySelectorAll('.macro-dropdown-btn.open').forEach(b=>b.classList.remove('open'));
+  // Ouvrir celui-ci si il était fermé
+  if(!isOpen){
+    menu.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+function flashMacroItem(el){
+  // Fermer le menu
+  const menu=el.closest('.macro-dropdown-menu');
+  const btn=menu?menu.previousElementSibling:null;
+  if(menu) menu.classList.remove('open');
+  if(btn)  btn.classList.remove('open');
+  // Flash vert
+  el.classList.add('flash');
+  setTimeout(()=>el.classList.remove('flash'),800);
+}
+
+// Fermer les menus au clic en dehors
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.macro-dropdown-wrap')){
+    document.querySelectorAll('.macro-dropdown-menu.open').forEach(m=>m.classList.remove('open'));
+    document.querySelectorAll('.macro-dropdown-btn.open').forEach(b=>b.classList.remove('open'));
+  }
+});
 
 // ══════════════════════════════════════
 // DRAG & DROP MACROS → PLAYLISTS
