@@ -547,7 +547,55 @@
   .macro-dropdown-item .mdrop-desc { font-size:8px; color:var(--txt-mute); margin-top:1px; }
   .macro-dropdown-item.flash { background:#1a2a00; color:var(--green); }
 
-  /* ── Cards PUB (gris neutre) ── */
+  /* ── Playlists ── */
+  .pl-card {
+    background:var(--s2); border:1px solid var(--border); border-radius:6px;
+    margin-bottom:1rem; overflow:hidden;
+  }
+  .pl-card-header {
+    display:flex; align-items:center; gap:10px; padding:.6rem 1rem;
+    background:var(--s3); border-bottom:1px solid var(--border); cursor:pointer;
+  }
+  .pl-card-header:hover { background:#0c1830; }
+  .pl-name { font-family:var(--display); font-size:14px; font-weight:700; color:var(--txt); letter-spacing:1px; flex:1; }
+  .pl-name-edit { background:transparent; border:none; border-bottom:1px solid var(--cyan); color:var(--txt);
+    font-family:var(--display); font-size:14px; font-weight:700; letter-spacing:1px; flex:1; outline:none; }
+  .pl-count { font-family:var(--mono); font-size:9px; color:var(--txt-mute); letter-spacing:1px; }
+  .pl-actions { display:flex; gap:6px; }
+  .pl-btn {
+    background:transparent; border:1px solid var(--border); color:var(--txt-mute);
+    font-family:var(--mono); font-size:9px; padding:2px 8px; border-radius:2px;
+    cursor:pointer; letter-spacing:1px; transition:all .12s; white-space:nowrap;
+  }
+  .pl-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+  .pl-btn.danger:hover { border-color:var(--red); color:var(--red); }
+  .pl-btn.send { border-color:var(--green); color:var(--green); }
+  .pl-btn.send:hover { background:#001a08; }
+  .pl-body { padding:.75rem 1rem; }
+  .pl-track-row {
+    display:flex; align-items:center; gap:8px; padding:4px 6px; border-radius:3px;
+    font-family:var(--mono); font-size:10px; color:var(--txt-dim);
+    border-bottom:1px solid #0d1428; cursor:default;
+  }
+  .pl-track-row:hover { background:#0d1428; }
+  .pl-track-row.missing { color:var(--red); opacity:.6; }
+  .pl-track-num { color:var(--txt-mute); min-width:22px; }
+  .pl-track-title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pl-track-dur { color:var(--txt-mute); min-width:50px; text-align:right; }
+  .pl-track-del { background:none; border:none; color:#3a4050; cursor:pointer; font-size:11px; padding:0 4px; }
+  .pl-track-del:hover { color:var(--red); }
+  .pl-drop-zone {
+    border:1px dashed var(--border); border-radius:4px; padding:10px;
+    text-align:center; font-family:var(--mono); font-size:9px; color:var(--txt-mute);
+    cursor:pointer; transition:all .15s; margin-top:8px; letter-spacing:1px;
+  }
+  .pl-drop-zone:hover, .pl-drop-zone.drag-over { border-color:var(--cyan); color:var(--cyan); background:#040810; }
+  .pl-send-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+  .pl-collapsed .pl-body { display:none; }
+  .pl-chevron { font-size:10px; color:var(--txt-mute); transition:transform .2s; }
+  .pl-collapsed .pl-chevron { transform:rotate(-90deg); }
+
+  /* ── Macros CSS (déjà existant, complété) ── */
   .card.is-pub-card { background:#181c20; border:1px solid #2a2e34; border-radius:8px; box-shadow:none; position:relative; }
   .card.is-pub-card .card-header { background:#1f2328; border-bottom:1px solid #2a2e34; box-shadow:none; border-radius:8px 8px 0 0; }
   .card.is-pub-card .card-header-title { color:#b0b8c0; font-family:var(--display); font-size:13px; letter-spacing:1px; padding:.5rem .75rem; }
@@ -638,6 +686,7 @@
   <button class="tab-btn active" onclick="switchTab('diffusion')">▶ Diffusion</button>
   <button class="tab-btn"        onclick="switchTab('rdv')">⏱ Rendez-vous</button>
   <button class="tab-btn"        onclick="switchTab('macros')">⚡ Macros</button>
+  <button class="tab-btn"        onclick="switchTab('playlist')">📋 Playlists</button>
 </div>
 
 <!-- Panneau Diffusion -->
@@ -1238,6 +1287,39 @@
   </div>
 </div>
 </div><!-- /tab-macros -->
+
+<!-- Panneau Playlists -->
+<div id="tab-playlist" class="tab-panel">
+<div class="rdv-section" style="min-height:80vh;padding-bottom:120px">
+  <div class="rdv-title">Playlists</div>
+  <p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:1.5rem;letter-spacing:1px;">
+    Crée et nomme des playlists. Elles sont sauvegardées dans le navigateur. Lors du rechargement, sélectionne les fichiers audio pour les restaurer.
+  </p>
+
+  <!-- Barre d'actions -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.2rem;flex-wrap:wrap">
+    <input id="pl-new-name" type="text" placeholder="Nom de la playlist…"
+      style="background:var(--s2);border:1px solid var(--border);color:var(--txt);font-family:var(--mono);font-size:12px;
+             padding:5px 10px;border-radius:3px;width:200px;outline:none;"
+      onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'"
+      onkeydown="if(event.key==='Enter')plCreate()">
+    <button onclick="plCreate()" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);
+      font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:2px;cursor:pointer;letter-spacing:1px;transition:all .15s"
+      onmouseover="this.style.background='#0a1c28'" onmouseout="this.style.background='transparent'">+ CRÉER</button>
+    <input id="pl-restore-input" type="file" multiple accept="audio/*" style="display:none"
+      onchange="plRestoreFiles(this.files)">
+    <button onclick="document.getElementById('pl-restore-input').click()" id="pl-restore-btn"
+      style="display:none;background:transparent;border:1px solid var(--yellow);color:var(--yellow);
+      font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:2px;cursor:pointer;letter-spacing:1px;transition:all .15s"
+      onmouseover="this.style.background='#1a1400'" onmouseout="this.style.background='transparent'">
+      ⚠ RESTAURER LES FICHIERS
+    </button>
+  </div>
+
+  <!-- Liste des playlists -->
+  <div id="pl-list"></div>
+</div>
+</div><!-- /tab-playlist -->
 
 <!-- VU MÈTRES STICKY : DIFF 1 + DIFF 2 — toujours visible -->
 <div class="vu-section">
@@ -2507,6 +2589,274 @@ function fireMacroTrack(macroKey){
 }
 
 setTimeout(bindMacroDropZones,500);
+
+// ══════════════════════════════════════════════════════════════
+// SYSTÈME DE PLAYLISTS PERSISTANTES
+// ══════════════════════════════════════════════════════════════
+// Structure sauvegardée dans localStorage :
+// PL_STORAGE_KEY → [ { id, name, tracks:[{title,dur,inCue,outCue,color,fileRef}] } ]
+// fileRef = null (fichier à restaurer) ou blob URL (session courante)
+
+const PL_STORAGE_KEY = 'radio_playlists_v1';
+const DIFF_LABELS_PL = ['DIFF 1','DIFF 2','PUB SAT','PUB DAB+','PUB Hz','NATIONAL'];
+
+let playlists = [];          // tableau en mémoire
+let plPendingRestore = null; // index playlist en attente de restauration
+
+// ── Charger depuis localStorage ──
+function plLoad(){
+  try{
+    const raw = localStorage.getItem(PL_STORAGE_KEY);
+    playlists = raw ? JSON.parse(raw) : [];
+  }catch(e){ playlists = []; }
+}
+
+// ── Sauvegarder ──
+function plSave(){
+  // Ne sauvegarder que les métadonnées (pas les blob URLs qui ne survivent pas)
+  const toSave = playlists.map(pl=>({
+    ...pl,
+    tracks: pl.tracks.map(t=>({ title:t.title, dur:t.dur||0, inCue:t.inCue||0, outCue:t.outCue||null, color:t.color||'#1a6b3a', fileRef:null }))
+  }));
+  localStorage.setItem(PL_STORAGE_KEY, JSON.stringify(toSave));
+}
+
+// ── Générer un ID unique ──
+function plGenId(){ return 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+// ── Créer une playlist ──
+function plCreate(){
+  const input = document.getElementById('pl-new-name');
+  const name = (input.value||'').trim() || 'Playlist ' + (playlists.length+1);
+  input.value = '';
+  playlists.push({ id:plGenId(), name, tracks:[], open:true });
+  plSave();
+  plRender();
+}
+
+// ── Supprimer une playlist ──
+function plDelete(id){
+  if(!confirm('Supprimer cette playlist ?')) return;
+  playlists = playlists.filter(p=>p.id!==id);
+  plSave(); plRender();
+}
+
+// ── Renommer ──
+function plRename(id, newName){
+  const pl = playlists.find(p=>p.id===id);
+  if(pl){ pl.name=newName.trim()||pl.name; plSave(); plRender(); }
+}
+
+// ── Toggle collapsed ──
+function plToggle(id){
+  const pl = playlists.find(p=>p.id===id);
+  if(pl){ pl.open=!pl.open; plRender(); }
+}
+
+// ── Supprimer une piste d'une playlist ──
+function plRemoveTrack(plId, ti){
+  const pl = playlists.find(p=>p.id===plId);
+  if(pl){ pl.tracks.splice(ti,1); plSave(); plRender(); }
+}
+
+// ── Monter / Descendre une piste ──
+function plMoveTrack(plId, ti, dir){
+  const pl = playlists.find(p=>p.id===plId);
+  if(!pl) return;
+  const ni = ti + dir;
+  if(ni<0||ni>=pl.tracks.length) return;
+  [pl.tracks[ti], pl.tracks[ni]] = [pl.tracks[ni], pl.tracks[ti]];
+  plSave(); plRender();
+}
+
+// ── Ajouter des fichiers à une playlist ──
+function plAddFiles(files, plId){
+  const pl = playlists.find(p=>p.id===plId);
+  if(!pl) return;
+  Array.from(files).filter(f=>f.type.startsWith('audio/')).forEach(f=>{
+    const blobUrl = URL.createObjectURL(f);
+    pl.tracks.push({
+      title: f.name.replace(/\.[^/.]+$/,''),
+      dur: 0,
+      inCue: 0, outCue: null,
+      color: COLORS[pl.tracks.length % COLORS.length],
+      fileRef: blobUrl,
+      _file: f   // référence temporaire pour durée
+    });
+    // Lire la durée
+    const a = new Audio(blobUrl);
+    a.addEventListener('loadedmetadata', ()=>{
+      const t = pl.tracks.find(tr=>tr.fileRef===blobUrl);
+      if(t){ t.dur=a.duration; plSave(); plRender(); }
+    });
+  });
+  plSave(); plRender();
+}
+
+// ── Envoyer une playlist dans un diffuseur ──
+function plSendToDiff(plId, diffIdx){
+  const pl = playlists.find(p=>p.id===plId);
+  if(!pl||!pl.tracks.length){ alert('Playlist vide.'); return; }
+  // Vérifier que tous les fichiers sont disponibles (fileRef non null)
+  const missing = pl.tracks.filter(t=>!t.fileRef);
+  if(missing.length){
+    alert(missing.length + ' fichier(s) non chargé(s). Clique sur "RESTAURER LES FICHIERS" pour les recharger.');
+    plPendingRestore = plId;
+    document.getElementById('pl-restore-btn').style.display='inline-block';
+    return;
+  }
+  // Injecter dans le diffuseur
+  const d = D[diffIdx];
+  const cfg = CONFIGS[diffIdx];
+  const newTracks = pl.tracks.map(t=>({
+    file: t.fileRef,
+    title: t.title,
+    color: t.color,
+    inCue: t.inCue||0,
+    outCue: t.outCue||null
+  }));
+  cfg.tracks = [...cfg.tracks, ...newTracks];
+  const total = cfg.tracks.length;
+  const fdzEl = document.getElementById(cfg.fdzCount);
+  if(fdzEl) fdzEl.textContent = total+' fichier'+(total>1?'s':'');
+  d.addTracks(newTracks);
+  // Feedback
+  alert('✓ ' + pl.tracks.length + ' pistes envoyées dans ' + DIFF_LABELS_PL[diffIdx]);
+}
+
+// ── Restaurer les fichiers après rechargement ──
+function plRestoreFiles(files){
+  const fileMap = {};
+  Array.from(files).forEach(f=>{ fileMap[f.name.replace(/\.[^/.]+$/,'')] = f; });
+  const target = plPendingRestore ? [playlists.find(p=>p.id===plPendingRestore)].filter(Boolean) : playlists;
+  let restored=0, missing=0;
+  target.forEach(pl=>{
+    pl.tracks.forEach(t=>{
+      if(t.fileRef) return; // déjà ok
+      const f = fileMap[t.title];
+      if(f){
+        t.fileRef = URL.createObjectURL(f);
+        const a = new Audio(t.fileRef);
+        a.addEventListener('loadedmetadata',()=>{ t.dur=a.duration; plSave(); plRender(); });
+        restored++;
+      } else { missing++; }
+    });
+  });
+  plPendingRestore = null;
+  document.getElementById('pl-restore-btn').style.display = 'none';
+  plSave(); plRender();
+  if(missing) alert(restored+' fichier(s) restauré(s), '+missing+' introuvable(s) (nom différent ?).');
+}
+
+// ── Vérifier si des fichiers manquent (au chargement) ──
+function plCheckMissing(){
+  const hasMissing = playlists.some(pl=>pl.tracks.some(t=>!t.fileRef));
+  document.getElementById('pl-restore-btn').style.display = hasMissing ? 'inline-block' : 'none';
+}
+
+// ── Rendu HTML ──
+function plRender(){
+  const container = document.getElementById('pl-list');
+  if(!container) return;
+  if(!playlists.length){
+    container.innerHTML = '<p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px">Aucune playlist. Crée-en une ci-dessus.</p>';
+    return;
+  }
+  container.innerHTML = playlists.map(pl=>{
+    const missingCount = pl.tracks.filter(t=>!t.fileRef).length;
+    const tracksHtml = pl.tracks.map((t,i)=>`
+      <div class="pl-track-row${t.fileRef?'':' missing'}">
+        <span class="pl-track-num">${i+1}</span>
+        <div class="color-bar" style="background:${t.color};width:3px;height:14px;border-radius:1px;flex-shrink:0"></div>
+        <span class="pl-track-title" title="${t.title}">${t.fileRef?'':' ⚠ '}${t.title}</span>
+        <span class="pl-track-dur">${t.dur?fmtFull(t.dur):'--:--'}</span>
+        <button class="pl-track-del" onclick="plMoveTrack('${pl.id}',${i},-1)" title="Monter">↑</button>
+        <button class="pl-track-del" onclick="plMoveTrack('${pl.id}',${i},+1)" title="Descendre">↓</button>
+        <button class="pl-track-del" onclick="plRemoveTrack('${pl.id}',${i})" title="Supprimer">✕</button>
+      </div>`).join('');
+
+    const sendBtns = DIFF_LABELS_PL.map((lbl,i)=>
+      `<button class="pl-btn send" onclick="plSendToDiff('${pl.id}',${i})">→ ${lbl}</button>`
+    ).join('');
+
+    const inputId = 'pl-file-input-'+pl.id;
+    const dropId  = 'pl-drop-'+pl.id;
+
+    return `<div class="pl-card${pl.open?'':' pl-collapsed'}" id="plcard-${pl.id}">
+  <div class="pl-card-header" onclick="plToggle('${pl.id}')">
+    <span class="pl-chevron">▾</span>
+    <span class="pl-name" ondblclick="event.stopPropagation();plStartRename('${pl.id}',this)" title="Double-clic pour renommer">${pl.name}</span>
+    <span class="pl-count">${pl.tracks.length} piste${pl.tracks.length!==1?'s':''} ${missingCount?'<span style="color:var(--red)">· '+missingCount+' manquant(s)</span>':''}</span>
+    <div class="pl-actions" onclick="event.stopPropagation()">
+      <button class="pl-btn" onclick="plExport('${pl.id}')">⬇ JSON</button>
+      <button class="pl-btn danger" onclick="plDelete('${pl.id}')">✕ SUPPR.</button>
+    </div>
+  </div>
+  <div class="pl-body">
+    ${pl.tracks.length ? tracksHtml : '<p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:4px 0">Aucune piste. Glisse des fichiers ci-dessous.</p>'}
+    <input type="file" id="${inputId}" multiple accept="audio/*" style="display:none"
+      onchange="plAddFiles(this.files,'${pl.id}')">
+    <div class="pl-drop-zone" id="${dropId}"
+      onclick="document.getElementById('${inputId}').click()"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="event.preventDefault();this.classList.remove('drag-over');plAddFiles(event.dataTransfer.files,'${pl.id}')">
+      ⊕ Ajouter des fichiers audio
+    </div>
+    <div class="pl-send-row">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;align-self:center">ENVOYER DANS →</span>
+      ${sendBtns}
+    </div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+// ── Renommer inline (double-clic) ──
+function plStartRename(id, el){
+  const oldName = el.textContent;
+  const inp = document.createElement('input');
+  inp.className = 'pl-name-edit';
+  inp.value = oldName;
+  el.replaceWith(inp);
+  inp.focus(); inp.select();
+  const done=()=>{ plRename(id, inp.value||oldName); };
+  inp.onblur = done;
+  inp.onkeydown = e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){inp.value=oldName;inp.blur();} };
+}
+
+// ── Export JSON ──
+function plExport(id){
+  const pl = playlists.find(p=>p.id===id);
+  if(!pl) return;
+  const data = { ...pl, tracks: pl.tracks.map(({title,dur,inCue,outCue,color})=>({title,dur,inCue,outCue,color})) };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = pl.name.replace(/[^a-z0-9]/gi,'_')+'.json';
+  a.click();
+}
+
+// ── Init ──
+function plInit(){
+  plLoad();
+  plCheckMissing();
+  plRender();
+}
+plInit();
+
+// Mettre à jour switchTab pour 'playlist'
+const _origSwitchTab = switchTab;
+switchTab = function(name){
+  _origSwitchTab(name);
+  if(name==='playlist') plRender();
+  // Corriger le bouton actif pour playlist
+  if(name==='playlist'){
+    document.querySelectorAll('.tab-btn').forEach(b=>{
+      if(b.textContent.toLowerCase().includes('playlist')) b.classList.add('active');
+    });
+  }
+};
 </script>
 </body>
 </html>
