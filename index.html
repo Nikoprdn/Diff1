@@ -540,6 +540,7 @@
     <div class="navbar-item">
       <div class="listen-mode-wrap">
         <span class="listen-mode-label">Écoute</span>
+        <button class="listen-btn"        id="listen-mix" onclick="setListenMode('mix')">MIX</button>
         <button class="listen-btn active" id="listen-sat" onclick="setListenMode('sat')">SAT</button>
         <button class="listen-btn"        id="listen-dab" onclick="setListenMode('dab')">DAB+</button>
         <button class="listen-btn"        id="listen-hz"  onclick="setListenMode('hz')">Hz</button>
@@ -705,6 +706,57 @@
 </div><!-- /grid DIFF 1+2 -->
 </div><!-- /column -->
 
+<!-- ══ NATIONAL ══ -->
+<div class="column is-full">
+<div class="card is-pub-card">
+  <div class="card-header" style="display:flex;align-items:stretch">
+    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #2a2e34">
+      <span class="tag diff-badge" style="background:#1c1c1c;color:#909090;border:1px solid #404040;letter-spacing:4px">NATIONAL</span>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #2a2e34;flex:1">
+      <p class="card-header-title" style="padding:0;font-size:13px;color:#7a8088">PUB NATIONAL</p>
+      <p style="font-family:var(--mono);font-size:9px;color:#3a4048">NAT_OUT</p>
+    </div>
+    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
+      <div class="timer-box"><span class="label-txt" style="color:#3a4048">Avancé</span><span class="val-txt" id="pn-avant" style="color:#5a6370">00:00:00</span></div>
+    </div>
+  </div>
+  <div class="notification is-onair" style="padding:.4rem .75rem">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="dot-live" style="background:#5a6370"></span>
+      <span class="onair-title" style="font-size:16px;letter-spacing:4px;color:#6a7280">NATIONAL</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="button is-success is-small is-outlined" style="border-color:#3a4a3a!important;color:#5a7a5a!important" onclick="D[5].togglePlay()">▶ PLAY</button>
+      <button class="button is-danger is-small is-outlined"  style="border-color:#4a3030!important;color:#7a5050!important" onclick="D[5].stopAll()">■ STOP</button>
+      <button class="button is-dark is-small" onclick="D[5].prevTrack()">|◀</button>
+      <button class="button is-dark is-small" onclick="D[5].nextTrack()">▶|</button>
+      <button class="button is-auto is-small" id="auto-btn-5" onclick="D[5].toggleAuto()">AUTO</button>
+      <span class="tag" style="background:#141618;color:#3a4048;border:1px solid #2a2e34;font-size:9px">PISTE <strong id="pn-counter" style="color:#4a5260;margin-left:3px">0/0</strong></span>
+    </div>
+  </div>
+  <progress class="progress is-elapsed" id="pn-progress" value="0" max="100"></progress>
+  <div class="file-drop-zone" id="fdz6" onclick="document.getElementById('fi6').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,5)" style="margin:6px 10px">
+    <input type="file" id="fi6" multiple accept="audio/*" onchange="handleFiles(this.files,5)">
+    <div class="fdz-row"><span class="fdz-icon" style="color:#4a5260">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz6-count">Aucun fichier</span></div>
+  </div>
+  <div class="card-content">
+    <table class="table is-radio is-fullwidth is-narrow">
+      <thead><tr>
+        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
+        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
+        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
+      </tr></thead>
+      <tbody id="pn-body"></tbody>
+    </table>
+  </div>
+  <div class="card-footer">
+    <span class="card-footer-item">Écoulé&nbsp;<strong id="pn-micros" style="color:#4a5260;font-family:var(--mono)">00:00</strong></span>
+    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="pn-total" style="color:#7a8088;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="pn-suffix" style="color:#6a7280;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
+  </div>
+</div>
+</div><!-- /NATIONAL -->
+
 <!-- ══ LIGNE 2 : PUB SAT + PUB DAB+ + PUB Hz ══ -->
 <div class="column is-full">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
@@ -861,6 +913,7 @@
 <span id="ps-avance" style="display:none"></span>
 <span id="pd-avance" style="display:none"></span>
 <span id="ph-avance" style="display:none"></span>
+<span id="pn-avance" style="display:none"></span>
 </div></section>
 
 <!-- VU MÈTRES -->
@@ -1217,7 +1270,8 @@ const CONFIGS=[
   {tracks:[],ids:{avant:'c2-avant',avance:'c2-avance',counter:'c2-counter',body:'c2-body',micros:'c2-micros',total:'c2-total',suffix:'c2-suffix',progress:'c2-progress'},fdzCount:'fdz2-count',autoBtn:'auto-btn-1'},
   {tracks:[],ids:{avant:'ps-avant',avance:'ps-avance',counter:'ps-counter',body:'ps-body',micros:'ps-micros',total:'ps-total',suffix:'ps-suffix',progress:'ps-progress'},fdzCount:'fdz3-count',autoBtn:'auto-btn-2'},
   {tracks:[],ids:{avant:'pd-avant',avance:'pd-avance',counter:'pd-counter',body:'pd-body',micros:'pd-micros',total:'pd-total',suffix:'pd-suffix',progress:'pd-progress'},fdzCount:'fdz4-count',autoBtn:'auto-btn-3'},
-  {tracks:[],ids:{avant:'ph-avant',avance:'ph-avance',counter:'ph-counter',body:'ph-body',micros:'ph-micros',total:'ph-total',suffix:'ph-suffix',progress:'ph-progress'},fdzCount:'fdz5-count',autoBtn:'auto-btn-4'}
+  {tracks:[],ids:{avant:'ph-avant',avance:'ph-avance',counter:'ph-counter',body:'ph-body',micros:'ph-micros',total:'ph-total',suffix:'ph-suffix',progress:'ph-progress'},fdzCount:'fdz5-count',autoBtn:'auto-btn-4'},
+  {tracks:[],ids:{avant:'pn-avant',avance:'pn-avant',counter:'pn-counter',body:'pn-body',micros:'pn-micros',total:'pn-total',suffix:'pn-suffix',progress:'pn-progress'},fdzCount:'fdz6-count',autoBtn:'auto-btn-5'}
 ];
 
 const fmt2=n=>String(n).padStart(2,'0');
@@ -1368,10 +1422,11 @@ class Diffuser{
       const inPct=(this._inOf(i)/dur*100).toFixed(1);
       // Clamp OUT à 98% max pour qu'elle soit toujours visible
       const outPct=Math.min(98,(this._outOf(i)/dur*100)).toFixed(1);
+      const delBtn=`<button onclick="event.stopPropagation();diffRemoveTrack(${this.idx},${i})" style="background:transparent;border:none;color:#3a4050;cursor:pointer;font-size:11px;padding:0 4px;line-height:1;transition:color .1s" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#3a4050'" title="Supprimer">✕</button>`;
       tr.innerHTML=`
         <td class="cell-num${isActive?' is-playing':''}">${isActive?'▶':(i+1)}</td>
         <td class="cell-time"><span>${hhmm}</span><span class="cell-sub">${sub}</span></td>
-        <td class="cell-title"><span class="cell-simple" title="${t.title}">${t.title}</span></td>
+        <td class="cell-title" style="display:flex;align-items:center;gap:4px">${delBtn}<span class="cell-simple" title="${t.title}">${t.title}</span></td>
         <td class="cell-wv">
           <div class="wv-outer">
             <div class="wv-wrap" id="${wvId}-wrap">
@@ -1565,6 +1620,32 @@ class Diffuser{
 
 const D=CONFIGS.map((cfg,i)=>new Diffuser(cfg,i));
 
+// Supprimer une piste d'un diffuseur
+function diffRemoveTrack(diffIdx, trackIdx){
+  const d=D[diffIdx];
+  if(!d||!d.tracks.length) return;
+  // Si la piste est en cours, stopper d'abord
+  if(d.ci===trackIdx && d.playing){ d.stopAll(); }
+  // Libérer l'URL objet
+  const t=d.tracks[trackIdx];
+  if(t && t.file && t.file.startsWith('blob:')) URL.revokeObjectURL(t.file);
+  // Retirer du tableau
+  d.tracks.splice(trackIdx, 1);
+  d.durs.splice(trackIdx, 1);
+  d.audios.splice(trackIdx, 1);
+  // Ajuster l'index courant
+  if(d.ci >= d.tracks.length) d.ci = Math.max(0, d.tracks.length-1);
+  // Mettre à jour le compte fichiers
+  const cfg=CONFIGS[diffIdx];
+  if(cfg){ cfg.tracks=d.tracks; }
+  const fdzId=cfg?cfg.fdzCount:null;
+  if(fdzId){
+    const n=d.tracks.length;
+    document.getElementById(fdzId).textContent=n?n+' fichier'+(n>1?'s':''):'Aucun fichier';
+  }
+  d.render();
+}
+
 // ── VU Mètre ──
 const NUM_BARS=24; let sharedCtx=null;
 
@@ -1629,58 +1710,53 @@ D[1].togglePlay=function(){
 let vuSat=null, vuDab=null, vuHz=null;
 const _t2=D[2].togglePlay.bind(D[2]);
 D[2].togglePlay=function(){
-  if(!vuSat){getCtx().resume();vuSat=wireVU(D[2].audios[D[2].ci]||new Audio(),'vu-sat-L','vu-sat-R');}
+  if(!vuSat){getCtx().resume();vuSat=wireVU(D[2].audios[D[2].ci]||new Audio(),'vu-sat-L','vu-sat-R');registerVUGain('sat',vuSat.gn);}
   getCtx().resume(); _t2();
 };
 const _t3=D[3].togglePlay.bind(D[3]);
 D[3].togglePlay=function(){
-  if(!vuDab){getCtx().resume();vuDab=wireVU(D[3].audios[D[3].ci]||new Audio(),'vu-dab-L','vu-dab-R');}
+  if(!vuDab){getCtx().resume();vuDab=wireVU(D[3].audios[D[3].ci]||new Audio(),'vu-dab-L','vu-dab-R');registerVUGain('dab',vuDab.gn);}
   getCtx().resume(); _t3();
 };
 const _t4=D[4].togglePlay.bind(D[4]);
 D[4].togglePlay=function(){
-  if(!vuHz){getCtx().resume();vuHz=wireVU(D[4].audios[D[4].ci]||new Audio(),'vu-hz-L','vu-hz-R');}
+  if(!vuHz){getCtx().resume();vuHz=wireVU(D[4].audios[D[4].ci]||new Audio(),'vu-hz-L','vu-hz-R');registerVUGain('hz',vuHz.gn);}
   getCtx().resume(); _t4();
 };
 
-// ── Mode écoute : SAT / DAB+ / Hz ──
-// Crée un nœud gain dédié pour la sortie moniteur (écoute opérateur)
-let listenCtx=null, listenGain=null, listenMode='sat';
-let listenSource=null; // source actuellement connectée à l'écoute
-const LISTEN_SOURCES={sat:null,dab:null,hz:null}; // rempli au wire
+// ── Mode écoute Solo/Mix : SAT / DAB+ / Hz / MIX ──
+// Solo : coupe le gain des autres VU sources (pas de reconnexion — agit sur les gainNodes VU)
+// MIX  : tous les gains au niveau normal
+let listenMode='sat';
 
-function getListenCtx(){
-  if(!listenCtx) listenCtx=new(window.AudioContext||window.webkitAudioContext)();
-  if(listenCtx.state==='suspended') listenCtx.resume();
-  return listenCtx;
-}
-
-function wireListenSource(key, audioEl){
-  // Crée une source d'écoute indépendante sur listenCtx
-  try{
-    const ctx=getListenCtx();
-    const src=ctx.createMediaElementSource(audioEl);
-    if(!listenGain){ listenGain=ctx.createGain(); listenGain.gain.value=0.7; listenGain.connect(ctx.destination); }
-    LISTEN_SOURCES[key]=src;
-    if(listenMode===key) src.connect(listenGain);
-  }catch(e){} // peut échouer si l'élément est déjà sourcé
-}
+// Gains des sources VU (on les ajuste pour le solo)
+// Clé → gainNode créé par wireVU pour chaque source
+const VU_GAINS={sat:null, dab:null, hz:null}; // remplis au premier PLAY des PUB
 
 function setListenMode(mode){
   listenMode=mode;
-  // Déconnecter tous
-  Object.entries(LISTEN_SOURCES).forEach(([k,src])=>{
-    if(src){try{src.disconnect(listenGain);}catch(e){}}
+  // Appliquer le solo / mix sur les gainNodes des PUB diffuseurs
+  const ctx=getCtx ? getCtx() : null;
+  const now=ctx?ctx.currentTime:0;
+  Object.entries(VU_GAINS).forEach(([key,gn])=>{
+    if(!gn) return;
+    const targetGain = (mode==='mix' || mode===key) ? 1.0 : 0.0;
+    gn.gain.setTargetAtTime(targetGain, now, 0.05);
   });
-  // Connecter le mode choisi
-  if(LISTEN_SOURCES[mode] && listenGain){
-    try{LISTEN_SOURCES[mode].connect(listenGain);}catch(e){}
-  }
   // UI
-  ['sat','dab','hz'].forEach(k=>{
+  ['mix','sat','dab','hz'].forEach(k=>{
     const btn=document.getElementById('listen-'+k);
     if(btn) btn.classList.toggle('active',k===mode);
   });
+}
+
+// Appelé lors du wiring VU des PUB pour enregistrer leur gainNode
+function registerVUGain(key, gainNode){
+  VU_GAINS[key]=gainNode;
+  // Appliquer le mode courant immédiatement
+  if(listenMode!=='mix' && listenMode!==key){
+    gainNode.gain.value=0;
+  }
 }
 
 // ── Initialiser les barres SAT/DAB+/Hz ──
@@ -1891,7 +1967,7 @@ function switchTab(name){
 // ── AUTO activé d'office sur les 3 PUB diffuseurs ──
 // Appelé après l'init des D[]
 function initPubAuto(){
-  [2,3,4].forEach(i=>{ if(D[i]&&!D[i].auto) D[i].toggleAuto(); });
+  [2,3,4,5].forEach(i=>{ if(D[i]&&!D[i].auto) D[i].toggleAuto(); });
 }
 initPubAuto();
 
