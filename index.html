@@ -1023,12 +1023,10 @@
 <!-- Panneau Diffusion -->
 <div id="tab-diffusion" class="tab-panel active">
 <section class="section is-console">
-<div class="columns is-console is-multiline" style="gap:1rem;flex-direction:column">
+<div style="display:flex;flex-direction:column;gap:1rem;">
 
-<!-- ══ LIGNE 1 : DIFF 1 + DIFF 2 côte à côte ══ -->
-<div class="column is-full">
+<!-- ══ LIGNE 1 : DIFF 1 + DIFF 2 ══ -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-
 <!-- ══ DIFF 1 ══ -->
 <div class="card is-dark-card">
   <div class="card-header" style="display:flex;align-items:stretch">
@@ -1199,10 +1197,10 @@
       <button class="rdv-popup-cancel" onclick="rdvCancel(1)">✕ ANNULER</button>
     </div>
   </div>
-</div>
-</div><!-- /grid DIFF 1+2 -->
-</div><!-- /column -->
 
+</div><!-- /DIFF 1+2 -->
+
+<!-- ══ NATIONAL (pleine largeur) ══ -->
 <!-- ══ NATIONAL ══ -->
 <div class="column is-full">
 <div class="card is-pub-card">
@@ -1272,8 +1270,7 @@
 </div>
 </div><!-- /NATIONAL -->
 
-<!-- ══ LIGNE 2 : PUB SAT + PUB DAB+ + PUB Hz ══ -->
-<div class="column is-full">
+<!-- ══ LIGNE 3 : PUB SAT + PUB DAB+ + PUB Hz ══ -->
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
 
 <!-- PUB SAT -->
@@ -1475,15 +1472,9 @@
 </div>
 
 </div><!-- /grid PUB -->
-</div><!-- /column PUB -->
 
-<!-- Éléments cachés pour la compatibilité JS -->
-<span id="ps-avance" style="display:none"></span>
-<span id="pd-avance" style="display:none"></span>
-<span id="ph-avance" style="display:none"></span>
-<span id="pn-avance" style="display:none"></span>
-</div></section>
-
+</div><!-- /flex layout -->
+</section>
 </div><!-- /tab-diffusion -->
 
 <div id="tab-rdv" class="tab-panel">
