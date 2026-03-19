@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radio Console</title>
+<!-- EmailJS SDK — envoi d'alertes silence par email -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -470,8 +472,12 @@
 <section class="section is-console">
 <div class="columns is-console is-multiline" style="gap:1rem;flex-direction:column">
 
+<!-- ══ LIGNE 1 : DIFF 1 + DIFF 2 côte à côte ══ -->
+<div class="column is-full">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
 <!-- ══ DIFF 1 ══ -->
-<div class="column is-full"><div class="card is-dark-card">
+<div class="card is-dark-card">
   <div class="card-header" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
       <span class="tag diff-badge" style="background:#1a2a00;color:#f5c400;border:1px solid #3a4a00">DIFF 1</span>
@@ -537,10 +543,10 @@
       <button class="rdv-popup-cancel" onclick="rdvCancel(0)">✕ ANNULER</button>
     </div>
   </div>
-</div></div><div class="sep-line"></div><span class="sep-label">— diffuseur —</span><div class="sep-line"></div></div>
+</div>
 
 <!-- ══ DIFF 2 ══ -->
-<div class="column is-full"><div class="card is-dark-card">
+<div class="card is-dark-card">
   <div class="card-header" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
       <span class="tag diff-badge" style="background:#160d2a;color:#9b5de5;border:1px solid #6a3aaa">DIFF 2</span>
@@ -606,8 +612,166 @@
       <button class="rdv-popup-cancel" onclick="rdvCancel(1)">✕ ANNULER</button>
     </div>
   </div>
-</div></div>
+</div>
+</div><!-- /grid DIFF 1+2 -->
+</div><!-- /column -->
 
+<!-- ══ LIGNE 2 : PUB SAT + PUB DAB+ + PUB Hz ══ -->
+<div class="column is-full">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+
+<!-- PUB SAT -->
+<div class="card is-dark-card">
+  <div class="card-header" style="display:flex;align-items:stretch">
+    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
+      <span class="tag diff-badge" style="background:#1a2a00;color:#f5c400;border:1px solid #3a4a00">PUB SAT</span>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #1e3060;flex:1">
+      <p class="card-header-title" style="padding:0;font-size:13px">SATELLITE</p>
+      <p style="font-family:var(--mono);font-size:9px;color:#3a5070;padding-left:0">PUB_SAT_OUT</p>
+    </div>
+    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
+      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="ps-avant" style="color:#f5c400">00:00:00</span></div>
+    </div>
+  </div>
+  <div class="notification is-onair" style="padding:.4rem .75rem">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="dot-live"></span><span class="onair-title" style="font-size:16px;letter-spacing:2px">PUB SAT</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="button is-success is-small is-outlined" onclick="D[2].togglePlay()">▶ PLAY</button>
+      <button class="button is-danger is-small is-outlined"  onclick="D[2].stopAll()">■ STOP</button>
+      <button class="button is-dark is-small" onclick="D[2].prevTrack()">|◀</button>
+      <button class="button is-dark is-small" onclick="D[2].nextTrack()">▶|</button>
+      <button class="button is-auto is-small" id="auto-btn-2" onclick="D[2].toggleAuto()">AUTO</button>
+      <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="ps-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
+    </div>
+  </div>
+  <progress class="progress is-elapsed" id="ps-progress" value="0" max="100"></progress>
+  <div class="file-drop-zone" id="fdz3" onclick="document.getElementById('fi3').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,2)">
+    <input type="file" id="fi3" multiple accept="audio/*" onchange="handleFiles(this.files,2)">
+    <div class="fdz-row"><span class="fdz-icon">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz3-count">Aucun fichier</span></div>
+  </div>
+  <div class="card-content">
+    <table class="table is-radio is-fullwidth is-narrow">
+      <thead><tr>
+        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
+        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
+        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
+      </tr></thead>
+      <tbody id="ps-body"></tbody>
+    </table>
+  </div>
+  <div class="card-footer">
+    <span class="card-footer-item">Écoulé&nbsp;<strong id="ps-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
+    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="ps-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="ps-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
+  </div>
+</div>
+
+<!-- PUB DAB+ -->
+<div class="card is-dark-card">
+  <div class="card-header" style="display:flex;align-items:stretch">
+    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
+      <span class="tag diff-badge" style="background:#001a2a;color:#00d4f0;border:1px solid #003a5a">PUB DAB+</span>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #1e3060;flex:1">
+      <p class="card-header-title" style="padding:0;font-size:13px">DAB+</p>
+      <p style="font-family:var(--mono);font-size:9px;color:#3a5070">PUB_DAB_OUT</p>
+    </div>
+    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
+      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="pd-avant" style="color:#f5c400">00:00:00</span></div>
+    </div>
+  </div>
+  <div class="notification is-onair" style="padding:.4rem .75rem">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="dot-live"></span><span class="onair-title" style="font-size:16px;letter-spacing:2px">PUB DAB+</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="button is-success is-small is-outlined" onclick="D[3].togglePlay()">▶ PLAY</button>
+      <button class="button is-danger is-small is-outlined"  onclick="D[3].stopAll()">■ STOP</button>
+      <button class="button is-dark is-small" onclick="D[3].prevTrack()">|◀</button>
+      <button class="button is-dark is-small" onclick="D[3].nextTrack()">▶|</button>
+      <button class="button is-auto is-small" id="auto-btn-3" onclick="D[3].toggleAuto()">AUTO</button>
+      <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="pd-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
+    </div>
+  </div>
+  <progress class="progress is-elapsed" id="pd-progress" value="0" max="100"></progress>
+  <div class="file-drop-zone" id="fdz4" onclick="document.getElementById('fi4').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,3)">
+    <input type="file" id="fi4" multiple accept="audio/*" onchange="handleFiles(this.files,3)">
+    <div class="fdz-row"><span class="fdz-icon">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz4-count">Aucun fichier</span></div>
+  </div>
+  <div class="card-content">
+    <table class="table is-radio is-fullwidth is-narrow">
+      <thead><tr>
+        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
+        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
+        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
+      </tr></thead>
+      <tbody id="pd-body"></tbody>
+    </table>
+  </div>
+  <div class="card-footer">
+    <span class="card-footer-item">Écoulé&nbsp;<strong id="pd-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
+    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="pd-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="pd-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
+  </div>
+</div>
+
+<!-- PUB Hz -->
+<div class="card is-dark-card">
+  <div class="card-header" style="display:flex;align-items:stretch">
+    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
+      <span class="tag diff-badge" style="background:#160d2a;color:#9b5de5;border:1px solid #6a3aaa">PUB Hz</span>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #1e3060;flex:1">
+      <p class="card-header-title" style="padding:0;font-size:13px">Hz FM</p>
+      <p style="font-family:var(--mono);font-size:9px;color:#3a5070">PUB_HZ_OUT</p>
+    </div>
+    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
+      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="ph-avant" style="color:#f5c400">00:00:00</span></div>
+    </div>
+  </div>
+  <div class="notification is-onair" style="padding:.4rem .75rem">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="dot-live"></span><span class="onair-title" style="font-size:16px;letter-spacing:2px">PUB Hz</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="button is-success is-small is-outlined" onclick="D[4].togglePlay()">▶ PLAY</button>
+      <button class="button is-danger is-small is-outlined"  onclick="D[4].stopAll()">■ STOP</button>
+      <button class="button is-dark is-small" onclick="D[4].prevTrack()">|◀</button>
+      <button class="button is-dark is-small" onclick="D[4].nextTrack()">▶|</button>
+      <button class="button is-auto is-small" id="auto-btn-4" onclick="D[4].toggleAuto()">AUTO</button>
+      <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="ph-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
+    </div>
+  </div>
+  <progress class="progress is-elapsed" id="ph-progress" value="0" max="100"></progress>
+  <div class="file-drop-zone" id="fdz5" onclick="document.getElementById('fi5').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,4)">
+    <input type="file" id="fi5" multiple accept="audio/*" onchange="handleFiles(this.files,4)">
+    <div class="fdz-row"><span class="fdz-icon">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz5-count">Aucun fichier</span></div>
+  </div>
+  <div class="card-content">
+    <table class="table is-radio is-fullwidth is-narrow">
+      <thead><tr>
+        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
+        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
+        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
+      </tr></thead>
+      <tbody id="ph-body"></tbody>
+    </table>
+  </div>
+  <div class="card-footer">
+    <span class="card-footer-item">Écoulé&nbsp;<strong id="ph-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
+    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="ph-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="ph-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
+  </div>
+</div>
+
+</div><!-- /grid PUB -->
+</div><!-- /column PUB -->
+
+
+<!-- Éléments cachés pour la compatibilité JS des PUB diffuseurs -->
+<span id="ps-avance" style="display:none"></span>
+<span id="pd-avance" style="display:none"></span>
+<span id="ph-avance" style="display:none"></span>
 </div></section>
 
 <!-- VU MÈTRES -->
@@ -815,7 +979,10 @@
 const COLORS=['#1a6b3a','#1a3a6e','#5b21b6','#6b3a1a','#1a5a6b','#3a1a6b','#6b5a1a','#1a6b5a'];
 const CONFIGS=[
   {tracks:[],ids:{avant:'c1-avant',avance:'c1-avance',counter:'c1-counter',body:'c1-body',micros:'c1-micros',total:'c1-total',suffix:'c1-suffix',progress:'c1-progress'},fdzCount:'fdz1-count',autoBtn:'auto-btn-0'},
-  {tracks:[],ids:{avant:'c2-avant',avance:'c2-avance',counter:'c2-counter',body:'c2-body',micros:'c2-micros',total:'c2-total',suffix:'c2-suffix',progress:'c2-progress'},fdzCount:'fdz2-count',autoBtn:'auto-btn-1'}
+  {tracks:[],ids:{avant:'c2-avant',avance:'c2-avance',counter:'c2-counter',body:'c2-body',micros:'c2-micros',total:'c2-total',suffix:'c2-suffix',progress:'c2-progress'},fdzCount:'fdz2-count',autoBtn:'auto-btn-1'},
+  {tracks:[],ids:{avant:'ps-avant',avance:'ps-avance',counter:'ps-counter',body:'ps-body',micros:'ps-micros',total:'ps-total',suffix:'ps-suffix',progress:'ps-progress'},fdzCount:'fdz3-count',autoBtn:'auto-btn-2'},
+  {tracks:[],ids:{avant:'pd-avant',avance:'pd-avance',counter:'pd-counter',body:'pd-body',micros:'pd-micros',total:'pd-total',suffix:'pd-suffix',progress:'pd-progress'},fdzCount:'fdz4-count',autoBtn:'auto-btn-3'},
+  {tracks:[],ids:{avant:'ph-avant',avance:'ph-avance',counter:'ph-counter',body:'ph-body',micros:'ph-micros',total:'ph-total',suffix:'ph-suffix',progress:'ph-progress'},fdzCount:'fdz5-count',autoBtn:'auto-btn-4'}
 ];
 
 const fmt2=n=>String(n).padStart(2,'0');
@@ -1249,14 +1416,58 @@ function paintMix(id, sources){
   return db;
 }
 
-// ── Détection silence + BIP d'alerte (5 secondes) ──
+// ── Détection silence + BIP + EMAIL d'alerte ──
 // Le bip sort sur un AudioContext dédié, totalement hors de la chaîne VU/diffusion
 const SILENCE_THRESH_DB=-55, SILENCE_DELAY_MS=5000;
+
+// Noms lisibles par flux (pour le mail)
+const FLUX_NAMES={sat:'SATELLITE',dab:'DAB+',hz:'Hz FM'};
+
 const silenceState={
-  sat:{since:null,alerting:false,bipTimer:null},
-  dab:{since:null,alerting:false,bipTimer:null},
-  hz: {since:null,alerting:false,bipTimer:null}
+  sat:{since:null,alerting:false,bipTimer:null,alertTime:null},
+  dab:{since:null,alerting:false,bipTimer:null,alertTime:null},
+  hz: {since:null,alerting:false,bipTimer:null,alertTime:null}
 };
+
+// ─────────────────────────────────────────────
+// CONFIGURATION EMAILJS
+// 1. Créer un compte gratuit sur https://www.emailjs.com
+// 2. Créer un Service (Gmail, SMTP…) → copier le Service ID
+// 3. Créer un Template avec les variables :
+//      {{flux_name}}  {{alert_time}}  {{return_time}}  {{alert_type}}
+// 4. Récupérer la Public Key dans Account > API Keys
+// Remplacer les 3 valeurs ci-dessous :
+// ─────────────────────────────────────────────
+const EMAILJS_CONFIG={
+  publicKey:  'VOTRE_PUBLIC_KEY',   // ← à remplacer
+  serviceId:  'VOTRE_SERVICE_ID',   // ← à remplacer
+  templateId: 'VOTRE_TEMPLATE_ID',  // ← à remplacer
+  toEmail:    'nicolas7lejeune@gmail.com'
+};
+let _emailjsReady=false;
+function initEmailJS(){
+  if(EMAILJS_CONFIG.publicKey==='VOTRE_PUBLIC_KEY') return; // pas encore configuré
+  try{
+    emailjs.init({publicKey:EMAILJS_CONFIG.publicKey});
+    _emailjsReady=true;
+    console.log('[EmailJS] Initialisé');
+  }catch(e){ console.warn('[EmailJS] Init error:',e); }
+}
+initEmailJS();
+
+function sendSilenceEmail(fluxKey, type, timeStr){
+  if(!_emailjsReady) return;
+  const params={
+    to_email:    EMAILJS_CONFIG.toEmail,
+    flux_name:   FLUX_NAMES[fluxKey]||fluxKey.toUpperCase(),
+    alert_type:  type==='start'?'ABSENCE DE MODULATION DÉTECTÉE':'RETOUR À LA NORMALE',
+    alert_time:  type==='start'?timeStr:'—',
+    return_time: type==='end'  ?timeStr:'—',
+  };
+  emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, params)
+    .then(()=>console.log(`[EmailJS] Mail envoyé → ${params.flux_name} ${params.alert_type}`))
+    .catch(e=>console.warn('[EmailJS] Erreur envoi:',e));
+}
 
 // Contexte audio indépendant uniquement pour les bips
 let _bipCtx=null;
@@ -1267,7 +1478,7 @@ function getBipCtx(){
   return _bipCtx;
 }
 
-// Émet un bip double (1kHz 80ms + 100ms silence + 1kHz 80ms) sur le contexte dédié
+// Émet un bip double (1kHz 80ms + 100ms silence + 1kHz 80ms)
 function playBip(){
   try{
     const ctx=getBipCtx();
@@ -1278,7 +1489,6 @@ function playBip(){
       const osc=ctx.createOscillator();
       osc.type='sine';
       osc.frequency.value=1000;
-      // Enveloppe rapide pour éviter le "click"
       const env=ctx.createGain();
       env.gain.setValueAtTime(0,ctx.currentTime+start);
       env.gain.linearRampToValueAtTime(1,ctx.currentTime+start+0.005);
@@ -1302,20 +1512,27 @@ function checkSilence(key,db){
     if(s.since===null) s.since=now;
     if((now-s.since)>=SILENCE_DELAY_MS&&!s.alerting){
       s.alerting=true;
+      s.alertTime=new Date();
+      const timeStr=s.alertTime.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
       if(wrap) wrap.classList.add('silence-warn');
       if(badge)badge.classList.add('active');
-      // Premier bip immédiat, puis répétition toutes les 8 secondes
+      // Bip immédiat + répétition toutes les 8s
       playBip();
-      s.bipTimer=setInterval(playBip, 8000);
+      s.bipTimer=setInterval(playBip,8000);
+      // Mail d'alerte début
+      sendSilenceEmail(key,'start',timeStr);
     }
   }else{
-    // Son revenu → tout réinitialiser
     s.since=null;
     if(s.alerting){
       s.alerting=false;
-      if(s.bipTimer){ clearInterval(s.bipTimer); s.bipTimer=null; }
+      const returnTime=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      const alertTimeStr=s.alertTime?s.alertTime.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
+      if(s.bipTimer){clearInterval(s.bipTimer);s.bipTimer=null;}
       if(wrap) wrap.classList.remove('silence-warn');
       if(badge)badge.classList.remove('active');
+      // Mail retour à la normale
+      sendSilenceEmail(key,'end',returnTime);
     }
   }
 }
