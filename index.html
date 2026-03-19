@@ -982,6 +982,37 @@
 
   /* Cards avec position relative pour popup */
   .card.is-dark-card { position: relative; }
+
+  /* ── Journal de modulation ── */
+  .mod-journal{
+    background:#04060e;
+    border-top:1px solid #1a2840;
+    padding:.5rem 1rem;
+    max-height:120px;
+    overflow-y:auto;
+    scroll-behavior:smooth;
+  }
+  .mod-journal::-webkit-scrollbar{width:4px;}
+  .mod-journal::-webkit-scrollbar-track{background:#04060e;}
+  .mod-journal::-webkit-scrollbar-thumb{background:#1e3060;border-radius:2px;}
+  .mod-journal-empty{
+    font-family:var(--mono);font-size:9px;color:#2a3a50;
+    letter-spacing:2px;padding:4px 0;
+  }
+  .mod-journal-line{
+    display:flex;align-items:center;gap:8px;
+    padding:2px 0;border-bottom:1px solid #0a1020;
+    font-family:var(--mono);font-size:10px;letter-spacing:.5px;
+  }
+  .mod-journal-line:last-child{border-bottom:none;}
+  .mod-journal-dot{
+    width:7px;height:7px;border-radius:50%;flex-shrink:0;
+  }
+  .mod-journal-line.absence .mod-journal-dot{background:#e03020;box-shadow:0 0 4px rgba(220,30,20,.6);}
+  .mod-journal-line.reprise  .mod-journal-dot{background:#00d96a;box-shadow:0 0 4px rgba(0,217,106,.6);}
+  .mod-journal-line.absence .mod-journal-txt{color:#ff6060;}
+  .mod-journal-line.reprise  .mod-journal-txt{color:#00d96a;}
+  .mod-journal-line .mod-journal-time{color:#3a5070;font-size:9px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -2117,6 +2148,12 @@
     <div id="vu2-L"></div><div id="vu2-R"></div><div id="vu2-db">—∞</div>
   </div>
 
+  <!-- ── Journal de modulation ── -->
+  <div style="height:1px;background:#0e1828;margin:.5rem 0"></div>
+  <div class="mod-journal" id="mod-journal">
+    <div class="mod-journal-empty" id="mod-journal-empty">— Aucun événement de modulation —</div>
+  </div>
+
 </div>
 
 <script>
@@ -3117,6 +3154,30 @@ function playBip(){
   }catch(e){console.warn('Bip error:',e);}
 }
 
+// ── Journal de modulation ──
+const EMETTEUR_NAMES={sat:'SATELLITE',dab:'DAB+',hz:'Hz FM'};
+function addJournalLine(type, key, timeStr){
+  const journal=document.getElementById('mod-journal');
+  if(!journal) return;
+  // Supprimer le message "aucun événement"
+  const empty=document.getElementById('mod-journal-empty');
+  if(empty) empty.remove();
+  // Créer la ligne
+  const line=document.createElement('div');
+  line.className='mod-journal-line '+(type==='absence'?'absence':'reprise');
+  const name=EMETTEUR_NAMES[key]||key.toUpperCase();
+  const msg=type==='absence'
+    ? `Absence de modulation émetteur ${name} à ${timeStr}`
+    : `Reprise de modulation émetteur ${name} à ${timeStr}`;
+  line.innerHTML=`
+    <div class="mod-journal-dot"></div>
+    <span class="mod-journal-time">${timeStr}</span>
+    <span class="mod-journal-txt">${msg}</span>`;
+  journal.appendChild(line);
+  // Scroll auto vers le bas
+  journal.scrollTop=journal.scrollHeight;
+}
+
 function checkSilence(key,db){
   const s=silenceState[key];
   const now=Date.now();
@@ -3136,6 +3197,8 @@ function checkSilence(key,db){
       if(navDot) navDot.classList.add('active');
       const listenBtn=document.getElementById('listen-'+key);
       if(listenBtn) listenBtn.classList.add('silence-alarm');
+      // Journal
+      addJournalLine('absence', key, timeStr);
       // Bip immédiat + répétition toutes les 8s
       playBip();
       s.bipTimer=setInterval(playBip,8000);
@@ -3155,6 +3218,8 @@ function checkSilence(key,db){
       if(navDot) navDot.classList.remove('active');
       const listenBtn=document.getElementById('listen-'+key);
       if(listenBtn) listenBtn.classList.remove('silence-alarm');
+      // Journal
+      addJournalLine('reprise', key, returnTime);
       // Mail retour à la normale
       sendSilenceEmail(key,'end',returnTime);
     }
