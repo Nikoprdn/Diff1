@@ -703,6 +703,7 @@
   <button class="tab-btn"        onclick="switchTab('rdv')">⏱ Rendez-vous</button>
   <button class="tab-btn"        onclick="switchTab('macros')">⚡ Macros</button>
   <button class="tab-btn"        onclick="switchTab('playlist')">📋 Playlists</button>
+  <button class="tab-btn"        onclick="switchTab('test')" style="color:#007a8a">🔬 TEST</button>
 </div>
 
 <!-- Panneau Diffusion -->
@@ -1381,6 +1382,104 @@
 </div>
 </div><!-- /tab-playlist -->
 
+<!-- Panneau TEST -->
+<div id="tab-test" class="tab-panel">
+<section class="section is-console" style="max-width:800px">
+
+<!-- ══ DIFFUSEUR TEST ══ -->
+<div class="card is-dark-card">
+  <div class="card-header" style="display:flex;align-items:stretch">
+    <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
+      <span class="tag diff-badge" style="background:#001a1a;color:#00e5ff;border:1px solid #007a8a;letter-spacing:3px">TEST</span>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
+      <p style="font-family:var(--mono);font-size:9px;color:#3a5070">DIFFUSEUR_TEST</p>
+    </div>
+    <div class="timer-group">
+      <div class="timer-box"><span class="label-txt">Avant fenêtre</span><span class="val-txt" id="tx-avant" style="color:#00d96a">00:00:00</span></div>
+      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="tx-avance" style="color:#f5c400">00:00:00</span></div>
+    </div>
+  </div>
+  <div class="notification is-onair">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="dot-live"></span>
+      <span class="onair-title" style="color:#00e5ff">DIFF TEST</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="button is-success is-small is-outlined" onclick="D[6].togglePlay()">▶ PLAY</button>
+      <button class="button is-danger is-small is-outlined"  onclick="D[6].stopAll()">■ STOP</button>
+      <button class="button is-auto is-small" id="auto-btn-6" onclick="D[6].toggleAuto()">AUTO</button>
+      <div class="macro-dropdown-wrap">
+        <button class="macro-dropdown-btn" id="mdrop-btn-6" onclick="toggleMacroMenu(6)">⚡ MACRO ▾</button>
+        <div class="macro-dropdown-menu" id="mdrop-menu-6">
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'nat');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'loc');flashMacroItem(this)">
+            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'raccro');flashMacroItem(this)">
+            <div><div class="mdrop-badge">RACCRO</div><div class="mdrop-desc">Stoppe ce diffuseur</div></div>
+          </div>
+          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'stop3');flashMacroItem(this)" style="border-top:1px solid #3a1010">
+            <div><div class="mdrop-badge" style="color:#e03020;border-color:#e03020">STOP −3s</div><div class="mdrop-desc">Arrêt avec délai 3s</div></div>
+          </div>
+        </div>
+      </div>
+      <span class="tag" style="background:#001a1a;color:#007a8a;border:1px solid #003a40">PISTE <strong id="tx-counter" style="color:#00a0b0;margin-left:4px">0/0</strong></span>
+    </div>
+  </div>
+  <progress class="progress is-elapsed" id="tx-progress" value="0" max="100"></progress>
+  <div class="file-drop-zone" id="fdz7" onclick="document.getElementById('fi7').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,6)">
+    <input type="file" id="fi7" multiple accept="audio/*" onchange="handleFiles(this.files,6)">
+    <div class="fdz-row">
+      <span class="fdz-icon">⊕</span>
+      <span class="fdz-text">Glisser des fichiers audio · ou cliquer</span>
+      <span class="fdz-add-badge">+ AJOUTER</span>
+      <span class="fdz-count" id="fdz7-count">Aucun fichier</span>
+    </div>
+  </div>
+  <div class="card-content">
+    <table class="table is-radio is-fullwidth is-narrow">
+      <thead><tr>
+        <th style="width:36px">#</th>
+        <th style="width:80px">Horaire</th>
+        <th style="width:140px">Titre</th>
+        <th>Waveform · IN / OUT</th>
+        <th style="width:64px;text-align:right">Durée</th>
+        <th style="width:84px;text-align:right;padding-right:10px">Décompte</th>
+        <th style="width:5px"></th>
+      </tr></thead>
+      <tbody id="tx-body"></tbody>
+    </table>
+  </div>
+  <div class="card-footer">
+    <span class="card-footer-item">Durée écoulée&nbsp;<strong id="tx-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
+    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="tx-total" style="color:#ddeeff;font-family:var(--mono);font-size:18px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="tx-suffix" style="color:#00e5ff;font-family:var(--display);font-size:16px;font-weight:700">A</span></span>
+  </div>
+  <div class="vu-strip" id="vu-strip-tx"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
+  <!-- Popup rendez-vous TEST -->
+  <div class="rdv-popup" id="rdv-popup-6">
+    <div class="rdv-popup-inner">
+      <div class="rdv-popup-label">Rendez-vous · TEST</div>
+      <div class="rdv-popup-target" id="rdv-popup-target-6">00:00:00</div>
+      <div class="rdv-popup-win" id="rdv-popup-win-6">fenêtre ± 0 min</div>
+      <div class="rdv-popup-countdown" id="rdv-popup-cd-6" style="color:#f5c400">--:--</div>
+      <div class="rdv-popup-bar-wrap"><div class="rdv-popup-bar" id="rdv-popup-bar-6" style="width:100%"></div></div>
+      <button class="rdv-popup-cancel" onclick="rdvCancel(6)">✕ ANNULER</button>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:1rem;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;border:1px dashed #1e3060;padding:.75rem 1rem;border-radius:4px">
+  <strong style="color:#00e5ff">MODE TEST</strong> · Ce diffuseur est indépendant des 3 départs de diffusion.
+  Il partage toute la logique (playlist, macros, waveform, IN/OUT, auto-suppression après lecture).
+  Les modifications validées ici seront appliquées à tous les diffuseurs.
+</div>
+
+</section>
+</div><!-- /tab-test -->
+
 <!-- VU MÈTRES STICKY : DIFF 1 + DIFF 2 — toujours visible -->
 <div class="vu-section">
   <div class="vu-row-title">Diffuseurs</div>
@@ -1498,7 +1597,9 @@ const CONFIGS=[
   {tracks:[],ids:{avant:'ps-avant',avance:'ps-avance',counter:'ps-counter',body:'ps-body',micros:'ps-micros',total:'ps-total',suffix:'ps-suffix',progress:'ps-progress'},fdzCount:'fdz3-count',autoBtn:'auto-btn-2'},
   {tracks:[],ids:{avant:'pd-avant',avance:'pd-avance',counter:'pd-counter',body:'pd-body',micros:'pd-micros',total:'pd-total',suffix:'pd-suffix',progress:'pd-progress'},fdzCount:'fdz4-count',autoBtn:'auto-btn-3'},
   {tracks:[],ids:{avant:'ph-avant',avance:'ph-avance',counter:'ph-counter',body:'ph-body',micros:'ph-micros',total:'ph-total',suffix:'ph-suffix',progress:'ph-progress'},fdzCount:'fdz5-count',autoBtn:'auto-btn-4'},
-  {tracks:[],ids:{avant:'pn-avant',avance:'pn-avant',counter:'pn-counter',body:'pn-body',micros:'pn-micros',total:'pn-total',suffix:'pn-suffix',progress:'pn-progress'},fdzCount:'fdz6-count',autoBtn:'auto-btn-5'}
+  {tracks:[],ids:{avant:'pn-avant',avance:'pn-avant',counter:'pn-counter',body:'pn-body',micros:'pn-micros',total:'pn-total',suffix:'pn-suffix',progress:'pn-progress'},fdzCount:'fdz6-count',autoBtn:'auto-btn-5'},
+  // ── DIFFUSEUR TEST (index 6) ──
+  {tracks:[],ids:{avant:'tx-avant',avance:'tx-avance',counter:'tx-counter',body:'tx-body',micros:'tx-micros',total:'tx-total',suffix:'tx-suffix',progress:'tx-progress'},fdzCount:'fdz7-count',autoBtn:'auto-btn-6'}
 ];
 
 const fmt2=n=>String(n).padStart(2,'0');
@@ -2404,7 +2505,8 @@ function switchTab(name){
     const txt=b.textContent.toLowerCase();
     const match=(name==='rdv'&&txt.includes('rendez'))||
                 (name==='diffusion'&&txt.includes('diffusion'))||
-                (name==='macros'&&txt.includes('macro'));
+                (name==='macros'&&txt.includes('macro'))||
+                (name==='test'&&txt.includes('test'));
     if(match) b.classList.add('active');
   });
 }
@@ -2809,12 +2911,14 @@ function stripLoop(){
   if(!STRIP_ANALYSERS.sat && vuSat)    STRIP_ANALYSERS.sat = vuSat.aL;
   if(!STRIP_ANALYSERS.dab && vuDab)    STRIP_ANALYSERS.dab = vuDab.aL;
   if(!STRIP_ANALYSERS.hz  && vuHz)     STRIP_ANALYSERS.hz  = vuHz.aL;
+  if(!STRIP_ANALYSERS.tx  && vuTx)     STRIP_ANALYSERS.tx  = vuTx.aL;
   paintStrip('vu-strip-d0',  STRIP_ANALYSERS.d0);
   paintStrip('vu-strip-d1',  STRIP_ANALYSERS.d1);
   paintStrip('vu-strip-nat', STRIP_ANALYSERS.nat);
   paintStrip('vu-strip-sat', STRIP_ANALYSERS.sat);
   paintStrip('vu-strip-dab', STRIP_ANALYSERS.dab);
   paintStrip('vu-strip-hz',  STRIP_ANALYSERS.hz);
+  paintStrip('vu-strip-tx',  STRIP_ANALYSERS.tx);
 }
 stripLoop();
 
@@ -2854,6 +2958,18 @@ const _ts5 = D[5].togglePlay.bind(D[5]);
 D[5].togglePlay = function(){
   if(D[5].audios[D[5].ci]) wireStrip('nat', D[5].audios[D[5].ci]);
   _ts5();
+};
+
+// ── Wiring DIFF TEST (D[6]) ──
+let vuTx=null;
+const _tx_orig=D[6].togglePlay.bind(D[6]);
+D[6].togglePlay=function(){
+  const el=D[6].audios[D[6].ci];
+  if(el && !vuTx){
+    getCtx().resume();
+    vuTx=wireVU(el,'vu-strip-tx','vu-strip-tx'); // analyseur uniquement (pas de VU sticky)
+  }
+  getCtx().resume(); _tx_orig();
 };
 
 setTimeout(bindMacroDropZones,500);
