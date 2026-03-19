@@ -2606,26 +2606,26 @@ class Diffuser{
     bindOne(outH, 'out');
   }
 
-  // tick() = mise à jour UI uniquement (la fin est gérée par setTimeout dans _startTrack)
+  // tick() = mise à jour UI — décompte jusqu'au point d'enchaînement (OUT)
   tick(){
     if(!this.playing || !this.tracks.length) return;
     const i=0;
     const audio=this.audios[i];
     if(!audio || audio.paused) return;
 
-    const pos=audio.currentTime;
-    const inCue=this._inOf(i);
-    const outCue=this._outOf(i);
-    const dur=this.durs[i]||1;
-    const rem=Math.max(0,outCue-pos);
+    const pos    = audio.currentTime;
+    const inCue  = this._inOf(i);
+    const outCue = this._outOf(i);
+    const dur    = this.durs[i]||1;
+    const rem    = Math.max(0, outCue - pos);
 
     // Playhead sur la waveform (position absolue dans le fichier)
     const ph=document.getElementById(`wv-${this.idx}-${i}-ph`);
-    if(ph){ph.style.display='block';ph.style.left=(pos/dur*100).toFixed(2)+'%';}
+    if(ph){ ph.style.display='block'; ph.style.left=(pos/dur*100).toFixed(2)+'%'; }
 
-    // Décompte dans le tableau
+    // Décompte jusqu'au point d'enchaînement
     const cd=document.getElementById(`${this.ids.body}-cd-${i}`);
-    if(cd)cd.textContent=fmtFull(rem);
+    if(cd) cd.textContent = fmtFull(rem);
 
     // Barre de progression (IN→OUT = 0→100%)
     const prog=Math.min(1,Math.max(0,(pos-inCue)/Math.max(0.01,this._playDur(i))));
@@ -2633,12 +2633,13 @@ class Diffuser{
     if(ar) ar.style.setProperty('--prog',prog.toFixed(4));
     const pb=document.getElementById(this.ids.progress);
     if(pb) pb.value=Math.round(prog*100);
-    document.getElementById(this.ids.avant).textContent=fmtFull(rem);
-    document.getElementById(this.ids.avance).textContent=fmtFull(pos-inCue);
-    document.getElementById(this.ids.micros).textContent=fmtSec(pos-inCue);
+    document.getElementById(this.ids.avant).textContent  = fmtFull(rem);
+    document.getElementById(this.ids.avance).textContent = fmtFull(pos-inCue);
+    document.getElementById(this.ids.micros).textContent = fmtSec(pos-inCue);
   }
 
-  // Lance la piste en tête (index 0) — UNE SEULE lecture à la fois
+  // Lance la piste en tête (index 0)
+  // OUT = point d'enchaînement : la suivante démarre, le son continue jusqu'à sa fin naturelle
   _startTrack(i){
     const t=this.tracks[i];
     if(!t) return;
@@ -2663,52 +2664,116 @@ class Diffuser{
     const audio=this.audios[i];
     if(!audio) return;
 
-    // Nouveau token — invalide tout ce qui était en attente
     const token=++this._playToken;
     audio.onended=null;
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
 
-    const inCue=this._inOf(i);
-    const outCue=this._outOf(i);
-    const playDur=Math.max(0, outCue-inCue);
+    const inCue  = this._inOf(i);
+    const outCue = this._outOf(i);
+    const dur    = this.durs[i] || 0;
+    const chainDelay = Math.max(0, outCue - inCue); // délai avant d'enchaîner
 
-    audio.currentTime=inCue;
+    audio.currentTime = inCue;
 
-    // Callback de fin — appelé par le timer OUT OU par onended natif
-    const onTrackFinished=()=>{
-      if(token!==this._playToken || !this.playing) return;
-      this._playToken++;
-      audio.onended=null;
-      if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
-      audio.pause();
-
-      // Supprimer la piste
-      if(i<this.tracks.length){
-        const track=this.tracks[i];
-        if(track?.file?.startsWith('blob:')) URL.revokeObjectURL(track.file);
-        this.tracks.splice(i,1);
-        this.durs.splice(i,1);
-        this.audios.splice(i,1);
+    // Au point OUT : démarrer la piste suivante (sans couper celle-ci)
+    this._outTimer = setTimeout(()=>{
+      if(token !== this._playToken || !this.playing) return;
+      // La piste i continue de jouer — on avance juste le curseur
+      this.ci = 0;
+      this.render(); // met à jour l'UI (la suivante devient active visuellement)
+      if(this.tracks.length > 1){
+        // Lancer la piste suivante (index 1, qui deviendra 0 après suppression de i)
+        this._startNextAfterChain(i, token);
       }
-      this.ci=0;
+      // Si c'est la seule piste, on laisse juste le son finir naturellement
+    }, chainDelay * 1000);
+
+    // À la fin naturelle du son : supprimer la piste de la liste
+    audio.onended = ()=>{
+      // Invalider seulement si c'est toujours ce token (pas déjà supplanté)
+      audio.onended = null;
+      if(!this.playing) return;
+      // Supprimer cette piste de la liste
+      const idx = this.tracks.indexOf(t);
+      if(idx !== -1){
+        if(t.file?.startsWith('blob:')) URL.revokeObjectURL(t.file);
+        this.tracks.splice(idx, 1);
+        this.durs.splice(idx, 1);
+        this.audios.splice(idx, 1);
+      }
+      this.ci = 0;
       this._updateFdzCount();
-      if(this.tracks.length){ this._startTrack(0); }
-      else { this.playing=false; }
+      // Si plus rien ne joue, s'arrêter
+      if(!this.tracks.length && !this.audios.some(a=>a&&!a.paused)){
+        this.playing = false;
+      }
       this.render();
     };
 
-    // Timer précis pour le point OUT (évite la latence du tick à 80ms)
-    if(playDur>0){
-      this._outTimer=setTimeout(onTrackFinished, playDur*1000);
-    }
-
-    // onended natif = filet de sécurité (si l'audio finit avant outCue)
-    audio.onended=()=>{ onTrackFinished(); };
-
     audio.play().catch(e=>{
-      audio.onended=null;
+      audio.onended = null;
       if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
       console.warn('play() error:', e);
+    });
+  }
+
+  // Enchaîne la piste suivante après le point OUT
+  _startNextAfterChain(currentIdx, token){
+    if(token !== this._playToken || !this.playing) return;
+    if(this.tracks.length < 2) return;
+    // La piste suivante est à l'index 1 (la 0 est encore en train de jouer)
+    const next = this.tracks[1];
+    if(!next || next.isMacro){
+      // Piste macro ou invalide — gérer normalement
+      if(this.tracks.length > 1) this._startTrack(1);
+      return;
+    }
+    const nextAudio = this.audios[1];
+    if(!nextAudio) return;
+
+    const nextToken = ++this._playToken;
+    nextAudio.onended = null;
+    if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+
+    const nextIn   = this._inOf(1);
+    const nextOut  = this._outOf(1);
+    const nextDur  = this.durs[1] || 0;
+    const nextChain = Math.max(0, nextOut - nextIn);
+
+    nextAudio.currentTime = nextIn;
+
+    // Timer OUT pour la piste suivante
+    this._outTimer = setTimeout(()=>{
+      if(nextToken !== this._playToken || !this.playing) return;
+      this.ci = 0;
+      this.render();
+      if(this.tracks.length > 1){
+        this._startNextAfterChain(1, nextToken);
+      }
+    }, nextChain * 1000);
+
+    // À la fin naturelle, supprimer
+    nextAudio.onended = ()=>{
+      nextAudio.onended = null;
+      if(!this.playing) return;
+      const idx = this.tracks.indexOf(next);
+      if(idx !== -1){
+        if(next.file?.startsWith('blob:')) URL.revokeObjectURL(next.file);
+        this.tracks.splice(idx, 1);
+        this.durs.splice(idx, 1);
+        this.audios.splice(idx, 1);
+      }
+      this.ci = 0;
+      this._updateFdzCount();
+      if(!this.tracks.length && !this.audios.some(a=>a&&!a.paused)){
+        this.playing = false;
+      }
+      this.render();
+    };
+
+    nextAudio.play().catch(e=>{
+      nextAudio.onended = null;
+      console.warn('play() next error:', e);
     });
   }
 
@@ -2745,8 +2810,9 @@ class Diffuser{
   stopAll(){
     this._playToken++;
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+    // Arrêter tous les audios (y compris ceux en queue naturelle)
     this.audios.forEach(a=>{
-      if(a){ a.onended=null; a.pause(); a.currentTime=0; }
+      if(a){ a.onended=null; if(!a.paused) a.pause(); a.currentTime=0; }
     });
     this.playing=false;
     this.ci=0;
