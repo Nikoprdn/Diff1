@@ -464,6 +464,44 @@
     animation: silence-blink .6s step-start infinite;
   }
 
+
+  /* ── Macros ── */
+  .macro-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:.75rem; margin-top:.5rem; }
+  .macro-card {
+    background:var(--s2); border:1px solid var(--border); border-radius:6px;
+    padding:.75rem 1rem; display:flex; flex-direction:column; gap:.5rem;
+  }
+  .macro-name { font-family:var(--display); font-size:14px; font-weight:700; color:var(--txt); letter-spacing:1px; }
+  .macro-desc { font-family:var(--mono); font-size:9px; color:var(--txt-mute); letter-spacing:1px; }
+  .macro-run-btn {
+    background:transparent; border:1px solid var(--border); color:var(--txt-dim);
+    font-family:var(--mono); font-size:11px; padding:5px 0; border-radius:2px;
+    cursor:pointer; letter-spacing:1px; transition:all .15s; text-align:center;
+  }
+  .macro-run-btn:hover { border-color:var(--yellow); color:var(--yellow); }
+  .macro-run-btn.running { background:#1a1400; border-color:var(--yellow); color:var(--yellow); animation:blink .6s step-start infinite; }
+
+  /* ── RDV simplifié ── */
+  .rdv-simple-card {
+    background:var(--s2); border:1px solid var(--border); border-radius:6px;
+    padding:.75rem 1rem; display:flex; flex-direction:column; gap:.6rem;
+    max-width:560px;
+  }
+  .rdv-simple-row { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+  .rdv-simple-label { font-family:var(--mono); font-size:9px; color:var(--txt-mute); letter-spacing:1px; text-transform:uppercase; min-width:52px; }
+  .rdv-clock-now { font-family:var(--mono); font-size:13px; color:var(--cyan); letter-spacing:2px; }
+  .rdv-window-signed {
+    display:flex; align-items:center; gap:4px;
+  }
+  .rdv-win-sign {
+    font-family:var(--mono); font-size:11px; color:var(--txt-dim); cursor:pointer;
+    padding:3px 8px; border:1px solid var(--border); border-radius:2px; background:transparent;
+    transition:all .12s;
+  }
+  .rdv-win-sign:hover { border-color:var(--cyan-dim); color:var(--txt); }
+  .rdv-win-sign.active { border-color:var(--cyan); color:var(--cyan); background:#0a1c28; }
+  .rdv-win-minutes { font-family:var(--mono); font-size:12px; color:var(--yellow); min-width:52px; text-align:center; }
+
   /* ── Cards PUB (gris neutre) ── */
   .card.is-pub-card { background:#181c20; border:1px solid #2a2e34; border-radius:8px; box-shadow:none; position:relative; }
   .card.is-pub-card .card-header { background:#1f2328; border-bottom:1px solid #2a2e34; box-shadow:none; border-radius:8px 8px 0 0; }
@@ -901,247 +939,90 @@
   </div>
   <div class="card-footer">
     <span class="card-footer-item">Écoulé&nbsp;<strong id="ph-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="ph-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="ph-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
-  </div>
-</div>
-
-</div><!-- /grid PUB -->
-</div><!-- /column PUB -->
-
-
-<!-- Éléments cachés pour la compatibilité JS des PUB diffuseurs -->
-<span id="ps-avance" style="display:none"></span>
-<span id="pd-avance" style="display:none"></span>
-<span id="ph-avance" style="display:none"></span>
-<span id="pn-avance" style="display:none"></span>
-</div></section>
-
-<!-- VU MÈTRES -->
-<div class="vu-section">
-
-  <!-- Ligne 1 : Diffuseurs DIFF 1 + DIFF 2 -->
-  <div class="vu-row-title">Diffuseurs</div>
-  <div class="vu-row-wrap">
-    <div class="vu-wrap" style="flex:1">
-      <div class="vu-label-block">
-        <div class="vu-main-title">DIFF 1</div>
-        <div class="vu-db-group"><div class="vu-db-val" id="vu1-db">—∞</div><div class="vu-db-unit">dB</div></div>
-      </div>
-      <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-40</span><span>-60</span></div>
-      <div class="vu-channel-v"><div class="vu-meter-v" id="vu1-L"></div><div class="vu-ch-label">L</div></div>
-      <div class="vu-channel-v"><div class="vu-meter-v" id="vu1-R"></div><div class="vu-ch-label">R</div></div>
-    </div>
-    <div class="vu-wrap" style="flex:1">
-      <div class="vu-label-block">
-        <div class="vu-main-title">DIFF 2</div>
-        <div class="vu-db-group"><div class="vu-db-val" id="vu-d2-db" style="color:#9b5de5">—∞</div><div class="vu-db-unit">dB</div></div>
-      </div>
-      <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-40</span><span>-60</span></div>
-      <div class="vu-channel-v"><div class="vu-meter-v" id="vu-d2-L"></div><div class="vu-ch-label">L</div></div>
-      <div class="vu-channel-v"><div class="vu-meter-v" id="vu-d2-R"></div><div class="vu-ch-label">R</div></div>
-    </div>
-  </div>
-</div><!-- /vu-section sticky -->
-
-
-
-</div>
-</div>
-
-</div><!-- /tab-diffusion -->
-
-<!-- Panneau Rendez-vous -->
+    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total<!-- Panneau Rendez-vous -->
 <div id="tab-rdv" class="tab-panel">
 <div class="rdv-section" style="min-height:80vh">
-  <div class="rdv-title">Fenêtres de rendez-vous</div>
-  <p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:1rem;letter-spacing:1px;">
-    Chaque rendez-vous peut cibler un ou plusieurs diffuseurs. Cliquer sur une cible pour la sélectionner/désélectionner. TOUS = tous les diffuseurs locaux simultanément.
-  </p>
-  <div class="rdv-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
 
-    <div class="rdv-card" style="">
-      <div class="rdv-card-header">
-        <span class="rdv-diff-label" style="background:#1a2a00;color:#f5c400;border:1px solid #3a4a00">DIFF 1</span>
-        <span class="rdv-status" id="rdv-status-0">EN ATTENTE</span>
-      </div>
-      
-      <div class="rdv-row">
-        <span class="rdv-label">Horaire</span>
-        <input class="rdv-input" type="text" id="rdv-time-0" value="00:30:00" placeholder="HH:MM:SS" maxlength="8">
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Fenêtre</span>
-        <div class="rdv-window-wrap">
-          <button class="rdv-win-btn" onclick="rdvWinAdj(0,-1)">−</button>
-          <span class="rdv-win-val" id="rdv-win-val-0">± 4 min</span>
-          <button class="rdv-win-btn" onclick="rdvWinAdj(0,+1)">+</button>
-        </div>
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Cible</span>
-        <div class="rdv-target-wrap" id="rdv-targets-0">
-          <button class="rdv-target-btn sel" data-rdv="0" data-target="0" onclick="rdvToggleTarget(0,0)">DIFF 1</button>
-          <button class="rdv-target-btn" data-rdv="0" data-target="1" onclick="rdvToggleTarget(0,1)">DIFF 2</button>
-          <button class="rdv-target-btn" data-rdv="0" data-target="2" onclick="rdvToggleTarget(0,2)">PUB SAT</button>
-          <button class="rdv-target-btn" data-rdv="0" data-target="3" onclick="rdvToggleTarget(0,3)">PUB DAB+</button>
-          <button class="rdv-target-btn" data-rdv="0" data-target="4" onclick="rdvToggleTarget(0,4)">PUB Hz</button>
-          <button class="rdv-target-btn" data-rdv="0" data-target="ext" onclick="rdvToggleTarget(0,'ext')">EXT.</button>
-          <button class="rdv-target-btn" data-rdv="0" data-target="all" onclick="rdvToggleTarget(0,'all')">TOUS</button>
-        </div>
-      </div>
-      <div class="rdv-countdown" id="rdv-cd-0">—</div>
-      <div class="rdv-actions">
-        <button class="rdv-arm-btn" id="rdv-arm-btn-0" onclick="rdvToggleArm(0)">⏱ ARMER</button>
-        <button class="rdv-cancel-btn" onclick="rdvCancel(0)">✕</button>
+  <!-- ── SECTION RENDEZ-VOUS ── -->
+  <div class="rdv-title">Fenêtres de rendez-vous</div>
+  <div class="rdv-simple-card" id="rdv-master-card">
+    <!-- Heure actuelle affichée -->
+    <div class="rdv-simple-row">
+      <span class="rdv-simple-label">Heure actuelle</span>
+      <span class="rdv-clock-now" id="rdv-clock-now">00:00:00</span>
+    </div>
+    <!-- Fenêtre : signe + valeur en minutes -->
+    <div class="rdv-simple-row">
+      <span class="rdv-simple-label">Fenêtre</span>
+      <div class="rdv-window-signed">
+        <button class="rdv-win-sign active" id="rdv-sign-minus" onclick="rdvSetSign('minus')">−</button>
+        <button class="rdv-win-sign"        id="rdv-sign-none"  onclick="rdvSetSign('none')">= 0</button>
+        <button class="rdv-win-sign"        id="rdv-sign-plus"  onclick="rdvSetSign('plus')">+</button>
+        <span class="rdv-win-minutes" id="rdv-win-disp">4 min</span>
+        <button class="rdv-win-btn" onclick="rdvMasterWinAdj(-1)">−</button>
+        <button class="rdv-win-btn" onclick="rdvMasterWinAdj(+1)">+</button>
       </div>
     </div>
-    <div class="rdv-card" style="">
-      <div class="rdv-card-header">
-        <span class="rdv-diff-label" style="background:#160d2a;color:#9b5de5;border:1px solid #6a3aaa">DIFF 2</span>
-        <span class="rdv-status" id="rdv-status-1">EN ATTENTE</span>
-      </div>
-      
-      <div class="rdv-row">
-        <span class="rdv-label">Horaire</span>
-        <input class="rdv-input" type="text" id="rdv-time-1" value="00:30:00" placeholder="HH:MM:SS" maxlength="8">
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Fenêtre</span>
-        <div class="rdv-window-wrap">
-          <button class="rdv-win-btn" onclick="rdvWinAdj(1,-1)">−</button>
-          <span class="rdv-win-val" id="rdv-win-val-1">± 4 min</span>
-          <button class="rdv-win-btn" onclick="rdvWinAdj(1,+1)">+</button>
-        </div>
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Cible</span>
-        <div class="rdv-target-wrap" id="rdv-targets-1">
-          <button class="rdv-target-btn sel" data-rdv="1" data-target="0" onclick="rdvToggleTarget(1,0)">DIFF 1</button>
-          <button class="rdv-target-btn" data-rdv="1" data-target="1" onclick="rdvToggleTarget(1,1)">DIFF 2</button>
-          <button class="rdv-target-btn" data-rdv="1" data-target="2" onclick="rdvToggleTarget(1,2)">PUB SAT</button>
-          <button class="rdv-target-btn" data-rdv="1" data-target="3" onclick="rdvToggleTarget(1,3)">PUB DAB+</button>
-          <button class="rdv-target-btn" data-rdv="1" data-target="4" onclick="rdvToggleTarget(1,4)">PUB Hz</button>
-          <button class="rdv-target-btn" data-rdv="1" data-target="ext" onclick="rdvToggleTarget(1,'ext')">EXT.</button>
-          <button class="rdv-target-btn" data-rdv="1" data-target="all" onclick="rdvToggleTarget(1,'all')">TOUS</button>
-        </div>
-      </div>
-      <div class="rdv-countdown" id="rdv-cd-1">—</div>
-      <div class="rdv-actions">
-        <button class="rdv-arm-btn" id="rdv-arm-btn-1" onclick="rdvToggleArm(1)">⏱ ARMER</button>
-        <button class="rdv-cancel-btn" onclick="rdvCancel(1)">✕</button>
+    <!-- Cibles -->
+    <div class="rdv-simple-row">
+      <span class="rdv-simple-label">Cible</span>
+      <div class="rdv-target-wrap" id="rdv-master-targets">
+        <button class="rdv-target-btn sel" data-target="0" onclick="rdvMasterToggleTarget(0)">DIFF 1</button>
+        <button class="rdv-target-btn" data-target="1" onclick="rdvMasterToggleTarget(1)">DIFF 2</button>
+        <button class="rdv-target-btn" data-target="2" onclick="rdvMasterToggleTarget(2)">PUB SAT</button>
+        <button class="rdv-target-btn" data-target="3" onclick="rdvMasterToggleTarget(3)">PUB DAB+</button>
+        <button class="rdv-target-btn" data-target="4" onclick="rdvMasterToggleTarget(4)">PUB Hz</button>
+        <button class="rdv-target-btn" data-target="5" onclick="rdvMasterToggleTarget(5)">NATIONAL</button>
+        <button class="rdv-target-btn" data-target="ext" onclick="rdvMasterToggleTarget('ext')">EXT.</button>
+        <button class="rdv-target-btn" data-target="all" onclick="rdvMasterToggleTarget('all')">TOUS</button>
       </div>
     </div>
-    <div class="rdv-card" style="">
-      <div class="rdv-card-header">
-        <span class="rdv-diff-label" style="background:#1a2008;color:#8a9870;border:1px solid #3a4828">PUB SAT</span>
-        <span class="rdv-status" id="rdv-status-2">EN ATTENTE</span>
-      </div>
-      
-      <div class="rdv-row">
-        <span class="rdv-label">Horaire</span>
-        <input class="rdv-input" type="text" id="rdv-time-2" value="00:30:00" placeholder="HH:MM:SS" maxlength="8">
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Fenêtre</span>
-        <div class="rdv-window-wrap">
-          <button class="rdv-win-btn" onclick="rdvWinAdj(2,-1)">−</button>
-          <span class="rdv-win-val" id="rdv-win-val-2">± 4 min</span>
-          <button class="rdv-win-btn" onclick="rdvWinAdj(2,+1)">+</button>
-        </div>
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Cible</span>
-        <div class="rdv-target-wrap" id="rdv-targets-2">
-          <button class="rdv-target-btn sel" data-rdv="2" data-target="0" onclick="rdvToggleTarget(2,0)">DIFF 1</button>
-          <button class="rdv-target-btn" data-rdv="2" data-target="1" onclick="rdvToggleTarget(2,1)">DIFF 2</button>
-          <button class="rdv-target-btn" data-rdv="2" data-target="2" onclick="rdvToggleTarget(2,2)">PUB SAT</button>
-          <button class="rdv-target-btn" data-rdv="2" data-target="3" onclick="rdvToggleTarget(2,3)">PUB DAB+</button>
-          <button class="rdv-target-btn" data-rdv="2" data-target="4" onclick="rdvToggleTarget(2,4)">PUB Hz</button>
-          <button class="rdv-target-btn" data-rdv="2" data-target="ext" onclick="rdvToggleTarget(2,'ext')">EXT.</button>
-          <button class="rdv-target-btn" data-rdv="2" data-target="all" onclick="rdvToggleTarget(2,'all')">TOUS</button>
-        </div>
-      </div>
-      <div class="rdv-countdown" id="rdv-cd-2">—</div>
-      <div class="rdv-actions">
-        <button class="rdv-arm-btn" id="rdv-arm-btn-2" onclick="rdvToggleArm(2)">⏱ ARMER</button>
-        <button class="rdv-cancel-btn" onclick="rdvCancel(2)">✕</button>
-      </div>
+    <!-- Décompte et boutons -->
+    <div class="rdv-countdown" id="rdv-master-cd">—</div>
+    <div class="rdv-actions">
+      <button class="rdv-arm-btn" id="rdv-master-arm" onclick="rdvMasterToggleArm()">⏱ ARMER</button>
+      <button class="rdv-cancel-btn" onclick="rdvMasterCancel()">✕</button>
     </div>
-    <div class="rdv-card" style="">
-      <div class="rdv-card-header">
-        <span class="rdv-diff-label" style="background:#081818;color:#6a9890;border:1px solid #1a3830">PUB DAB+</span>
-        <span class="rdv-status" id="rdv-status-3">EN ATTENTE</span>
-      </div>
-      
-      <div class="rdv-row">
-        <span class="rdv-label">Horaire</span>
-        <input class="rdv-input" type="text" id="rdv-time-3" value="00:30:00" placeholder="HH:MM:SS" maxlength="8">
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Fenêtre</span>
-        <div class="rdv-window-wrap">
-          <button class="rdv-win-btn" onclick="rdvWinAdj(3,-1)">−</button>
-          <span class="rdv-win-val" id="rdv-win-val-3">± 4 min</span>
-          <button class="rdv-win-btn" onclick="rdvWinAdj(3,+1)">+</button>
-        </div>
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Cible</span>
-        <div class="rdv-target-wrap" id="rdv-targets-3">
-          <button class="rdv-target-btn sel" data-rdv="3" data-target="0" onclick="rdvToggleTarget(3,0)">DIFF 1</button>
-          <button class="rdv-target-btn" data-rdv="3" data-target="1" onclick="rdvToggleTarget(3,1)">DIFF 2</button>
-          <button class="rdv-target-btn" data-rdv="3" data-target="2" onclick="rdvToggleTarget(3,2)">PUB SAT</button>
-          <button class="rdv-target-btn" data-rdv="3" data-target="3" onclick="rdvToggleTarget(3,3)">PUB DAB+</button>
-          <button class="rdv-target-btn" data-rdv="3" data-target="4" onclick="rdvToggleTarget(3,4)">PUB Hz</button>
-          <button class="rdv-target-btn" data-rdv="3" data-target="ext" onclick="rdvToggleTarget(3,'ext')">EXT.</button>
-          <button class="rdv-target-btn" data-rdv="3" data-target="all" onclick="rdvToggleTarget(3,'all')">TOUS</button>
-        </div>
-      </div>
-      <div class="rdv-countdown" id="rdv-cd-3">—</div>
-      <div class="rdv-actions">
-        <button class="rdv-arm-btn" id="rdv-arm-btn-3" onclick="rdvToggleArm(3)">⏱ ARMER</button>
-        <button class="rdv-cancel-btn" onclick="rdvCancel(3)">✕</button>
-      </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-top:2px">
+      Le diffuseur partira à l'heure actuelle + la fenêtre sélectionnée
     </div>
-    <div class="rdv-card" style="">
-      <div class="rdv-card-header">
-        <span class="rdv-diff-label" style="background:#180820;color:#806890;border:1px solid #382048">PUB Hz</span>
-        <span class="rdv-status" id="rdv-status-4">EN ATTENTE</span>
+  </div>
+
+  <!-- Popup sur chaque card DIFF (inchangé, géré par rdvArm) -->
+
+  <div style="height:2rem"></div>
+
+  <!-- ── SECTION MACROS ── -->
+  <div class="rdv-title">Macros</div>
+  <p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:.75rem;letter-spacing:1px;">
+    Lance un groupe de diffuseurs d'un seul clic. Utilisable depuis n'importe quel diffuseur comme une action instantanée.
+  </p>
+  <div class="macro-grid">
+
+    <!-- START NAT -->
+    <div class="macro-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="diff-badge" style="background:#1c1c1c;color:#909090;border:1px solid #404040;letter-spacing:3px;font-size:10px">START NAT</span>
       </div>
-      
-      <div class="rdv-row">
-        <span class="rdv-label">Horaire</span>
-        <input class="rdv-input" type="text" id="rdv-time-4" value="00:30:00" placeholder="HH:MM:SS" maxlength="8">
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Fenêtre</span>
-        <div class="rdv-window-wrap">
-          <button class="rdv-win-btn" onclick="rdvWinAdj(4,-1)">−</button>
-          <span class="rdv-win-val" id="rdv-win-val-4">± 4 min</span>
-          <button class="rdv-win-btn" onclick="rdvWinAdj(4,+1)">+</button>
-        </div>
-      </div>
-      <div class="rdv-row">
-        <span class="rdv-label">Cible</span>
-        <div class="rdv-target-wrap" id="rdv-targets-4">
-          <button class="rdv-target-btn sel" data-rdv="4" data-target="0" onclick="rdvToggleTarget(4,0)">DIFF 1</button>
-          <button class="rdv-target-btn" data-rdv="4" data-target="1" onclick="rdvToggleTarget(4,1)">DIFF 2</button>
-          <button class="rdv-target-btn" data-rdv="4" data-target="2" onclick="rdvToggleTarget(4,2)">PUB SAT</button>
-          <button class="rdv-target-btn" data-rdv="4" data-target="3" onclick="rdvToggleTarget(4,3)">PUB DAB+</button>
-          <button class="rdv-target-btn" data-rdv="4" data-target="4" onclick="rdvToggleTarget(4,4)">PUB Hz</button>
-          <button class="rdv-target-btn" data-rdv="4" data-target="ext" onclick="rdvToggleTarget(4,'ext')">EXT.</button>
-          <button class="rdv-target-btn" data-rdv="4" data-target="all" onclick="rdvToggleTarget(4,'all')">TOUS</button>
-        </div>
-      </div>
-      <div class="rdv-countdown" id="rdv-cd-4">—</div>
-      <div class="rdv-actions">
-        <button class="rdv-arm-btn" id="rdv-arm-btn-4" onclick="rdvToggleArm(4)">⏱ ARMER</button>
-        <button class="rdv-cancel-btn" onclick="rdvCancel(4)">✕</button>
-      </div>
+      <div class="macro-desc">Lance le diffuseur NATIONAL</div>
+      <div class="macro-desc" style="color:var(--txt-dim)">Diffuseurs concernés : NATIONAL (D[5])</div>
+      <button class="macro-run-btn" id="macro-nat-btn" onclick="runMacro('nat')">▶ EXÉCUTER</button>
     </div>
-    <div class="rdv-card" style="border-color:#2a4060;">
-      <div class="rdv-card-header">
-        <span class="rdv-diff-label" style="background:#00102a;color:#00d4f0;border:1px solid #0066aa">DIFF EXT.</span>
+
+    <!-- START LOC -->
+    <div class="macro-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="diff-badge" style="background:#0d1020;color:#6a8890;border:1px solid #1a3040;letter-spacing:3px;font-size:10px">START LOC</span>
+      </div>
+      <div class="macro-desc">Lance les 3 diffuseurs pub locaux</div>
+      <div class="macro-desc" style="color:var(--txt-dim)">Diffuseurs concernés : PUB SAT · PUB DAB+ · PUB Hz</div>
+      <button class="macro-run-btn" id="macro-loc-btn" onclick="runMacro('loc')">▶ EXÉCUTER</button>
+    </div>
+
+  </div>
+
+</div>
+</div><!-- /tab-rdv -->color:#00d4f0;border:1px solid #0066aa">DIFF EXT.</span>
         <span class="rdv-status" id="rdv-status-5">EN ATTENTE</span>
       </div>
       <div style="font-family:var(--mono);font-size:9px;color:#3a5070;letter-spacing:1px;margin-bottom:6px">nikoprdn.github.io/Diff2</div>
@@ -1964,106 +1845,106 @@ function switchTab(name){
   });
 }
 
-// ── AUTO activé d'office sur les 3 PUB diffuseurs ──
-// Appelé après l'init des D[]
+// ── AUTO activé d'office sur les PUB + NATIONAL ──
 function initPubAuto(){
   [2,3,4,5].forEach(i=>{ if(D[i]&&!D[i].auto) D[i].toggleAuto(); });
 }
 initPubAuto();
 
 // ══════════════════════════════════════
-// RENDEZ-VOUS
+// RENDEZ-VOUS UNIFIÉ (un seul encart)
 // ══════════════════════════════════════
-// rdvState[i].targets = Set des cibles sélectionnées
-//   0..4 = D[0]..D[4]  |  'ext' = page externe
-const rdvState=[
-  {armed:false,winMin:4,totalSec:null,popupVisible:false,targets:new Set([0])},
-  {armed:false,winMin:4,totalSec:null,popupVisible:false,targets:new Set([1])},
-  {armed:false,winMin:4,totalSec:null,popupVisible:false,targets:new Set([2])},
-  {armed:false,winMin:4,totalSec:null,popupVisible:false,targets:new Set([3])},
-  {armed:false,winMin:4,totalSec:null,popupVisible:false,targets:new Set([4])},
-  {armed:false,winMin:4,totalSec:null,popupVisible:false,targets:new Set(['ext']),isExternal:true}
-];
+const rdvMaster = {
+  armed:   false,
+  winMin:  4,
+  sign:    'minus',   // 'minus' | 'none' | 'plus'
+  targets: new Set([0]),
+  triggerSec: null,
+  bipTimer: null,
+  extWin: null,
+  _readyPoll: null
+};
 
-function rdvToggleTarget(rdvIdx, target){
-  const s=rdvState[rdvIdx];
-  const wrap=document.getElementById('rdv-targets-'+rdvIdx);
+// Mise à jour de l'affichage de la fenêtre
+function rdvUpdateWinDisplay(){
+  const s=rdvMaster;
+  const pfx=s.sign==='minus'?'− ':s.sign==='plus'?'+ ':'± 0 / ';
+  document.getElementById('rdv-win-disp').textContent=
+    s.sign==='none'?'0 min':pfx+s.winMin+' min';
+}
+
+function rdvSetSign(sign){
+  rdvMaster.sign=sign;
+  ['minus','none','plus'].forEach(k=>{
+    const btn=document.getElementById('rdv-sign-'+k);
+    if(btn) btn.classList.toggle('active',k===sign);
+  });
+  rdvUpdateWinDisplay();
+}
+
+function rdvMasterWinAdj(delta){
+  if(rdvMaster.sign==='none') return;
+  rdvMaster.winMin=Math.max(0,rdvMaster.winMin+delta);
+  rdvUpdateWinDisplay();
+}
+
+function rdvMasterToggleTarget(target){
+  const s=rdvMaster;
+  const wrap=document.getElementById('rdv-master-targets');
   if(!wrap)return;
-
   if(target==='all'){
-    // Sélectionner tous les diffuseurs locaux
-    const allLocal=[0,1,2,3,4];
+    const allLocal=[0,1,2,3,4,5];
     const alreadyAll=allLocal.every(t=>s.targets.has(t));
-    if(alreadyAll){
-      s.targets.clear(); s.targets.add(rdvIdx<5?rdvIdx:0);
-    } else {
-      s.targets=new Set(allLocal);
-    }
+    if(alreadyAll){ s.targets.clear(); s.targets.add(0); }
+    else { s.targets=new Set(allLocal); }
   } else {
     if(s.targets.has(target)) s.targets.delete(target);
     else s.targets.add(target);
-    if(s.targets.size===0) s.targets.add(rdvIdx<5?rdvIdx:target);
+    if(s.targets.size===0) s.targets.add(0);
   }
-
-  // Rafraîchir UI boutons cibles
+  // Rafraîchir UI
   wrap.querySelectorAll('.rdv-target-btn').forEach(btn=>{
     const t=btn.dataset.target;
     const tVal=isNaN(t)?t:parseInt(t);
-    const localAll=[0,1,2,3,4];
-    const isAll=(tVal==='all');
+    const localAll=[0,1,2,3,4,5];
     const allSel=localAll.every(v=>s.targets.has(v));
-    if(isAll){
-      btn.className='rdv-target-btn'+(allSel?' sel-all':'');
-    } else {
-      btn.className='rdv-target-btn'+(s.targets.has(tVal)?' sel':'');
-    }
+    if(t==='all') btn.className='rdv-target-btn'+(allSel?' sel-all':'');
+    else btn.className='rdv-target-btn'+(s.targets.has(tVal)?' sel':'');
   });
 }
 
-function rdvParseTime(str){
-  const parts=str.split(':').map(Number);
-  if(parts.length!==3||parts.some(isNaN))return null;
-  return parts[0]*3600+parts[1]*60+parts[2];
-}
-
-function rdvWinAdj(idx,delta){
-  const s=rdvState[idx];
-  s.winMin=Math.max(0,s.winMin+delta);
-  document.getElementById(`rdv-win-val-${idx}`).textContent=`± ${s.winMin} min`;
-}
-
-function rdvToggleArm(idx){
-  const s=rdvState[idx];
-  if(s.armed){rdvCancel(idx);return;}
-  const timeStr=document.getElementById(`rdv-time-${idx}`).value;
-  const parsed=rdvParseTime(timeStr);
-  if(parsed===null){alert('Format horaire invalide. Utilisez HH:MM:SS');return;}
-  s.totalSec=parsed;
+function rdvMasterToggleArm(){
+  if(rdvMaster.armed){ rdvMasterCancel(); return; }
+  const s=rdvMaster;
+  const now=new Date();
+  const nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+  let winSec=0;
+  if(s.sign==='minus')  winSec=-s.winMin*60;
+  else if(s.sign==='plus') winSec=s.winMin*60;
+  s.triggerSec=(nowSec+winSec+86400)%86400;
   s.armed=true;
+  const armBtn=document.getElementById('rdv-master-arm');
+  if(armBtn){armBtn.classList.add('armed');armBtn.textContent='⏱ ARMÉ';}
 
-  document.getElementById(`rdv-arm-btn-${idx}`).classList.add('armed');
-  document.getElementById(`rdv-arm-btn-${idx}`).textContent='⏱ ARMÉ';
-  document.getElementById(`rdv-status-${idx}`).textContent='ARMÉ';
-  document.getElementById(`rdv-status-${idx}`).classList.add('armed');
-
-  // Popup sur les DIFF internes qui sont dans les cibles
+  // Afficher popup sur chaque cible interne
+  const targetTime=new Date(now.getTime()+winSec*1000);
+  const timeStr=fmt2(targetTime.getHours())+':'+fmt2(targetTime.getMinutes())+':'+fmt2(targetTime.getSeconds());
   s.targets.forEach(t=>{
-    if(typeof t==='number'){
-      const popup=document.getElementById(`rdv-popup-${t}`);
+    if(typeof t==='number' && t<2){ // popups seulement sur DIFF 1 et DIFF 2
+      const popup=document.getElementById('rdv-popup-'+t);
       if(popup){
-        const pt=document.getElementById(`rdv-popup-target-${t}`);
-        const pw=document.getElementById(`rdv-popup-win-${t}`);
+        const pt=document.getElementById('rdv-popup-target-'+t);
+        const pw=document.getElementById('rdv-popup-win-'+t);
         if(pt) pt.textContent=timeStr;
-        if(pw) pw.textContent=`fenêtre ± ${s.winMin} min`;
+        if(pw) pw.textContent=winSec===0?'Maintenant':(s.sign==='minus'?'- ':'+ ')+s.winMin+' min';
         popup.classList.add('visible');
       }
     }
   });
 
-  // Si la cible inclut l'externe, ouvrir l'onglet maintenant
+  // Ouvrir onglet externe si nécessaire
   if(s.targets.has('ext')){
     s.extWin=window.open('https://nikoprdn.github.io/Diff2/','diff2_ext');
-    s.extWinReady=false;
     const pollReady=setInterval(()=>{
       try{ if(s.extWin&&!s.extWin.closed) s.extWin.postMessage({action:'ping'},'https://nikoprdn.github.io'); }catch(e){}
     },500);
@@ -2071,99 +1952,111 @@ function rdvToggleArm(idx){
   }
 }
 
-function rdvCancel(idx){
-  const s=rdvState[idx];
-  s.armed=false; s.popupVisible=false;
-  // Fermer popups de toutes les cibles
-  if(s.targets) s.targets.forEach(t=>{ if(typeof t==='number'){ const p=document.getElementById(`rdv-popup-${t}`); if(p)p.classList.remove('visible'); } });
-  document.getElementById(`rdv-arm-btn-${idx}`).classList.remove('armed');
-  document.getElementById(`rdv-arm-btn-${idx}`).textContent='⏱ ARMER';
-  document.getElementById(`rdv-status-${idx}`).textContent='EN ATTENTE';
-  document.getElementById(`rdv-status-${idx}`).classList.remove('armed','live');
-  document.getElementById(`rdv-cd-${idx}`).textContent='—';
-  document.getElementById(`rdv-cd-${idx}`).className='rdv-countdown';
-  if(s._readyPoll){ clearInterval(s._readyPoll); s._readyPoll=null; }
+function rdvMasterCancel(){
+  const s=rdvMaster;
+  s.armed=false;
+  // Fermer popups DIFF 1 et 2
+  [0,1].forEach(t=>{ const p=document.getElementById('rdv-popup-'+t); if(p) p.classList.remove('visible'); });
+  const armBtn=document.getElementById('rdv-master-arm');
+  if(armBtn){armBtn.classList.remove('armed');armBtn.textContent='⏱ ARMER';}
+  const cdEl=document.getElementById('rdv-master-cd');
+  if(cdEl){cdEl.textContent='—';cdEl.className='rdv-countdown';}
+  if(s.bipTimer){clearInterval(s.bipTimer);s.bipTimer=null;}
+  if(s._readyPoll){clearInterval(s._readyPoll);s._readyPoll=null;}
 }
 
-function rdvTick(){
-  const now=new Date();
-  const nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
-
-  rdvState.forEach((s,idx)=>{
-    if(!s.armed)return;
-
-    const target=s.totalSec;
-    // Diff en secondes (gère le passage à minuit)
-    let diff=target-nowSec;
-    if(diff<-43200)diff+=86400; // si on a dépassé minuit
-    if(diff>43200)diff-=86400;
-
-    const winSec=s.winMin*60;
-    const totalWindow=winSec*2; // fenêtre complète = avant + après
-
-    // ── Mise à jour countdown dans le module ──
-    const cdEl=document.getElementById(`rdv-cd-${idx}`);
-    const popCdEl=document.getElementById(`rdv-popup-cd-${idx}`);
-    const popBarEl=document.getElementById(`rdv-popup-bar-${idx}`);
-
-    if(diff>0){
-      // Avant le rendez-vous
-      const h=Math.floor(diff/3600),m=Math.floor((diff%3600)/60),sec=diff%60;
-      const txt=h>0?`${fmt2(h)}:${fmt2(m)}:${fmt2(sec)}`:`${fmt2(m)}:${fmt2(sec)}`;
-      cdEl.textContent=txt;
-      if(popCdEl)popCdEl.textContent=txt;
-
-      // Couleur urgence
-      if(diff<=30){cdEl.className='rdv-countdown urgent';if(popCdEl)popCdEl.style.color='#e03020';}
-      else if(diff<=120){cdEl.className='rdv-countdown warning';if(popCdEl)popCdEl.style.color='#f5c400';}
-      else{cdEl.className='rdv-countdown';if(popCdEl)popCdEl.style.color='#00d4f0';}
-
-      // Barre de progression du popup (commence à 100% et descend vers 0 dans la fenêtre)
-      if(diff<=winSec&&popBarEl){
-        const pct=Math.min(100,(diff/winSec)*100);
-        popBarEl.style.width=pct+'%';
-        popBarEl.style.background=diff<=30?'#e03020':diff<=120?'#f5c400':'#f5c400';
+function rdvMasterLaunch(){
+  const s=rdvMaster;
+  s.targets.forEach(t=>{
+    if(t==='ext'){
+      if(s._readyPoll){clearInterval(s._readyPoll);s._readyPoll=null;}
+      if(s.extWin&&!s.extWin.closed){
+        s.extWin.postMessage({action:'rdv_play',diffuser:0},'https://nikoprdn.github.io');
+        s.extWin.focus();
+      } else {
+        window.open('https://nikoprdn.github.io/Diff2/?rdv_play=1','diff2_ext');
       }
-
-    } else if(diff>-winSec){
-      // ── DANS LA FENETRE : lancer la DIFF ──
-      cdEl.textContent='▶ EN COURS';
-      cdEl.className='rdv-countdown';
-      cdEl.style.color='#00d96a';
-
-      // Fermer popups de toutes les cibles
-      if(s.targets) s.targets.forEach(t=>{ if(typeof t==='number'){ const p=document.getElementById(`rdv-popup-${t}`); if(p)p.classList.remove('visible'); } });
-
-      // Mise à jour statut
-      document.getElementById(`rdv-status-${idx}`).textContent='LANCÉ';
-      document.getElementById(`rdv-status-${idx}`).className='rdv-status live';
-
-      // Lancer toutes les cibles du rendez-vous
-      s.targets.forEach(t=>{
-        if(t==='ext'){
-          if(s._readyPoll){clearInterval(s._readyPoll);s._readyPoll=null;}
-          if(s.extWin&&!s.extWin.closed){
-            s.extWin.postMessage({action:'rdv_play',diffuser:0},'https://nikoprdn.github.io');
-            s.extWin.focus();
-          } else {
-            window.open('https://nikoprdn.github.io/Diff2/?rdv_play=1','diff2_ext');
-          }
-        } else if(typeof t==='number' && D[t] && !D[t].playing){
-          D[t].togglePlay();
-        }
-      });
-
-      // Désarmer après déclenchement
-      s.armed=false;
-      document.getElementById(`rdv-arm-btn-${idx}`).classList.remove('armed');
-      document.getElementById(`rdv-arm-btn-${idx}`).textContent='⏱ ARMER';
-
-    } else {
-      // Fenêtre dépassée sans déclenchement
-      rdvCancel(idx);
+    } else if(typeof t==='number' && D[t] && !D[t].playing){
+      D[t].togglePlay();
     }
   });
 }
+
+function rdvTick(){
+  // Mise à jour horloge dans l'encart RDV
+  const clk=document.getElementById('rdv-clock-now');
+  if(clk) clk.textContent=nowClock();
+
+  if(!rdvMaster.armed) return;
+  const s=rdvMaster;
+  const now=new Date();
+  const nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+  let diff=s.triggerSec-nowSec;
+  if(diff<-43200)diff+=86400;
+  if(diff>43200)diff-=86400;
+
+  const cdEl=document.getElementById('rdv-master-cd');
+  const popCdEls=[0,1].map(t=>document.getElementById('rdv-popup-cd-'+t));
+  const popBarEls=[0,1].map(t=>document.getElementById('rdv-popup-bar-'+t));
+
+  if(diff>0){
+    const h=Math.floor(diff/3600),m=Math.floor((diff%3600)/60),sec=diff%60;
+    const txt=h>0?`${fmt2(h)}:${fmt2(m)}:${fmt2(sec)}`:`${fmt2(m)}:${fmt2(sec)}`;
+    if(cdEl){
+      cdEl.textContent=txt;
+      cdEl.className=diff<=30?'rdv-countdown urgent':diff<=120?'rdv-countdown warning':'rdv-countdown';
+    }
+    popCdEls.forEach(el=>{ if(el){ el.textContent=txt; el.style.color=diff<=30?'#e03020':diff<=120?'#f5c400':'#00d4f0'; }});
+    popBarEls.forEach(el=>{ if(el){ el.style.width=Math.min(100,(diff/60)*100)+'%'; }});
+  } else {
+    // DÉCLENCHER
+    if(cdEl){cdEl.textContent='▶ EN COURS';cdEl.className='rdv-countdown';cdEl.style.color='#00d96a';}
+    [0,1].forEach(t=>{ const p=document.getElementById('rdv-popup-'+t); if(p) p.classList.remove('visible'); });
+    rdvMasterLaunch();
+    s.armed=false;
+    const armBtn=document.getElementById('rdv-master-arm');
+    if(armBtn){armBtn.classList.remove('armed');armBtn.textContent='⏱ ARMER';}
+  }
+}
+
+// ══════════════════════════════════════
+// MACROS
+// ══════════════════════════════════════
+const MACROS={
+  nat:{
+    label:'START NAT',
+    run(){
+      // Lance le diffuseur NATIONAL (D[5])
+      if(D[5]&&!D[5].playing) D[5].togglePlay();
+    }
+  },
+  loc:{
+    label:'START LOC',
+    run(){
+      // Lance PUB SAT (D[2]), PUB DAB+ (D[3]), PUB Hz (D[4])
+      [2,3,4].forEach(i=>{ if(D[i]&&!D[i].playing) D[i].togglePlay(); });
+    }
+  }
+};
+
+function runMacro(key){
+  const m=MACROS[key]; if(!m)return;
+  m.run();
+  const btn=document.getElementById('macro-'+key+'-btn');
+  if(btn){
+    btn.classList.add('running');
+    btn.textContent='▶ EN COURS';
+    setTimeout(()=>{ btn.classList.remove('running'); btn.textContent='▶ EXÉCUTER'; },2000);
+  }
+}
+
+// Compatibilité : rdvToggleTarget / rdvWinAdj / rdvToggleArm / rdvCancel restent vides
+// (les popups DIFF 1/2 sont maintenant pilotés par rdvMaster)
+function rdvWinAdj(){}
+function rdvToggleArm(){}
+function rdvCancel(idx){
+  const popup=document.getElementById('rdv-popup-'+idx);
+  if(popup) popup.classList.remove('visible');
+}
+function rdvToggleTarget(){}
 </script>
-</body>
-</html>
