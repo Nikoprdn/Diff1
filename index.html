@@ -443,6 +443,49 @@
     animation: silence-blink .6s step-start infinite;
   }
 
+  /* ── Cards PUB (gris neutre) ── */
+  .card.is-pub-card { background:#181c20; border:1px solid #2a2e34; border-radius:8px; box-shadow:none; position:relative; }
+  .card.is-pub-card .card-header { background:#1f2328; border-bottom:1px solid #2a2e34; box-shadow:none; border-radius:8px 8px 0 0; }
+  .card.is-pub-card .card-header-title { color:#b0b8c0; font-family:var(--display); font-size:13px; letter-spacing:1px; padding:.5rem .75rem; }
+  .card.is-pub-card .card-content { padding:0; }
+  .card.is-pub-card .card-footer { background:#14181c; border-top:1px solid #2a2e34; border-radius:0 0 8px 8px; padding:.5rem .75rem; gap:.75rem; }
+  .card.is-pub-card .card-footer-item { color:#5a6370; font-family:var(--mono); font-size:10px; border:none; padding:0; justify-content:flex-start; }
+  .card.is-pub-card .notification.is-onair { background:#1f2328; border:1px solid #2a2e34; border-top:none; border-radius:0; padding:.4rem .75rem; margin:0; display:flex; align-items:center; justify-content:space-between; }
+  .card.is-pub-card .onair-title { color:#8a9098; font-size:15px; letter-spacing:2px; }
+  .card.is-pub-card .progress.is-elapsed { background:#2a2e34; }
+  .card.is-pub-card .progress.is-elapsed::-webkit-progress-value { background:#4a5260; }
+  .card.is-pub-card .progress.is-elapsed::-moz-progress-bar { background:#4a5260; }
+  .card.is-pub-card .file-drop-zone { border-color:#2a2e34; }
+  .card.is-pub-card .file-drop-zone:hover { border-color:#4a5260; background:#1a1e22; }
+  .card.is-pub-card .table.is-radio thead th { background:#14181c; color:#3a4048; border-color:#2a2e34!important; }
+  .card.is-pub-card .table.is-radio tbody td { border-color:#2a2e34!important; color:#4a5260; }
+  .card.is-pub-card .table.is-radio tbody tr:hover td { background:#1c2024; }
+  .card.is-pub-card .table.is-radio tbody tr.row-active { background:#1a1008; border-left:3px solid #6a5a30; }
+  .card.is-pub-card .table.is-radio tbody tr.row-next   { background:#101408; border-left:3px solid #2a3818; }
+
+  /* ── Sélecteur mode écoute (navbar) ── */
+  .listen-mode-wrap { display:flex; align-items:center; gap:6px; }
+  .listen-mode-label { font-family:var(--mono); font-size:9px; color:var(--txt-mute); letter-spacing:2px; text-transform:uppercase; }
+  .listen-btn {
+    background:transparent; border:1px solid var(--border); color:var(--txt-mute);
+    font-family:var(--mono); font-size:10px; padding:2px 10px; border-radius:2px;
+    cursor:pointer; letter-spacing:1px; transition:all .15s;
+  }
+  .listen-btn:hover { border-color:var(--cyan-dim); color:var(--txt); }
+  .listen-btn.active { background:#0a1c28; border-color:var(--cyan); color:var(--cyan); }
+
+  /* ── Alarme silence navbar ── */
+  .navbar-silence-alerts { display:flex; align-items:center; gap:6px; }
+  .sil-nav-badge {
+    font-family:var(--mono); font-size:9px; letter-spacing:1px; padding:2px 7px;
+    border-radius:2px; border:1px solid transparent; display:none;
+  }
+  .sil-nav-badge.active {
+    display:inline-block;
+    color:#fff; background:var(--red); border-color:#8c1010;
+    animation:silence-blink .6s step-start infinite;
+  }
+
   /* ── DIFF 2 couleur accent violet ── */
   #c2-progress::-webkit-progress-value { background: #9b5de5 !important; }
   #c2-progress::-moz-progress-bar      { background: #9b5de5 !important; }
@@ -464,6 +507,23 @@
     </a>
   </div>
   <div class="navbar-end">
+    <!-- Alarmes silence -->
+    <div class="navbar-item">
+      <div class="navbar-silence-alerts">
+        <span class="sil-nav-badge" id="sil-nav-sat">⚠ SAT</span>
+        <span class="sil-nav-badge" id="sil-nav-dab">⚠ DAB+</span>
+        <span class="sil-nav-badge" id="sil-nav-hz">⚠ Hz</span>
+      </div>
+    </div>
+    <!-- Mode écoute -->
+    <div class="navbar-item">
+      <div class="listen-mode-wrap">
+        <span class="listen-mode-label">Écoute</span>
+        <button class="listen-btn active" id="listen-sat" onclick="setListenMode('sat')">SAT</button>
+        <button class="listen-btn"        id="listen-dab" onclick="setListenMode('dab')">DAB+</button>
+        <button class="listen-btn"        id="listen-hz"  onclick="setListenMode('hz')">Hz</button>
+      </div>
+    </div>
     <div class="navbar-item"><div class="clock-display" id="global-clock">00:00:00</div></div>
     <div class="navbar-item"><span class="tag" style="background:#111c38;color:#5a7090;border:1px solid #1e3060">MONTRÉAL · GMT+1</span></div>
   </div>
@@ -621,7 +681,7 @@
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
 
 <!-- PUB SAT -->
-<div class="card is-dark-card">
+<div class="card is-pub-card">
   <div class="card-header" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
       <span class="tag diff-badge" style="background:#1a2a00;color:#f5c400;border:1px solid #3a4a00">PUB SAT</span>
@@ -669,7 +729,7 @@
 </div>
 
 <!-- PUB DAB+ -->
-<div class="card is-dark-card">
+<div class="card is-pub-card">
   <div class="card-header" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
       <span class="tag diff-badge" style="background:#001a2a;color:#00d4f0;border:1px solid #003a5a">PUB DAB+</span>
@@ -717,7 +777,7 @@
 </div>
 
 <!-- PUB Hz -->
-<div class="card is-dark-card">
+<div class="card is-pub-card">
   <div class="card-header" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
       <span class="tag diff-badge" style="background:#160d2a;color:#9b5de5;border:1px solid #6a3aaa">PUB Hz</span>
@@ -1389,6 +1449,65 @@ D[1].togglePlay=function(){
   getCtx().resume(); _t1();
 };
 
+// ── VU PUB SAT / DAB+ / Hz (wirés sur leurs diffuseurs dédiés) ──
+// Chaque PUB diffuseur alimente le VU-mètre de sa sortie
+let vuSat=null, vuDab=null, vuHz=null;
+const _t2=D[2].togglePlay.bind(D[2]);
+D[2].togglePlay=function(){
+  if(!vuSat){getCtx().resume();vuSat=wireVU(D[2].audios[D[2].ci]||new Audio(),'vu-sat-L','vu-sat-R');}
+  getCtx().resume(); _t2();
+};
+const _t3=D[3].togglePlay.bind(D[3]);
+D[3].togglePlay=function(){
+  if(!vuDab){getCtx().resume();vuDab=wireVU(D[3].audios[D[3].ci]||new Audio(),'vu-dab-L','vu-dab-R');}
+  getCtx().resume(); _t3();
+};
+const _t4=D[4].togglePlay.bind(D[4]);
+D[4].togglePlay=function(){
+  if(!vuHz){getCtx().resume();vuHz=wireVU(D[4].audios[D[4].ci]||new Audio(),'vu-hz-L','vu-hz-R');}
+  getCtx().resume(); _t4();
+};
+
+// ── Mode écoute : SAT / DAB+ / Hz ──
+// Crée un nœud gain dédié pour la sortie moniteur (écoute opérateur)
+let listenCtx=null, listenGain=null, listenMode='sat';
+let listenSource=null; // source actuellement connectée à l'écoute
+const LISTEN_SOURCES={sat:null,dab:null,hz:null}; // rempli au wire
+
+function getListenCtx(){
+  if(!listenCtx) listenCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(listenCtx.state==='suspended') listenCtx.resume();
+  return listenCtx;
+}
+
+function wireListenSource(key, audioEl){
+  // Crée une source d'écoute indépendante sur listenCtx
+  try{
+    const ctx=getListenCtx();
+    const src=ctx.createMediaElementSource(audioEl);
+    if(!listenGain){ listenGain=ctx.createGain(); listenGain.gain.value=0.7; listenGain.connect(ctx.destination); }
+    LISTEN_SOURCES[key]=src;
+    if(listenMode===key) src.connect(listenGain);
+  }catch(e){} // peut échouer si l'élément est déjà sourcé
+}
+
+function setListenMode(mode){
+  listenMode=mode;
+  // Déconnecter tous
+  Object.entries(LISTEN_SOURCES).forEach(([k,src])=>{
+    if(src){try{src.disconnect(listenGain);}catch(e){}}
+  });
+  // Connecter le mode choisi
+  if(LISTEN_SOURCES[mode] && listenGain){
+    try{LISTEN_SOURCES[mode].connect(listenGain);}catch(e){}
+  }
+  // UI
+  ['sat','dab','hz'].forEach(k=>{
+    const btn=document.getElementById('listen-'+k);
+    if(btn) btn.classList.toggle('active',k===mode);
+  });
+}
+
 // ── Initialiser les barres SAT/DAB+/Hz ──
 ['sat','dab','hz'].forEach(id=>{buildBars(`vu-${id}-L`);buildBars(`vu-${id}-R`);});
 
@@ -1516,6 +1635,9 @@ function checkSilence(key,db){
       const timeStr=s.alertTime.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
       if(wrap) wrap.classList.add('silence-warn');
       if(badge)badge.classList.add('active');
+      // Badge navbar
+      const navBadge=document.getElementById('sil-nav-'+key);
+      if(navBadge) navBadge.classList.add('active');
       // Bip immédiat + répétition toutes les 8s
       playBip();
       s.bipTimer=setInterval(playBip,8000);
@@ -1540,16 +1662,27 @@ function checkSilence(key,db){
 // ── Boucle VU principale ──
 function vuLoop(){
   requestAnimationFrame(vuLoop);
+  // Diffuseurs principaux (sticky)
   if(vu1)  paintBars('vu1-L','vu1-R',  vu1.aL,  vu1.aR,  'vu1-db',   vu1.gn,  '#00d4f0');
   if(vuD2) paintBars('vu-d2-L','vu-d2-R',vuD2.aL,vuD2.aR,'vu-d2-db', vuD2.gn, '#9b5de5');
+  // Radio Monaco
   if(vu2)  paintBars('vu2-L','vu2-R',  vu2.aL,  vu2.aR,  'vu2-db',   vu2.gn,  '#00d4f0');
-  // Flux de diffusion : SAT=DIFF1+RM, DAB=DIFF2+RM, Hz=tout
-  const dbSat=paintMix('sat',[vu1,vu2]);
-  const dbDab=paintMix('dab',[vuD2,vu2]);
-  const dbHz =paintMix('hz', [vu1,vuD2,vu2]);
+  // Flux de diffusion : directs depuis les PUB diffuseurs
+  // Si PUB pas encore joué → fallback mix DIFF+RM
+  let dbSat, dbDab, dbHz;
+  if(vuSat) { paintBars('vu-sat-L','vu-sat-R',vuSat.aL,vuSat.aR,'vu-sat-db',vuSat.gn,'#00d4f0'); dbSat=getDbFromVU(vuSat); }
+  else       { dbSat=paintMix('sat',[vu1,vu2]); }
+  if(vuDab) { paintBars('vu-dab-L','vu-dab-R',vuDab.aL,vuDab.aR,'vu-dab-db',vuDab.gn,'#00d4f0'); dbDab=getDbFromVU(vuDab); }
+  else       { dbDab=paintMix('dab',[vuD2,vu2]); }
+  if(vuHz)  { paintBars('vu-hz-L','vu-hz-R',  vuHz.aL, vuHz.aR, 'vu-hz-db', vuHz.gn, '#00d4f0'); dbHz=getDbFromVU(vuHz); }
+  else       { dbHz =paintMix('hz',[vu1,vuD2,vu2]); }
   checkSilence('sat',dbSat);
   checkSilence('dab',dbDab);
   checkSilence('hz', dbHz);
+}
+function getDbFromVU(vu){
+  const rms=Math.max(getRMS(vu.aL),getRMS(vu.aR));
+  return rms>0?Math.max(-60,20*Math.log10(rms)):-60;
 }
 vuLoop();
 
