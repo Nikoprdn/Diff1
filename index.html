@@ -2243,16 +2243,6 @@ function drawWaveformBg(canvas, data){
     }
   }
 }
-    const r=amp>0.8?255:amp>0.6?Math.round(amp*200):0;
-    const g=Math.round(160+amp*60);
-    const b=Math.round(220-amp*80);
-    c.strokeStyle=`rgba(${r},${g},${b},0.75)`;
-    c.lineWidth=1;
-    const y1=Math.round((1+mn)/2*H);
-    const y2=Math.round((1+mx)/2*H);
-    c.beginPath(); c.moveTo(x+.5,y1); c.lineTo(x+.5,Math.max(y2,y1+1)); c.stroke();
-  }
-}
 
 // ── Classe Diffuser ──
 class Diffuser{
@@ -2856,91 +2846,91 @@ function routeSrcToDepart(srcKey, dep, audioEl){
   return {aL, aR, gn};
 }
 
-// ── Wiring DIFF 1 : VU sticky + routage 3 départs ──
-const _t0_orig=D[0].togglePlay.bind(D[0]);
-D[0].togglePlay=function(){
-  const el=D[0].audios[D[0].ci];
-  if(el && !SRCS.d0){
-    getCtx().resume();
-    vu1=wireVU(el,'vu1-L','vu1-R');
-    SRCS.d0=vu1.gn.context?vu1.gn:null; // marquer comme créé
-    ['sat','dab','hz'].forEach(dep=>routeSrcToDepart('d0',dep,el));
-  }
-  getCtx().resume(); _t0_orig();
-};
-
-// ── Wiring DIFF 2 : VU sticky + routage 3 départs ──
-const _t1_orig=D[1].togglePlay.bind(D[1]);
-D[1].togglePlay=function(){
-  const el=D[1].audios[D[1].ci];
-  if(el && !SRCS.d1){
-    getCtx().resume();
-    vuD2=wireVU(el,'vu-d2-L','vu-d2-R');
-    SRCS.d1=vuD2.gn.context?vuD2.gn:null;
-    ['sat','dab','hz'].forEach(dep=>routeSrcToDepart('d1',dep,el));
-  }
-  getCtx().resume(); _t1_orig();
-};
-
-// ── Wiring PUB SAT : VU analyseur + départ SAT ──
+// ── Patches togglePlay — audio routing + VU strips (fusionnés) ──
 let vuSat=null, vuDab=null, vuHz=null, vuNat=null;
-const _t2_orig=D[2].togglePlay.bind(D[2]);
-D[2].togglePlay=function(){
-  const el=D[2].audios[D[2].ci];
-  if(el && !SRCS.sat){
-    getCtx().resume();
-    const r=routeSrcToDepart('sat','sat',el);
-    if(r) vuSat=r;
-    buildBars('vu-sat-L'); buildBars('vu-sat-R');
-  }
-  getCtx().resume(); _t2_orig();
-};
-
-// ── Wiring PUB DAB+ : VU analyseur + départ DAB+ ──
-const _t3_orig=D[3].togglePlay.bind(D[3]);
-D[3].togglePlay=function(){
-  const el=D[3].audios[D[3].ci];
-  if(el && !SRCS.dab){
-    getCtx().resume();
-    const r=routeSrcToDepart('dab','dab',el);
-    if(r) vuDab=r;
-    buildBars('vu-dab-L'); buildBars('vu-dab-R');
-  }
-  getCtx().resume(); _t3_orig();
-};
-
-// ── Wiring PUB Hz : VU analyseur + départ Hz ──
-const _t4_orig=D[4].togglePlay.bind(D[4]);
-D[4].togglePlay=function(){
-  const el=D[4].audios[D[4].ci];
-  if(el && !SRCS.hz){
-    getCtx().resume();
-    const r=routeSrcToDepart('hz','hz',el);
-    if(r) vuHz=r;
-    buildBars('vu-hz-L'); buildBars('vu-hz-R');
-  }
-  getCtx().resume(); _t4_orig();
-};
-
-// ── Wiring NATIONAL : 3 départs + analyseurs VU dédiés ──
-// vuNatSat / vuNatDab / vuNatHz = analyseurs de NATIONAL par départ
-// Ils sont mixés dans vuLoop pour afficher sur les 3 VU-mètres
 let vuNatSat=null, vuNatDab=null, vuNatHz=null;
 
+// DIFF 1
+const _t0_orig=D[0].togglePlay.bind(D[0]);
+D[0].togglePlay=function(){
+  const el=D[0].audios[D[0].ci]; if(!el){getCtx().resume();return _t0_orig();}
+  getCtx().resume();
+  if(!SRCS.d0){
+    vu1=wireVU(el,'vu1-L','vu1-R');
+    SRCS.d0=true;
+    ['sat','dab','hz'].forEach(dep=>routeSrcToDepart('d0',dep,el));
+  }
+  wireStrip('d0',el);
+  _t0_orig();
+};
+
+// DIFF 2
+const _t1_orig=D[1].togglePlay.bind(D[1]);
+D[1].togglePlay=function(){
+  const el=D[1].audios[D[1].ci]; if(!el){getCtx().resume();return _t1_orig();}
+  getCtx().resume();
+  if(!SRCS.d1){
+    vuD2=wireVU(el,'vu-d2-L','vu-d2-R');
+    SRCS.d1=true;
+    ['sat','dab','hz'].forEach(dep=>routeSrcToDepart('d1',dep,el));
+  }
+  wireStrip('d1',el);
+  _t1_orig();
+};
+
+// PUB SAT
+const _t2_orig=D[2].togglePlay.bind(D[2]);
+D[2].togglePlay=function(){
+  const el=D[2].audios[D[2].ci]; if(!el){getCtx().resume();return _t2_orig();}
+  getCtx().resume();
+  if(!SRCS.sat){
+    const r=routeSrcToDepart('sat','sat',el);
+    if(r) vuSat=r;
+  }
+  wireStrip('sat',el);
+  _t2_orig();
+};
+
+// PUB DAB+
+const _t3_orig=D[3].togglePlay.bind(D[3]);
+D[3].togglePlay=function(){
+  const el=D[3].audios[D[3].ci]; if(!el){getCtx().resume();return _t3_orig();}
+  getCtx().resume();
+  if(!SRCS.dab){
+    const r=routeSrcToDepart('dab','dab',el);
+    if(r) vuDab=r;
+  }
+  wireStrip('dab',el);
+  _t3_orig();
+};
+
+// PUB Hz
+const _t4_orig=D[4].togglePlay.bind(D[4]);
+D[4].togglePlay=function(){
+  const el=D[4].audios[D[4].ci]; if(!el){getCtx().resume();return _t4_orig();}
+  getCtx().resume();
+  if(!SRCS.hz){
+    const r=routeSrcToDepart('hz','hz',el);
+    if(r) vuHz=r;
+  }
+  wireStrip('hz',el);
+  _t4_orig();
+};
+
+// NATIONAL
 const _t5_orig=D[5].togglePlay.bind(D[5]);
 D[5].togglePlay=function(){
-  const el=D[5].audios[D[5].ci];
-  if(el && !SRCS.nat){
-    getCtx().resume();
+  const el=D[5].audios[D[5].ci]; if(!el){getCtx().resume();return _t5_orig();}
+  getCtx().resume();
+  if(!SRCS.nat){
     const r1=routeSrcToDepart('nat','sat',el);
     const r2=routeSrcToDepart('nat','dab',el);
     const r3=routeSrcToDepart('nat','hz',el);
-    // Garder les analyseurs pour le VU-mètre et le strip
     vuNatSat=r1; vuNatDab=r2; vuNatHz=r3;
-    vuNat=r1; // strip latéral
-    buildBars('vu-nat-L'); buildBars('vu-nat-R');
+    vuNat=r1;
   }
-  getCtx().resume(); _t5_orig();
+  wireStrip('nat',el);
+  _t5_orig();
 };
 
 // ── Initialiser les barres SAT/DAB+/Hz ──
@@ -3603,43 +3593,6 @@ function stripLoop(){
 }
 stripLoop();
 
-// Patch togglePlay pour wirer le strip au premier PLAY
-// DIFF 1
-const _ts0 = D[0].togglePlay.bind(D[0]);
-D[0].togglePlay = function(){
-  if(D[0].audios[D[0].ci]) wireStrip('d0', D[0].audios[D[0].ci]);
-  _ts0();
-};
-// DIFF 2
-const _ts1 = D[1].togglePlay.bind(D[1]);
-D[1].togglePlay = function(){
-  if(D[1].audios[D[1].ci]) wireStrip('d1', D[1].audios[D[1].ci]);
-  _ts1();
-};
-// PUB SAT
-const _ts2 = D[2].togglePlay.bind(D[2]);
-D[2].togglePlay = function(){
-  if(D[2].audios[D[2].ci]) wireStrip('sat', D[2].audios[D[2].ci]);
-  _ts2();
-};
-// PUB DAB+
-const _ts3 = D[3].togglePlay.bind(D[3]);
-D[3].togglePlay = function(){
-  if(D[3].audios[D[3].ci]) wireStrip('dab', D[3].audios[D[3].ci]);
-  _ts3();
-};
-// PUB Hz
-const _ts4 = D[4].togglePlay.bind(D[4]);
-D[4].togglePlay = function(){
-  if(D[4].audios[D[4].ci]) wireStrip('hz', D[4].audios[D[4].ci]);
-  _ts4();
-};
-// NATIONAL
-const _ts5 = D[5].togglePlay.bind(D[5]);
-D[5].togglePlay = function(){
-  if(D[5].audios[D[5].ci]) wireStrip('nat', D[5].audios[D[5].ci]);
-  _ts5();
-};
 
 // ── Wiring DIFF TEST (D[6]) ──
 let vuTx=null;
