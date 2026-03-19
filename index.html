@@ -2259,6 +2259,7 @@ class Diffuser{
     this.auto=false;
     this._chainDone=new Set(); // pistes dont l'enchainement a été déclenché
     this._playToken=0;         // token unique par session de lecture
+    this._outTimer=null;       // timer précis pour le point OUT
   }
 
   addTracks(newTracks){
@@ -2517,19 +2518,20 @@ class Diffuser{
     bindDrag(outH,'out');
   }
 
-  // tick() = mise à jour UI UNIQUEMENT — jamais de déclenchement de lecture
+  // tick() = mise à jour UI uniquement (la fin est gérée par setTimeout dans _startTrack)
   tick(){
     if(!this.playing || !this.tracks.length) return;
-    const i=0; // toujours piste 0
+    const i=0;
     const audio=this.audios[i];
     if(!audio || audio.paused) return;
 
     const pos=audio.currentTime;
+    const inCue=this._inOf(i);
     const outCue=this._outOf(i);
     const dur=this.durs[i]||1;
     const rem=Math.max(0,outCue-pos);
 
-    // Playhead waveform
+    // Playhead sur la waveform (position absolue dans le fichier)
     const ph=document.getElementById(`wv-${this.idx}-${i}-ph`);
     if(ph){ph.style.display='block';ph.style.left=(pos/dur*100).toFixed(2)+'%';}
 
@@ -2537,15 +2539,15 @@ class Diffuser{
     const cd=document.getElementById(`${this.ids.body}-cd-${i}`);
     if(cd)cd.textContent=fmtFull(rem);
 
-    // Barre de progression + timers footer
-    const prog=(pos-this._inOf(i))/Math.max(0.01,this._playDur(i));
+    // Barre de progression (IN→OUT = 0→100%)
+    const prog=Math.min(1,Math.max(0,(pos-inCue)/Math.max(0.01,this._playDur(i))));
     const ar=document.querySelector(`#${this.ids.body} tr.row-active`);
-    if(ar) ar.style.setProperty('--prog',Math.min(1,prog).toFixed(4));
+    if(ar) ar.style.setProperty('--prog',prog.toFixed(4));
     const pb=document.getElementById(this.ids.progress);
-    if(pb) pb.value=Math.round(Math.min(1,prog)*100);
+    if(pb) pb.value=Math.round(prog*100);
     document.getElementById(this.ids.avant).textContent=fmtFull(rem);
-    document.getElementById(this.ids.avance).textContent=fmtFull(pos-this._inOf(i));
-    document.getElementById(this.ids.micros).textContent=fmtSec(pos-this._inOf(i));
+    document.getElementById(this.ids.avance).textContent=fmtFull(pos-inCue);
+    document.getElementById(this.ids.micros).textContent=fmtSec(pos-inCue);
   }
 
   // Lance la piste en tête (index 0) — UNE SEULE lecture à la fois
@@ -2573,21 +2575,27 @@ class Diffuser{
     const audio=this.audios[i];
     if(!audio) return;
 
-    // Incrémenter le token — invalide tous les onended en attente
+    // Nouveau token — invalide tout ce qui était en attente
     const token=++this._playToken;
-    audio.onended=null; // annuler l'ancien handler
-    audio.currentTime=this._inOf(i);
+    audio.onended=null;
+    if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
 
-    audio.onended=()=>{
-      // Ignorer si ce n'est plus notre session ou si stoppé
+    const inCue=this._inOf(i);
+    const outCue=this._outOf(i);
+    const playDur=Math.max(0, outCue-inCue);
+
+    audio.currentTime=inCue;
+
+    // Callback de fin — appelé par le timer OUT OU par onended natif
+    const onTrackFinished=()=>{
       if(token!==this._playToken || !this.playing) return;
-
-      // Verrouiller — empêche tout autre déclenchement
       this._playToken++;
       audio.onended=null;
+      if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+      audio.pause();
 
-      // Supprimer la piste qui vient de finir
-      if(i < this.tracks.length){
+      // Supprimer la piste
+      if(i<this.tracks.length){
         const track=this.tracks[i];
         if(track?.file?.startsWith('blob:')) URL.revokeObjectURL(track.file);
         this.tracks.splice(i,1);
@@ -2596,17 +2604,24 @@ class Diffuser{
       }
       this.ci=0;
       this._updateFdzCount();
-
-      // Enchaîner sur la nouvelle piste 0, ou s'arrêter proprement
-      if(this.tracks.length){
-        this._startTrack(0);
-      } else {
-        this.playing=false;
-      }
+      if(this.tracks.length){ this._startTrack(0); }
+      else { this.playing=false; }
       this.render();
     };
 
-    audio.play().catch(e=>{ audio.onended=null; console.warn(e); });
+    // Timer précis pour le point OUT (évite la latence du tick à 80ms)
+    if(playDur>0){
+      this._outTimer=setTimeout(onTrackFinished, playDur*1000);
+    }
+
+    // onended natif = filet de sécurité (si l'audio finit avant outCue)
+    audio.onended=()=>{ onTrackFinished(); };
+
+    audio.play().catch(e=>{
+      audio.onended=null;
+      if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+      console.warn('play() error:', e);
+    });
   }
 
   // Mettre à jour le compteur de fichiers dans la dropzone
@@ -2628,8 +2643,9 @@ class Diffuser{
       this._startTrack(0);
       this.render();
     } else {
-      // Pause — invalider le token ET annuler les onended
+      // Pause — invalider token + annuler timer OUT
       this._playToken++;
+      if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
       this.audios.forEach(a=>{
         if(a){ a.onended=null; if(!a.paused)a.pause(); }
       });
@@ -2639,8 +2655,8 @@ class Diffuser{
   }
 
   stopAll(){
-    // Invalider le token + annuler onended — aucune relance possible
     this._playToken++;
+    if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
     this.audios.forEach(a=>{
       if(a){ a.onended=null; a.pause(); a.currentTime=0; }
     });
