@@ -2737,6 +2737,12 @@ class Diffuser{
       this.audios[idx] = a;
     });
     this.render();
+    // Si le diffuseur est armé (playing=true) et qu'il vient de recevoir des pistes,
+    // relancer automatiquement depuis la première piste
+    if(this.playing && !this.audios.some(a=>a&&!a.paused)){
+      this.ci=0;
+      this._startTrack(0);
+    }
   }
 
   // Retourne l'index avant lequel insérer (avant les pistes pinned en fin de liste)
@@ -3006,11 +3012,12 @@ class Diffuser{
 
   // tick() = mise à jour UI — suit la piste active (this.ci)
   tick(){
-    if(!this.playing || !this.tracks.length) return;
+    if(!this.playing) return;
+    // Si plus de pistes mais playing=true (armé), juste maintenir l'état rouge
+    if(!this.tracks.length) return;
     // Trouver la piste active : this.ci en priorité, sinon la première qui joue
     let i = this.ci;
     if(!this.audios[i] || this.audios[i].paused){
-      // Chercher une piste en cours de lecture
       const playingIdx = this.audios.findIndex(a=>a&&!a.paused);
       if(playingIdx < 0) return;
       i = playingIdx;
@@ -3124,10 +3131,9 @@ class Diffuser{
     if(t.isMacro){
       if(typeof fireMacroTrack==='function') fireMacroTrack(t.macroKey, this.idx);
       if(t.pinned){
-        // Macro épinglée : exécuter, garder en place, et s'arrêter proprement
+        // Macro épinglée : exécuter, garder en place — reste armé
         this.ci=0;
         this._updateFdzCount();
-        this.playing=false;
         this.render();
       } else {
         this.tracks.splice(i,1);
@@ -3137,7 +3143,7 @@ class Diffuser{
         this._updateFdzCount();
         if(this.playing){
           if(this.tracks.length) this._startTrack(0);
-          else this.playing=false;
+          // sinon reste armé
         }
         this.render();
       }
@@ -3173,7 +3179,9 @@ class Diffuser{
       }
       this.ci = 0;
       this._updateFdzCount();
-      if(!this.tracks.length) this.playing = false;
+      // Ne PAS mettre playing=false automatiquement :
+      // le diffuseur reste "armé" (rouge) jusqu'au STOP explicite.
+      // S'il n'y a plus de pistes, il attend le prochain son.
       this.render();
     };
 
@@ -3265,7 +3273,9 @@ class Diffuser{
       }
       this.ci = 0;
       this._updateFdzCount();
-      if(!this.tracks.length) this.playing = false;
+      // Ne PAS mettre playing=false automatiquement :
+      // le diffuseur reste "armé" (rouge) jusqu'au STOP explicite.
+      // S'il n'y a plus de pistes, il attend le prochain son.
       this.render();
     };
 
@@ -4280,6 +4290,31 @@ const MACROS={
     run(diffIdx){
       // Lance DIFF 1 (D[0])
       if(D[0]&&!D[0].playing) D[0].togglePlay();
+    }
+  },
+  ext:{
+    label:'EXT NAT',
+    _win: null,
+    run(diffIdx){
+      const URL_EXT='https://nikoprdn.github.io/Diff2/';
+      // Si la fenêtre est déjà ouverte et active, envoyer la commande
+      if(this._win && !this._win.closed){
+        this._win.postMessage({action:'play', source:'Radio-Console'},'https://nikoprdn.github.io');
+        this._win.focus();
+      } else {
+        // Ouvrir la page et lui passer la commande via URL + postMessage
+        this._win=window.open(URL_EXT+'?autoplay=1','diff2_ext','width=900,height=400');
+        // Envoyer le message une fois la fenêtre chargée
+        const poll=setInterval(()=>{
+          try{
+            if(this._win&&!this._win.closed){
+              this._win.postMessage({action:'play', source:'Radio-Console'},'https://nikoprdn.github.io');
+            }
+            clearInterval(poll);
+          }catch(e){}
+        },500);
+        setTimeout(()=>clearInterval(poll),10000);
+      }
     }
   },
   stop3:{
