@@ -3463,14 +3463,22 @@ function diff2Connect(){
   // ── 1. BroadcastChannel (même domaine github.io) ──
   try{
     _diff2Channel = new BroadcastChannel('diff2_control');
-    _diff2Channel.addEventListener('message', e=>{
-      const msg = e.data || {};
-      if(msg.action==='pong'||msg.action==='ready'){
+    _diff2Channel.addEventListener('message', async e=>{
+      const m = e.data || {};
+      if(m.action==='pong'||m.action==='ready') _diff2SetStatus(true);
+      // WebRTC signaling
+      if(m.action==='rtc-offer') await _extHandleOffer(m.sdp);
+      if(m.action==='rtc-ice-d2rc') await _extHandleIce(m.c);
+      // Diff2 nous pingue
+      if(m.action==='d2-ping'){
         _diff2SetStatus(true);
+        _diff2Channel.postMessage({action:'d2-pong', source:'Radio-Console'});
       }
-      // ── Signaling WebRTC ──
-      if(msg.action==='webrtc-offer')  _extHandleOffer(msg.sdp);
-      if(msg.action==='webrtc-ice')    _extHandleIce(msg.candidate);
+      // Macro RACCRO EXT : Diff2 demande à lancer DIFF1
+      if(m.action==='raccro-ext'){
+        if(D[0]&&!D[0].playing) D[0].togglePlay();
+        console.log('[RC] RACCRO EXT reçu de Diff2 → DIFF1 lancé');
+      }
     });
   } catch(ex){
     console.warn('[Diff2] BroadcastChannel non disponible:', ex);
@@ -3481,8 +3489,15 @@ function diff2Connect(){
     if(!e.origin.startsWith('https://nikoprdn.github.io')) return;
     const msg = e.data || {};
     if(msg.action==='pong'||msg.action==='ready') _diff2SetStatus(true);
-    if(msg.action==='webrtc-offer') _extHandleOffer(msg.sdp);
-    if(msg.action==='webrtc-ice')   _extHandleIce(msg.candidate);
+    if(msg.action==='rtc-offer') _extHandleOffer(msg.sdp);
+    if(msg.action==='rtc-ice-d2rc') _extHandleIce(msg.c);
+    if(msg.action==='d2-ping'){
+      _diff2SetStatus(true);
+      e.source?.postMessage({action:'d2-pong',source:'Radio-Console'}, e.origin);
+    }
+    if(msg.action==='raccro-ext'){
+      if(D[0]&&!D[0].playing) D[0].togglePlay();
+    }
   });
 
   // ── 3. Ping immédiat + toutes les 10s ──
@@ -3520,7 +3535,7 @@ async function _extHandleOffer(sdp){
 
     _extPeer.onicecandidate = (e)=>{
       if(e.candidate && _diff2Channel){
-        _diff2Channel.postMessage({action:'webrtc-ice-answer', candidate:e.candidate});
+        _diff2Channel.postMessage({action:'rtc-ice-rcd2', c:e.candidate.toJSON()});
       }
     };
 
@@ -3542,7 +3557,7 @@ async function _extHandleOffer(sdp){
     const answer = await _extPeer.createAnswer();
     await _extPeer.setLocalDescription(answer);
     if(_diff2Channel){
-      _diff2Channel.postMessage({action:'webrtc-answer', sdp:answer.sdp});
+      _diff2Channel.postMessage({action:'rtc-answer', sdp:answer.sdp});
     }
   } catch(ex){ console.warn('[EXT VU] Erreur WebRTC offer:', ex); }
 }
