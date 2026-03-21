@@ -73,22 +73,23 @@
 
   /* ── Ligne active : grande, waveform en fond ── */
   .table.is-radio tbody tr.row-active{
-    background:#080a10;
-    border-left:3px solid var(--red);
-    border-top:1px solid #3a0808;
-    border-bottom:1px solid #3a0808;
+    background:linear-gradient(90deg,#180303 0%,#0c0303 100%);
+    border-left:4px solid #ff2020;
+    border-top:1px solid #6a1010;
+    border-bottom:1px solid #6a1010;
+    box-shadow:inset 0 0 30px rgba(200,0,0,.08);
   }
   .table.is-radio tbody tr.row-active td{
     position:relative;z-index:2;
-    height:96px; /* plus haute */
+    height:96px;
     vertical-align:middle;
   }
-  /* Fond de progression rouge */
+  /* Fond de progression rouge vif */
   .table.is-radio tbody tr.row-active::before{
     content:'';position:absolute;inset:0;
-    background:linear-gradient(90deg,rgba(60,5,5,.9) 0%,rgba(30,3,3,.7) 100%);
+    background:linear-gradient(90deg,rgba(180,10,10,.85) 0%,rgba(80,5,5,.5) 100%);
     z-index:0;transform-origin:left;transform:scaleX(var(--prog,0));
-    transition:transform .1s linear;
+    transition:transform 0.08s linear;
   }
   /* Waveform fond : canvas positionné en absolu z-index:1 */
   .row-active-wv-bg{
@@ -1156,137 +1157,166 @@
 
   .pige-live-dot{width:8px;height:8px;border-radius:50%;background:#2a3040;flex-shrink:0;transition:background .2s;}
   .pige-live-dot.active{background:#e03020;box-shadow:0 0 6px rgba(220,30,20,.6);animation:live-pulse .8s ease-in-out infinite;}
+
+  /* ── Lignes IN/OUT draggables dans l'éditeur ── */
+  .wvm-cue-line{
+    position:absolute;top:0;bottom:0;width:3px;cursor:ew-resize;z-index:8;
+    transform:translateX(-50%);
+  }
+  .wvm-cue-line::before{
+    content:attr(data-role);
+    position:absolute;top:4px;left:6px;
+    font-family:var(--mono);font-size:9px;font-weight:700;
+    letter-spacing:1px;text-shadow:0 1px 4px rgba(0,0,0,.9);
+    pointer-events:none;
+  }
+  #wv-modal-in::before{color:#00e060;}
+  #wv-modal-out::before{color:#ff2020;}
+  .wvm-cue-line::after{
+    content:'';position:absolute;top:0;bottom:0;left:-8px;right:-8px;
+    /* zone de clic élargie */
+  }
 </style>
 </head>
 <body>
 
 
-<!-- ══ MODAL ÉDITEUR WAVEFORM ══ -->
+<!-- ══ ÉDITEUR IN/OUT ══ -->
 <div class="wv-modal-overlay" id="wv-modal">
-  <div class="wv-modal">
+  <div class="wv-modal" id="wv-modal-box" style="width:min(96vw,1100px);max-height:92vh;display:flex;flex-direction:column">
 
-    <!-- Barre titre -->
-    <div class="wvm-titlebar">
-      <span class="wvm-ver">ÉDITEUR IN/OUT</span>
-      <span class="wvm-trackname" id="wv-modal-title">—</span>
-      <button class="wvm-close" onclick="wvModalClose()">✕</button>
+    <!-- Titre -->
+    <div class="wvm-titlebar" style="display:flex;align-items:center;gap:1rem;padding:.5rem 1rem;background:#030508;border-bottom:1px solid #1e3060;flex-shrink:0">
+      <span style="font-family:var(--display);font-size:13px;color:var(--cyan);letter-spacing:3px">ÉDITEUR IN/OUT</span>
+      <span style="font-family:var(--mono);font-size:12px;color:#f5c400;flex:1" id="wv-modal-title">—</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--txt-mute)" id="wv-modal-file-dur">—</span>
+      <button onclick="wvModalClose()" style="background:transparent;border:1px solid #3a1010;color:#e03020;font-size:13px;width:26px;height:26px;border-radius:3px;cursor:pointer;line-height:1">✕</button>
     </div>
 
-    <!-- Écran waveform -->
-    <div class="wvm-screen" id="wv-modal-wrap">
-      <canvas class="wvm-canvas-main" id="wv-modal-canvas" width="780" height="180"></canvas>
-      <div class="wvm-pre"  id="wv-modal-pre"></div>
-      <div class="wvm-post" id="wv-modal-post"></div>
-      <div class="wvm-ph"   id="wv-modal-ph" style="display:none"></div>
-      <div class="wvm-handle wvm-handle-in"  id="wv-modal-in"  data-tc="IN 00:00.0"></div>
-      <div class="wvm-handle wvm-handle-out" id="wv-modal-out" data-tc="OUT 00:00.0"></div>
+    <!-- Waveform principale -->
+    <div style="position:relative;background:#04060e;flex-shrink:0;cursor:crosshair" id="wv-modal-wrap">
+      <canvas id="wv-modal-canvas" style="display:block;width:100%;height:180px"></canvas>
+      <!-- masques IN/OUT -->
+      <div id="wv-modal-pre"  style="position:absolute;top:0;bottom:0;left:0;background:rgba(0,0,0,.55);pointer-events:none"></div>
+      <div id="wv-modal-post" style="position:absolute;top:0;bottom:0;right:0;background:rgba(0,0,0,.55);pointer-events:none"></div>
+      <!-- playhead -->
+      <div id="wv-modal-ph" style="display:none;position:absolute;top:0;bottom:0;width:2px;background:#f5c400;pointer-events:none;z-index:5"></div>
+      <!-- Lignes IN/OUT draggables -->
+      <div id="wv-modal-in"  class="wvm-cue-line" style="left:0;background:#00e060" data-role="in"></div>
+      <div id="wv-modal-out" class="wvm-cue-line" style="left:100%;background:#ff2020" data-role="out"></div>
     </div>
 
-    <!-- Timecodes row -->
-    <div class="wvm-timecodes">
-      <div class="wvm-tc-cell">
-        <span class="wvm-tc-label">POSITION</span>
-        <span class="wvm-tc-value" id="wvm-tc-pos" style="color:#f5c400">00:00:000</span>
+    <!-- Overview (vue complète avec région visible) -->
+    <div style="position:relative;background:#02030a;height:36px;flex-shrink:0;border-top:1px solid #0d1828;cursor:pointer" id="wv-modal-overview-wrap" onclick="wvModalOverviewSeek(event)">
+      <canvas id="wv-modal-zoom" style="display:block;width:100%;height:36px"></canvas>
+      <div id="wv-modal-zoom-region" style="position:absolute;top:0;bottom:0;background:rgba(0,212,240,.12);border:1px solid rgba(0,212,240,.3);pointer-events:none"></div>
+      <div id="wv-modal-in-ov"  style="position:absolute;top:0;bottom:0;width:1px;background:#00e060;opacity:.6;pointer-events:none"></div>
+      <div id="wv-modal-out-ov" style="position:absolute;top:0;bottom:0;width:1px;background:#ff2020;opacity:.6;pointer-events:none"></div>
+      <div id="wv-modal-ph-ov"  style="position:absolute;top:0;bottom:0;width:1px;background:#f5c400;opacity:.7;pointer-events:none"></div>
+    </div>
+
+    <!-- Zoom contrôle -->
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.3rem .75rem;background:#030508;border-top:1px solid #0d1828;flex-shrink:0;flex-wrap:wrap">
+      <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);letter-spacing:1px">ZOOM</span>
+      <input type="range" id="wv-modal-zoom-range" min="1" max="50" value="1" step="0.5"
+        style="width:140px;accent-color:var(--cyan)"
+        oninput="wvModalZoomChange(this.value)">
+      <span id="wv-modal-zoom-val" style="font-family:var(--mono);font-size:9px;color:var(--cyan);min-width:36px">×1.0</span>
+      <button onclick="wvModalZoomToOut()" style="background:transparent;border:1px solid #1e3060;color:var(--txt-mute);font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:1px">ZOOM OUT −20s</button>
+      <button onclick="wvModalZoomFull()" style="background:transparent;border:1px solid #1e3060;color:var(--txt-mute);font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:1px">VUE COMPLÈTE</button>
+      <div style="flex:1"></div>
+      <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute)">Clic = seek · Shift+clic = IN · Alt+clic = OUT</span>
+    </div>
+
+    <!-- Timecodes -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);background:#030508;border-top:1px solid #0d1828;flex-shrink:0">
+      <div style="padding:.35rem .6rem;border-right:1px solid #0d1828">
+        <div style="font-family:var(--mono);font-size:7px;color:var(--txt-mute);letter-spacing:1px">POSITION</div>
+        <div style="font-family:var(--mono);font-size:13px;color:#f5c400;letter-spacing:1px" id="wvm-tc-pos">00:00.000</div>
       </div>
-      <div class="wvm-tc-cell">
-        <span class="wvm-tc-label">IN</span>
-        <span class="wvm-tc-value" id="wvm-tc-in" style="color:#00ff60">00:00:000</span>
+      <div style="padding:.35rem .6rem;border-right:1px solid #0d1828">
+        <div style="font-family:var(--mono);font-size:7px;color:var(--txt-mute);letter-spacing:1px">IN</div>
+        <div style="font-family:var(--mono);font-size:13px;color:#00e060;letter-spacing:1px" id="wvm-tc-in">00:00.000</div>
       </div>
-      <div class="wvm-tc-cell">
-        <span class="wvm-tc-label">OUT</span>
-        <span class="wvm-tc-value" id="wvm-tc-out" style="color:#ff3030">00:00:000</span>
+      <div style="padding:.35rem .6rem;border-right:1px solid #0d1828">
+        <div style="font-family:var(--mono);font-size:7px;color:var(--txt-mute);letter-spacing:1px">OUT</div>
+        <div style="font-family:var(--mono);font-size:13px;color:#ff3030;letter-spacing:1px" id="wvm-tc-out">00:00.000</div>
       </div>
-      <div class="wvm-tc-cell">
-        <span class="wvm-tc-label">DURÉE</span>
-        <span class="wvm-tc-value" id="wvm-tc-dur" style="color:#ddeeff">00:00:000</span>
+      <div style="padding:.35rem .6rem;border-right:1px solid #0d1828">
+        <div style="font-family:var(--mono);font-size:7px;color:var(--txt-mute);letter-spacing:1px">DURÉE</div>
+        <div style="font-family:var(--mono);font-size:13px;color:#ddeeff;letter-spacing:1px" id="wvm-tc-dur">00:00.000</div>
       </div>
-      <div class="wvm-tc-cell">
-        <span class="wvm-tc-label">RESTANT</span>
-        <span class="wvm-tc-value" id="wvm-tc-rem" style="color:#f07800">00:00:000</span>
+      <div style="padding:.35rem .6rem;border-right:1px solid #0d1828">
+        <div style="font-family:var(--mono);font-size:7px;color:var(--txt-mute);letter-spacing:1px">RESTANT</div>
+        <div style="font-family:var(--mono);font-size:13px;color:#f07800;letter-spacing:1px" id="wvm-tc-rem">00:00.000</div>
       </div>
-      <div class="wvm-tc-cell">
-        <span class="wvm-tc-label">TOTAL</span>
-        <span class="wvm-tc-value" id="wvm-tc-total" style="color:#5a7090">00:00:000</span>
+      <div style="padding:.35rem .6rem">
+        <div style="font-family:var(--mono);font-size:7px;color:var(--txt-mute);letter-spacing:1px">TOTAL</div>
+        <div style="font-family:var(--mono);font-size:13px;color:#5a7090;letter-spacing:1px" id="wvm-tc-total">00:00.000</div>
       </div>
     </div>
 
-    <!-- VU-mètres L/R -->
-    <div class="wvm-vu-section">
-      <div class="wvm-vu-row">
-        <span class="wvm-vu-lbl" style="color:#00d96a">L</span>
-        <div class="wvm-vu-bar-wrap">
-          <div class="wvm-vu-bar" id="wvm-vu-L" style="background:linear-gradient(90deg,#00d96a 0%,#f5c400 70%,#e03020 90%)"></div>
-          <div class="wvm-vu-threshold" style="left:70%"></div>
-          <div class="wvm-vu-threshold" style="left:85%"></div>
+    <!-- VU + saisie précise + transport -->
+    <div style="display:flex;gap:1rem;padding:.5rem .75rem;background:#030508;border-top:1px solid #0d1828;flex-shrink:0;flex-wrap:wrap;align-items:center">
+
+      <!-- VU L/R -->
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:160px">
+        <div class="wvm-vu-row"><span class="wvm-vu-lbl" style="color:#00d96a">L</span>
+          <div class="wvm-vu-bar-wrap"><div class="wvm-vu-bar" id="wvm-vu-L" style="background:linear-gradient(90deg,#00d96a 0%,#f5c400 70%,#e03020 90%)"></div></div>
+        </div>
+        <div class="wvm-vu-row"><span class="wvm-vu-lbl" style="color:#00d96a">R</span>
+          <div class="wvm-vu-bar-wrap"><div class="wvm-vu-bar" id="wvm-vu-R" style="background:linear-gradient(90deg,#00d96a 0%,#f5c400 70%,#e03020 90%)"></div></div>
         </div>
       </div>
-      <div class="wvm-vu-row">
-        <span class="wvm-vu-lbl" style="color:#00d96a">R</span>
-        <div class="wvm-vu-bar-wrap">
-          <div class="wvm-vu-bar" id="wvm-vu-R" style="background:linear-gradient(90deg,#00d96a 0%,#f5c400 70%,#e03020 90%)"></div>
-          <div class="wvm-vu-threshold" style="left:70%"></div>
-          <div class="wvm-vu-threshold" style="left:85%"></div>
-        </div>
-      </div>
-      <div class="wvm-vu-scale">
-        <span>-50</span><span>-40</span><span>-30</span><span>-20</span>
-        <span>LOOP</span><span>THRESHOLD</span><span>-18</span><span>-9</span><span>0</span>
-      </div>
-    </div>
 
-    <!-- Bande du bas -->
-    <div class="wvm-bottom">
-
-      <!-- Cues IN/OUT -->
-      <div class="wvm-cues-panel">
-        <div class="wvm-cue-row">
-          <div class="wvm-cue-dot" style="background:#00ff60"></div>
-          <input class="wvm-cue-input in" id="wv-modal-in-input"  type="text" placeholder="0.000" title="IN en secondes" onchange="wvModalSetIn()">
+      <!-- Saisie précise IN/OUT -->
+      <div style="display:flex;flex-direction:column;gap:.3rem">
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <div style="width:8px;height:8px;border-radius:50%;background:#00e060;flex-shrink:0"></div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);width:22px">IN</span>
+          <input id="wv-modal-in-input" type="number" step="0.001" min="0" placeholder="0.000"
+            style="background:#080e1c;border:1px solid #1e3060;color:#00e060;font-family:var(--mono);font-size:11px;padding:2px 6px;width:90px;border-radius:2px;outline:none"
+            oninput="wvModalSetIn()" onkeydown="if(event.key==='Enter')wvModalSetIn()">
+          <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute)">sec</span>
+          <button onclick="wvModalSetInNow()" style="background:transparent;border:1px solid #00e060;color:#00e060;font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer">MARK</button>
         </div>
-        <div class="wvm-cue-row">
-          <div class="wvm-cue-dot" style="background:#ff2020"></div>
-          <input class="wvm-cue-input out" id="wv-modal-out-input" type="text" placeholder="0.000" title="OUT en secondes" onchange="wvModalSetOut()">
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <div style="width:8px;height:8px;border-radius:50%;background:#ff2020;flex-shrink:0"></div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);width:22px">OUT</span>
+          <input id="wv-modal-out-input" type="number" step="0.001" min="0" placeholder="0.000"
+            style="background:#080e1c;border:1px solid #1e3060;color:#ff3030;font-family:var(--mono);font-size:11px;padding:2px 6px;width:90px;border-radius:2px;outline:none"
+            oninput="wvModalSetOut()" onkeydown="if(event.key==='Enter')wvModalSetOut()">
+          <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute)">sec</span>
+          <button onclick="wvModalSetOutNow()" style="background:transparent;border:1px solid #ff2020;color:#ff2020;font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer">MARK</button>
         </div>
       </div>
 
       <!-- Transport -->
-      <div class="wvm-transport">
-        <div class="wvm-transport-row">
-          <button class="wvm-tbtn red"   onclick="wvModalStop()"    title="STOP">■</button>
-          <button class="wvm-tbtn"       onclick="wvModalGoIn()"    title="Aller au IN">|◀</button>
-          <button class="wvm-tbtn green" id="wvm-play-btn" onclick="wvModalPlayPause()" title="PLAY">▶</button>
-          <button class="wvm-tbtn"       onclick="wvModalGoOut()"   title="Aller au OUT">▶|</button>
-          <button class="wvm-tbtn"       onclick="wvModalReset()"   title="Réinitialiser">↺</button>
+      <div style="display:flex;flex-direction:column;gap:.3rem">
+        <div style="display:flex;gap:.3rem">
+          <button class="wvm-tbtn red"   onclick="wvModalStop()">■</button>
+          <button class="wvm-tbtn"       onclick="wvModalGoIn()">|◀</button>
+          <button class="wvm-tbtn green" id="wvm-play-btn" onclick="wvModalPlayPause()">▶</button>
+          <button class="wvm-tbtn"       onclick="wvModalGoOut()">▶|</button>
+          <button class="wvm-tbtn"       onclick="wvModalReset()">↺</button>
         </div>
-        <div class="wvm-transport-row">
-          <button class="wvm-tbtn apply" onclick="wvModalApply()" title="Appliquer et fermer"
-            style="width:auto;padding:0 10px;font-size:9px;letter-spacing:1px;color:#60ff90;border-color:#1a8a40;background:linear-gradient(180deg,#0a4a1a,#052810)">
-            ✓ APPLIQUER
-          </button>
-        </div>
-      </div>
-
-      <!-- Options -->
-      <div class="wvm-options">
-        <div class="wvm-opt-title">OPTIONS</div>
-        <div class="wvm-opt-grid">
-          <div class="wvm-opt-btn" onclick="this.classList.toggle('active')">INTRO</div>
-          <div class="wvm-opt-btn" onclick="this.classList.toggle('active')">HOOK</div>
-          <div class="wvm-opt-btn active" onclick="this.classList.toggle('active')">MACRO</div>
-          <div class="wvm-opt-btn" onclick="this.classList.toggle('active')">PONT</div>
-          <div class="wvm-opt-btn" onclick="this.classList.toggle('active')">REPÈRE</div>
-          <div class="wvm-opt-btn" onclick="this.classList.toggle('active')">CHAIN</div>
-          <div class="wvm-opt-btn" onclick="this.classList.toggle('active')">ÉVÈNEM.</div>
-          <div class="wvm-opt-btn" onclick="this.classList.toggle('active')">FIN</div>
+        <div style="display:flex;gap:.3rem">
+          <button class="wvm-tbtn" onclick="wvModalNudge(-0.1)" title="-100ms">◀ .1</button>
+          <button class="wvm-tbtn" onclick="wvModalNudge(-0.01)" title="-10ms">◀.01</button>
+          <button class="wvm-tbtn" onclick="wvModalNudge(+0.01)" title="+10ms">.01▶</button>
+          <button class="wvm-tbtn" onclick="wvModalNudge(+0.1)" title="+100ms">.1 ▶</button>
         </div>
       </div>
 
-    </div><!-- /bottom -->
+      <!-- Appliquer -->
+      <div style="margin-left:auto">
+        <button onclick="wvModalApply()"
+          style="background:linear-gradient(180deg,#0a4a1a,#052810);border:1px solid #1a8a40;color:#60ff90;
+                 font-family:var(--mono);font-size:11px;padding:8px 20px;border-radius:3px;cursor:pointer;letter-spacing:1px">
+          ✓ APPLIQUER
+        </button>
+      </div>
 
-    <!-- Overview -->
-    <div class="wvm-overview-wrap">
-      <canvas class="wvm-overview-canvas" id="wv-modal-zoom" width="780" height="36"></canvas>
-      <div class="wvm-overview-region" id="wv-modal-zoom-region"></div>
     </div>
 
   </div>
@@ -2526,8 +2556,9 @@ class Diffuser{
     this.ci=0;
     this.auto=false;
     this._chainDone=new Set(); // pistes dont l'enchainement a été déclenché
-    this._playToken=0;         // token unique par session de lecture
-    this._outTimer=null;       // timer précis pour le point OUT
+    this._playToken=0;
+    this._outTimer=null;
+    this._removeTimer=null;    // timer de suppression après 2s de queue
   }
 
   addTracks(newTracks){
@@ -2844,7 +2875,7 @@ class Diffuser{
     const rem    = Math.max(0, outCue - pos);
 
     // ── Zoom waveform sur les 30 dernières secondes avant OUT ──
-    const ZOOM_WIN = 30;
+    const ZOOM_WIN = 20;
     const cv = document.getElementById(`wv-${this.idx}-${i}`);
     const ph = document.getElementById(`wv-${this.idx}-${i}-ph`);
     const trackFile = this.tracks[i]?.file;
@@ -2930,33 +2961,19 @@ class Diffuser{
     const token=++this._playToken;
     audio.onended=null;
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+    if(this._removeTimer){ clearTimeout(this._removeTimer); this._removeTimer=null; }
 
-    const inCue  = this._inOf(i);
-    const outCue = this._outOf(i);
-    const dur    = this.durs[i] || 0;
-    const chainDelay = Math.max(0, outCue - inCue); // délai avant d'enchaîner
+    const inCue      = this._inOf(i);
+    const outCue     = this._outOf(i);
+    const chainDelay = Math.max(0, outCue - inCue);
 
     audio.currentTime = inCue;
 
-    // Au point OUT : démarrer la piste suivante (sans couper celle-ci)
-    this._outTimer = setTimeout(()=>{
-      if(token !== this._playToken || !this.playing) return;
-      // La piste i continue de jouer — on avance juste le curseur
-      this.ci = 0;
-      this.render(); // met à jour l'UI (la suivante devient active visuellement)
-      if(this.tracks.length > 1){
-        // Lancer la piste suivante (index 1, qui deviendra 0 après suppression de i)
-        this._startNextAfterChain(i, token);
-      }
-      // Si c'est la seule piste, on laisse juste le son finir naturellement
-    }, chainDelay * 1000);
-
-    // À la fin naturelle du son : supprimer la piste de la liste
-    audio.onended = ()=>{
-      // Invalider seulement si c'est toujours ce token (pas déjà supplanté)
+    // ── Fonction de suppression propre (après 2s de queue) ──
+    const removeTrack = (tk) => {
+      if(tk !== this._playToken) return;
       audio.onended = null;
-      if(!this.playing) return;
-      // Supprimer cette piste de la liste
+      audio.pause();
       const idx = this.tracks.indexOf(t);
       if(idx !== -1){
         if(t.file?.startsWith('blob:')) URL.revokeObjectURL(t.file);
@@ -2966,11 +2983,27 @@ class Diffuser{
       }
       this.ci = 0;
       this._updateFdzCount();
-      // Si plus rien ne joue, s'arrêter
-      if(!this.tracks.length && !this.audios.some(a=>a&&!a.paused)){
-        this.playing = false;
-      }
+      if(!this.tracks.length) this.playing = false;
       this.render();
+    };
+
+    // ── Au point OUT : enchaîner + programmer suppression dans 2s ──
+    this._outTimer = setTimeout(()=>{
+      if(token !== this._playToken || !this.playing) return;
+      this.ci = 0;
+      this.render();
+      // Lancer la piste suivante si elle existe
+      if(this.tracks.length > 1) this._startNextAfterChain(i, token);
+      // Supprimer cette piste après 2 secondes de queue
+      this._removeTimer = setTimeout(()=>removeTrack(token), 2000);
+    }, chainDelay * 1000);
+
+    // ── Filet de sécurité : onended natif (si la fin arrive avant outCue) ──
+    audio.onended = ()=>{
+      audio.onended = null;
+      if(token !== this._playToken) return;
+      // La fin naturelle = supprimer immédiatement (pas de queue)
+      removeTrack(token);
     };
 
     audio.play().catch(e=>{
@@ -3010,28 +3043,18 @@ class Diffuser{
     const nextToken = ++this._playToken;
     nextAudio.onended = null;
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+    if(this._removeTimer){ clearTimeout(this._removeTimer); this._removeTimer=null; }
 
-    const nextIn   = this._inOf(1);
-    const nextOut  = this._outOf(1);
-    const nextDur  = this.durs[1] || 0;
+    const nextIn    = this._inOf(1);
+    const nextOut   = this._outOf(1);
     const nextChain = Math.max(0, nextOut - nextIn);
 
     nextAudio.currentTime = nextIn;
 
-    // Timer OUT pour la piste suivante
-    this._outTimer = setTimeout(()=>{
-      if(nextToken !== this._playToken || !this.playing) return;
-      this.ci = 0;
-      this.render();
-      if(this.tracks.length > 1){
-        this._startNextAfterChain(1, nextToken);
-      }
-    }, nextChain * 1000);
-
-    // À la fin naturelle, supprimer
-    nextAudio.onended = ()=>{
+    const removeNext = (tk) => {
+      if(tk !== this._playToken) return;
       nextAudio.onended = null;
-      if(!this.playing) return;
+      nextAudio.pause();
       const idx = this.tracks.indexOf(next);
       if(idx !== -1){
         if(next.file?.startsWith('blob:')) URL.revokeObjectURL(next.file);
@@ -3041,10 +3064,22 @@ class Diffuser{
       }
       this.ci = 0;
       this._updateFdzCount();
-      if(!this.tracks.length && !this.audios.some(a=>a&&!a.paused)){
-        this.playing = false;
-      }
+      if(!this.tracks.length) this.playing = false;
       this.render();
+    };
+
+    this._outTimer = setTimeout(()=>{
+      if(nextToken !== this._playToken || !this.playing) return;
+      this.ci = 0;
+      this.render();
+      if(this.tracks.length > 1) this._startNextAfterChain(1, nextToken);
+      this._removeTimer = setTimeout(()=>removeNext(nextToken), 2000);
+    }, nextChain * 1000);
+
+    nextAudio.onended = ()=>{
+      nextAudio.onended = null;
+      if(nextToken !== this._playToken) return;
+      removeNext(nextToken);
     };
 
     nextAudio.play().catch(e=>{
@@ -3075,9 +3110,9 @@ class Diffuser{
       this._startTrack(0);
       this.render();
     } else {
-      // Pause — invalider token + annuler timer OUT
       this._playToken++;
       if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+      if(this._removeTimer){ clearTimeout(this._removeTimer); this._removeTimer=null; }
       this.audios.forEach(a=>{
         if(a){ a.onended=null; if(!a.paused)a.pause(); }
       });
@@ -3089,7 +3124,7 @@ class Diffuser{
   stopAll(){
     this._playToken++;
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
-    // Arrêter tous les audios (y compris ceux en queue naturelle)
+    if(this._removeTimer){ clearTimeout(this._removeTimer); this._removeTimer=null; }
     this.audios.forEach(a=>{
       if(a){ a.onended=null; if(!a.paused) a.pause(); a.currentTime=0; }
     });
@@ -4288,806 +4323,365 @@ D[6].togglePlay=function(){
 // ══════════════════════════════════════════════════════════════
 // MODAL ÉDITEUR WAVEFORM
 // ══════════════════════════════════════════════════════════════
-let _wvModal={diffIdx:null, trackIdx:null, wvId:null, dur:1, dragging:null};
+
+// ══════════════════════════════════════════════════════════════
+// ÉDITEUR IN/OUT — fenêtre flottante avec zoom et précision
+// ══════════════════════════════════════════════════════════════
+let _wvModal={
+  diffIdx:null, trackIdx:null, dur:1,
+  zoom:1,           // facteur de zoom (1 = vue complète)
+  viewStart:0,      // ratio début de la vue zoomée
+  viewEnd:1,        // ratio fin de la vue zoomée
+  playing:false, rafId:null,
+  dragging:null,    // 'in' | 'out' | null
+  audio:null
+};
+
+// Format ms précis
+function fmtMs3(s){
+  if(!isFinite(s)||s<0) s=0;
+  const mm=Math.floor(s/60), ss=Math.floor(s%60), ms=Math.round((s%1)*1000);
+  return String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0')+'.'+String(ms).padStart(3,'0');
+}
 
 function wvModalOpen(wvId, diffIdx, trackIdx){
   const d=D[diffIdx]; if(!d) return;
   const t=d.tracks[trackIdx]; if(!t||!t.file) return;
-  const dur=d.durs[trackIdx]||1;
-  _wvModal={diffIdx,trackIdx,wvId,dur,dragging:null,playing:false};
+  const dur=d.durs[trackIdx]||0; if(!dur) return;
 
-  // Titre
-  document.getElementById('wv-modal-title').textContent=t.title;
+  _wvModal.diffIdx=diffIdx;
+  _wvModal.trackIdx=trackIdx;
+  _wvModal.dur=dur;
+  _wvModal.zoom=1;
+  _wvModal.viewStart=0;
+  _wvModal.viewEnd=1;
+  _wvModal.playing=false;
+  _wvModal.dragging=null;
+  _wvModal.audio=d.audios[trackIdx];
 
-  // Canvas principal
-  const cv=document.getElementById('wv-modal-canvas');
-  cv.width=780; cv.height=180;
-  const data=WV_DATA_CACHE[t.file];
-  if(data){ drawWaveformFromData(cv,data,0,1); }
-  else { drawWaveform(cv,t.file).then(()=>wvModalRedraw()); }
-
-  // Overview
-  const zv=document.getElementById('wv-modal-zoom');
-  zv.width=780; zv.height=36;
-  if(data) drawWaveformFromData(zv,data,0,1);
-
-  // Timecodes initiaux
-  _wvModalUpdateTC();
-
-  // Poignées
-  _wvModalUpdateHandles();
-
-  // Inputs
-  document.getElementById('wv-modal-in-input').value=t.inCue.toFixed(3);
-  document.getElementById('wv-modal-out-input').value=(t.outCue??dur).toFixed(3);
-
+  document.getElementById('wv-modal-title').textContent=t.title||'—';
+  document.getElementById('wv-modal-file-dur').textContent=fmtFull(dur);
   document.getElementById('wv-modal').classList.add('open');
-  _wvModalBindDrag();
-  _wvModalVULoop();
-}
 
-function _wvModalUpdateTC(){
-  const d=D[_wvModal.diffIdx]; if(!d) return;
-  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
-  const dur=_wvModal.dur;
-  const inT=t.inCue||0;
-  const outT=t.outCue??dur;
-  const selDur=Math.max(0,outT-inT);
-  // Position de l'audio si en lecture
-  const audio=d.audios[_wvModal.trackIdx];
-  const pos=audio?audio.currentTime:inT;
-  const rem=Math.max(0,outT-pos);
-  const tc=s=>{const ms=Math.round((s%1)*1000);const sec=Math.floor(s%60);const min=Math.floor(s/60);return fmt2(min)+':'+fmt2(sec)+'.'+String(ms).padStart(3,'0');};
-  const el=id=>document.getElementById(id);
-  if(el('wvm-tc-pos'))  el('wvm-tc-pos').textContent  = tc(pos);
-  if(el('wvm-tc-in'))   el('wvm-tc-in').textContent   = tc(inT);
-  if(el('wvm-tc-out'))  el('wvm-tc-out').textContent  = tc(outT);
-  if(el('wvm-tc-dur'))  el('wvm-tc-dur').textContent  = tc(selDur);
-  if(el('wvm-tc-rem'))  el('wvm-tc-rem').textContent  = tc(rem);
-  if(el('wvm-tc-total')) el('wvm-tc-total').textContent = tc(dur);
-  // data-tc sur les poignées
-  const inH=document.getElementById('wv-modal-in');
-  const outH=document.getElementById('wv-modal-out');
-  if(inH)  inH.setAttribute('data-tc',  'IN  '+tc(inT));
-  if(outH) outH.setAttribute('data-tc', 'OUT '+tc(outT));
-}
-
-// VU loop dans le modal (lecture de l'audio en preview)
-let _wvModalVUFrame=null;
-function _wvModalVULoop(){
-  if(_wvModalVUFrame) cancelAnimationFrame(_wvModalVUFrame);
-  const step=()=>{
-    if(!document.getElementById('wv-modal').classList.contains('open')) return;
-    _wvModalVUFrame=requestAnimationFrame(step);
-    _wvModalUpdateTC();
-    // VU depuis l'analyseur du diffuseur si disponible
-    const diffIdx=_wvModal.diffIdx;
-    const vuSrc=diffIdx===0?vu1:diffIdx===1?vuD2:diffIdx===6?vuTx:null;
-    const barL=document.getElementById('wvm-vu-L');
-    const barR=document.getElementById('wvm-vu-R');
-    if(vuSrc&&barL&&barR){
-      const rL=getRMS(vuSrc.aL),rR=getRMS(vuSrc.aR);
-      const pctL=Math.min(100,Math.max(0,((Math.max(-60,rL>0?20*Math.log10(rL):-60)+60)/60)*100));
-      const pctR=Math.min(100,Math.max(0,((Math.max(-60,rR>0?20*Math.log10(rR):-60)+60)/60)*100));
-      barL.style.width=pctL+'%';
-      barR.style.width=pctR+'%';
-    }
-    // Playhead
-    const d=D[_wvModal.diffIdx]; if(!d) return;
-    const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
-    const audio=d.audios[_wvModal.trackIdx];
-    if(audio&&!audio.paused){
-      const pct=(audio.currentTime/_wvModal.dur)*100;
-      const ph=document.getElementById('wv-modal-ph');
-      if(ph){ph.style.display='block';ph.style.left=pct+'%';}
-    }
-  };
-  _wvModalVUFrame=requestAnimationFrame(step);
-}
-
-function wvModalPlayPause(){
-  const d=D[_wvModal.diffIdx]; if(!d) return;
-  const audio=d.audios[_wvModal.trackIdx]; if(!audio) return;
-  const btn=document.getElementById('wvm-play-btn');
-  if(audio.paused){
-    if(audio.currentTime<(d.tracks[_wvModal.trackIdx]?.inCue||0)||
-       audio.currentTime>=(d.tracks[_wvModal.trackIdx]?.outCue??_wvModal.dur)){
-      audio.currentTime=d.tracks[_wvModal.trackIdx]?.inCue||0;
-    }
-    audio.play().catch(e=>console.warn(e));
-    if(btn){btn.textContent='⏸';btn.classList.add('green');}
-  }else{
-    audio.pause();
-    if(btn){btn.textContent='▶';btn.classList.remove('green');}
+  // Dessiner dès que les données waveform sont dispo
+  if(WV_DATA_CACHE[t.file]){
+    wvModalRedraw();
+  } else {
+    drawWaveform(document.createElement('canvas'), t.file).then(()=>wvModalRedraw());
   }
-}
-function wvModalStop(){
-  const d=D[_wvModal.diffIdx]; if(!d) return;
-  const audio=d.audios[_wvModal.trackIdx]; if(!audio) return;
-  audio.pause();
-  audio.currentTime=d.tracks[_wvModal.trackIdx]?.inCue||0;
-  const btn=document.getElementById('wvm-play-btn');
-  if(btn){btn.textContent='▶';btn.classList.remove('green');}
-  const ph=document.getElementById('wv-modal-ph');
-  if(ph) ph.style.display='none';
-}
-function wvModalGoIn(){
-  const d=D[_wvModal.diffIdx]; if(!d) return;
-  const audio=d.audios[_wvModal.trackIdx]; if(!audio) return;
-  audio.currentTime=d.tracks[_wvModal.trackIdx]?.inCue||0;
-}
-function wvModalGoOut(){
-  const d=D[_wvModal.diffIdx]; if(!d) return;
-  const audio=d.audios[_wvModal.trackIdx]; if(!audio) return;
-  const t=d.tracks[_wvModal.trackIdx];
-  audio.currentTime=Math.max(0,(t?.outCue??_wvModal.dur)-1);
+  _wvModalBindDrag();
+  _wvModalUpdateTC();
+  _wvModalStartRAF();
 }
 
 function wvModalClose(){
   wvModalStop();
+  if(_wvModal.rafId){cancelAnimationFrame(_wvModal.rafId);_wvModal.rafId=null;}
   document.getElementById('wv-modal').classList.remove('open');
-  if(_wvModalVUFrame){cancelAnimationFrame(_wvModalVUFrame);_wvModalVUFrame=null;}
-  _wvModal={diffIdx:null,trackIdx:null,wvId:null,dur:1,dragging:null};
 }
 
+function wvModalApply(){
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  const inVal=parseFloat(document.getElementById('wv-modal-in-input').value)||0;
+  const outVal=parseFloat(document.getElementById('wv-modal-out-input').value)||_wvModal.dur;
+  t.inCue=Math.max(0,Math.min(inVal,outVal-0.01));
+  t.outCue=Math.min(_wvModal.dur,Math.max(outVal,t.inCue+0.01));
+  d.render();
+  wvModalClose();
+}
+
+// ── Rendu waveform ──
 function wvModalRedraw(){
   const d=D[_wvModal.diffIdx]; if(!d) return;
   const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
   const dur=_wvModal.dur;
   const data=WV_DATA_CACHE[t.file]; if(!data) return;
-  const inR=t.inCue/dur;
-  const outR=(t.outCue??dur)/dur;
-  const pad=0.04;
-  const s=Math.max(0,inR-pad);
-  const e=Math.min(1,outR+pad);
+
   const cv=document.getElementById('wv-modal-canvas');
-  drawWaveformFromData(cv,data,s,e);
-  // Zoom region sur le mini
-  const zr=document.getElementById('wv-modal-zoom-region');
-  if(zr){ zr.style.left=(s*100)+'%'; zr.style.width=((e-s)*100)+'%'; }
-  _wvModalUpdateHandles(s,e);
+  if(!cv) return;
+  cv.width=cv.offsetWidth||900; cv.height=180;
+  drawWaveformFromData(cv, data, _wvModal.viewStart, _wvModal.viewEnd);
+
+  // Overview
+  const oz=document.getElementById('wv-modal-zoom');
+  if(oz){ oz.width=oz.offsetWidth||900; oz.height=36; drawWaveformFromData(oz,data,0,1); }
+
+  _wvModalUpdateHandles();
+  _wvModalUpdateOverview();
   _wvModalUpdateTC();
 }
 
-function _wvModalUpdateHandles(startR=0,endR=1){
+// ── Mise à jour poignées IN/OUT dans la vue zoomée ──
+function _wvModalUpdateHandles(){
   const d=D[_wvModal.diffIdx]; if(!d) return;
   const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
   const dur=_wvModal.dur;
-  const range=endR-startR;
-  const inPct=range>0?((t.inCue/dur-startR)/range*100).toFixed(2):0;
-  const outPct=range>0?(((t.outCue??dur)/dur-startR)/range*100).toFixed(2):100;
+  const vs=_wvModal.viewStart, ve=_wvModal.viewEnd, range=ve-vs||0.001;
+
+  const inR=((t.inCue||0)/dur - vs)/range;
+  const outR=((t.outCue||dur)/dur - vs)/range;
+
   const inH=document.getElementById('wv-modal-in');
   const outH=document.getElementById('wv-modal-out');
   const pre=document.getElementById('wv-modal-pre');
   const post=document.getElementById('wv-modal-post');
-  if(inH) inH.style.left=Math.max(0,Math.min(98,inPct))+'%';
-  if(outH) outH.style.left=Math.max(0,Math.min(98,outPct))+'%';
-  if(pre) pre.style.width=Math.max(0,inPct)+'%';
-  if(post) post.style.left=Math.max(0,outPct)+'%';
-  // Stocker pour le drag
-  _wvModal._startR=startR; _wvModal._endR=endR;
+
+  if(inH){ inH.style.left=(Math.min(1,Math.max(0,inR))*100).toFixed(2)+'%'; }
+  if(outH){ outH.style.left=(Math.min(1,Math.max(0,outR))*100).toFixed(2)+'%'; }
+  if(pre){ pre.style.width=(Math.max(0,Math.min(100,inR*100)).toFixed(2))+'%'; }
+  if(post){ post.style.left=(Math.max(0,Math.min(100,outR*100)).toFixed(2))+'%'; }
+
   // Inputs
-  document.getElementById('wv-modal-in-input').value=t.inCue.toFixed(3);
-  document.getElementById('wv-modal-out-input').value=(t.outCue??_wvModal.dur).toFixed(3);
+  const inInput=document.getElementById('wv-modal-in-input');
+  const outInput=document.getElementById('wv-modal-out-input');
+  if(inInput && document.activeElement!==inInput) inInput.value=(t.inCue||0).toFixed(3);
+  if(outInput && document.activeElement!==outInput) outInput.value=(t.outCue||dur).toFixed(3);
 }
 
-function _wvModalBindDrag(){
-  const wrap=document.getElementById('wv-modal-wrap');
-  const inH=document.getElementById('wv-modal-in');
-  const outH=document.getElementById('wv-modal-out');
+// ── Overview : région zoomée + IN/OUT + playhead ──
+function _wvModalUpdateOverview(){
+  const zr=document.getElementById('wv-modal-zoom-region');
+  const inOv=document.getElementById('wv-modal-in-ov');
+  const outOv=document.getElementById('wv-modal-out-ov');
+  if(zr){zr.style.left=(_wvModal.viewStart*100).toFixed(2)+'%';zr.style.width=((_wvModal.viewEnd-_wvModal.viewStart)*100).toFixed(2)+'%';}
 
-  const move=(type,clientX)=>{
-    const rect=wrap.getBoundingClientRect();
-    const pct=Math.min(1,Math.max(0,(clientX-rect.left)/rect.width));
-    const d=D[_wvModal.diffIdx]; if(!d) return;
-    const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
-    const dur=_wvModal.dur;
-    const sR=_wvModal._startR||0;
-    const eR=_wvModal._endR||1;
-    const realPct=sR+pct*(eR-sR);
-    const realTime=realPct*dur;
-    if(type==='in'){
-      t.inCue=Math.min(realTime,(t.outCue??dur)-0.05);
-      t.inCue=Math.max(0,t.inCue);
-    } else {
-      t.outCue=Math.max(realTime,t.inCue+0.05);
-      t.outCue=Math.min(dur,t.outCue);
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  const dur=_wvModal.dur;
+  if(inOv) inOv.style.left=((t.inCue||0)/dur*100).toFixed(2)+'%';
+  if(outOv) outOv.style.left=((t.outCue||dur)/dur*100).toFixed(2)+'%';
+}
+
+// ── Timecodes ──
+function _wvModalUpdateTC(){
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  const audio=_wvModal.audio;
+  const pos=audio?audio.currentTime:0;
+  const inCue=t.inCue||0, outCue=t.outCue||_wvModal.dur;
+  document.getElementById('wvm-tc-pos').textContent=fmtMs3(pos);
+  document.getElementById('wvm-tc-in').textContent=fmtMs3(inCue);
+  document.getElementById('wvm-tc-out').textContent=fmtMs3(outCue);
+  document.getElementById('wvm-tc-dur').textContent=fmtMs3(outCue-inCue);
+  document.getElementById('wvm-tc-rem').textContent=fmtMs3(Math.max(0,outCue-pos));
+  document.getElementById('wvm-tc-total').textContent=fmtMs3(_wvModal.dur);
+
+  // Playhead dans la vue zoomée
+  const vs=_wvModal.viewStart, ve=_wvModal.viewEnd, range=ve-vs||0.001;
+  const posR=(pos/_wvModal.dur - vs)/range;
+  const ph=document.getElementById('wv-modal-ph');
+  if(ph){
+    const visible=posR>=0&&posR<=1;
+    ph.style.display=visible?'block':'none';
+    if(visible) ph.style.left=(posR*100).toFixed(2)+'%';
+  }
+  // Playhead overview
+  const phOv=document.getElementById('wv-modal-ph-ov');
+  if(phOv) phOv.style.left=(pos/_wvModal.dur*100).toFixed(2)+'%';
+
+  // VU
+  if(_wvModal.audio && !_wvModal.audio.paused){
+    // chercher un analyseur existant pour ce diffuseur
+    const vuSrc=vu1&&_wvModal.diffIdx===0?vu1:vuD2&&_wvModal.diffIdx===1?vuD2:null;
+    if(vuSrc){
+      const rL=getRMS(vuSrc.aL),rR=getRMS(vuSrc.aR);
+      const barL=document.getElementById('wvm-vu-L'),barR=document.getElementById('wvm-vu-R');
+      if(barL) barL.style.width=Math.min(100,Math.max(0,(rL+1)*80)).toFixed(1)+'%';
+      if(barR) barR.style.width=Math.min(100,Math.max(0,(rR+1)*80)).toFixed(1)+'%';
     }
-    wvModalRedraw();
-    // Sync waveform dans la playlist
-    const wvId=_wvModal.wvId;
-    const dur2=dur;
-    const inPct=(t.inCue/dur2*100).toFixed(1);
-    const outPct=Math.min(98,(t.outCue??dur2)/dur2*100).toFixed(1);
-    const hdIn=document.getElementById(wvId+'-in');
-    const hdOut=document.getElementById(wvId+'-out');
-    const pr=document.getElementById(wvId+'-pre');
-    const po=document.getElementById(wvId+'-post');
-    const lIn=document.getElementById(wvId+'-inlbl');
-    const lOut=document.getElementById(wvId+'-outlbl');
-    if(hdIn)hdIn.style.left=inPct+'%';
-    if(hdOut)hdOut.style.left=outPct+'%';
-    if(pr)pr.style.width=inPct+'%';
-    if(po)po.style.left=outPct+'%';
-    if(lIn)lIn.textContent='IN '+fmtMs(t.inCue);
-    if(lOut)lOut.textContent='OUT '+fmtMs(t.outCue??dur2);
-  };
-
-  inH._wvBound=true;
-  ['in','out'].forEach(type=>{
-    const el=type==='in'?inH:outH;
-    if(el._wvBound&&el._wvBound!==true) return;
-    el._wvBound='done';
-    el.addEventListener('mousedown',e=>{e.stopPropagation();_wvModal.dragging=type;});
-    el.addEventListener('touchstart',e=>{e.stopPropagation();_wvModal.dragging=type;},{passive:true});
-  });
-  // Listeners globaux (une seule fois)
-  if(!window._wvModalListeners){
-    window._wvModalListeners=true;
-    document.addEventListener('mousemove',e=>{if(_wvModal.dragging)move(_wvModal.dragging,e.clientX);});
-    document.addEventListener('mouseup',()=>{_wvModal.dragging=null;});
-    document.addEventListener('touchmove',e=>{if(_wvModal.dragging)move(_wvModal.dragging,e.touches[0].clientX);},{passive:true});
-    document.addEventListener('touchend',()=>{_wvModal.dragging=null;});
   }
 }
 
-function wvModalSetIn(){
+// ── RAF loop pour timecodes en temps réel ──
+function _wvModalStartRAF(){
+  if(_wvModal.rafId) cancelAnimationFrame(_wvModal.rafId);
+  const loop=()=>{
+    if(!document.getElementById('wv-modal').classList.contains('open')) return;
+    _wvModalUpdateTC();
+    _wvModal.rafId=requestAnimationFrame(loop);
+  };
+  _wvModal.rafId=requestAnimationFrame(loop);
+}
+
+// ── Drag des lignes IN/OUT ──
+function _wvModalBindDrag(){
+  const wrap=document.getElementById('wv-modal-wrap');
+  if(!wrap||wrap._bound) return;
+  wrap._bound=true;
+
+  const getPos=(clientX)=>{
+    const rect=wrap.getBoundingClientRect();
+    return Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
+  };
+
+  wrap.addEventListener('mousedown',e=>{
+    const role=e.target.dataset.role;
+    if(role==='in'||role==='out'){
+      _wvModal.dragging=role;
+      e.preventDefault();
+    } else if(e.shiftKey){
+      // Shift+clic = poser IN
+      _wvModal.dragging='in_click';
+      wvModalSetInFromRatio(getPos(e.clientX));
+    } else if(e.altKey){
+      // Alt+clic = poser OUT
+      _wvModal.dragging='out_click';
+      wvModalSetOutFromRatio(getPos(e.clientX));
+    } else {
+      // Clic simple = seek
+      const ratio=getPos(e.clientX);
+      const globalR=_wvModal.viewStart+ratio*(_wvModal.viewEnd-_wvModal.viewStart);
+      const sec=globalR*_wvModal.dur;
+      if(_wvModal.audio) _wvModal.audio.currentTime=sec;
+    }
+  });
+
+  document.addEventListener('mousemove',e=>{
+    if(!_wvModal.dragging||_wvModal.dragging==='in_click'||_wvModal.dragging==='out_click') return;
+    const ratio=getPos(e.clientX);
+    const globalR=_wvModal.viewStart+ratio*(_wvModal.viewEnd-_wvModal.viewStart);
+    if(_wvModal.dragging==='in') wvModalSetInFromRatio(globalR);
+    else wvModalSetOutFromRatio(globalR);
+  });
+
+  document.addEventListener('mouseup',()=>{ _wvModal.dragging=null; });
+}
+
+function wvModalSetInFromRatio(r){
   const d=D[_wvModal.diffIdx]; if(!d) return;
   const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
-  const v=parseFloat(document.getElementById('wv-modal-in-input').value);
-  if(isNaN(v)) return;
-  t.inCue=Math.max(0,Math.min(v,(t.outCue??_wvModal.dur)-0.05));
+  t.inCue=Math.max(0,Math.min(r*_wvModal.dur,(t.outCue||_wvModal.dur)-0.01));
+  _wvModalUpdateHandles();
+  _wvModalUpdateTC();
+}
+function wvModalSetOutFromRatio(r){
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  t.outCue=Math.min(_wvModal.dur,Math.max(r*_wvModal.dur,(t.inCue||0)+0.01));
+  _wvModalUpdateHandles();
+  _wvModalUpdateTC();
+}
+
+// ── Zoom ──
+function wvModalZoomChange(val){
+  const z=parseFloat(val);
+  _wvModal.zoom=z;
+  document.getElementById('wv-modal-zoom-val').textContent='×'+z.toFixed(1);
+  // Centrer la vue sur la position courante
+  const audio=_wvModal.audio;
+  const centerR=audio?audio.currentTime/_wvModal.dur:0.5;
+  const half=1/(2*z);
+  _wvModal.viewStart=Math.max(0,centerR-half);
+  _wvModal.viewEnd=Math.min(1,_wvModal.viewStart+1/z);
+  if(_wvModal.viewEnd>1){_wvModal.viewEnd=1;_wvModal.viewStart=Math.max(0,1-1/z);}
   wvModalRedraw();
 }
-function wvModalSetOut(){
+function wvModalZoomFull(){
+  _wvModal.zoom=1;_wvModal.viewStart=0;_wvModal.viewEnd=1;
+  document.getElementById('wv-modal-zoom-range').value=1;
+  document.getElementById('wv-modal-zoom-val').textContent='×1.0';
+  wvModalRedraw();
+}
+function wvModalZoomToOut(){
+  // Zoomer sur les 20s avant le OUT
   const d=D[_wvModal.diffIdx]; if(!d) return;
   const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
-  const v=parseFloat(document.getElementById('wv-modal-out-input').value);
-  if(isNaN(v)) return;
-  t.outCue=Math.min(_wvModal.dur,Math.max(v,t.inCue+0.05));
+  const outCue=t.outCue||_wvModal.dur;
+  const winSec=20;
+  const s=Math.max(0,(outCue-winSec)/_wvModal.dur);
+  const e=Math.min(1,(outCue+2)/_wvModal.dur);
+  _wvModal.viewStart=s; _wvModal.viewEnd=e;
+  const z=1/(e-s); _wvModal.zoom=z;
+  document.getElementById('wv-modal-zoom-range').value=Math.min(50,z).toFixed(1);
+  document.getElementById('wv-modal-zoom-val').textContent='×'+z.toFixed(1);
   wvModalRedraw();
+}
+
+// ── Seek overview ──
+function wvModalOverviewSeek(e){
+  const wrap=document.getElementById('wv-modal-overview-wrap');
+  const rect=wrap.getBoundingClientRect();
+  const r=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+  const sec=r*_wvModal.dur;
+  if(_wvModal.audio) _wvModal.audio.currentTime=sec;
+  // Centrer la vue sur ce point
+  const half=(_wvModal.viewEnd-_wvModal.viewStart)/2;
+  _wvModal.viewStart=Math.max(0,r-half);
+  _wvModal.viewEnd=Math.min(1,_wvModal.viewStart+half*2);
+  wvModalRedraw();
+}
+
+// ── Saisie précise ──
+function wvModalSetIn(){
+  const v=parseFloat(document.getElementById('wv-modal-in-input').value);
+  if(!isFinite(v)) return;
+  wvModalSetInFromRatio(v/_wvModal.dur);
+}
+function wvModalSetOut(){
+  const v=parseFloat(document.getElementById('wv-modal-out-input').value);
+  if(!isFinite(v)) return;
+  wvModalSetOutFromRatio(v/_wvModal.dur);
+}
+function wvModalSetInNow(){
+  if(_wvModal.audio) wvModalSetInFromRatio(_wvModal.audio.currentTime/_wvModal.dur);
+}
+function wvModalSetOutNow(){
+  if(_wvModal.audio) wvModalSetOutFromRatio(_wvModal.audio.currentTime/_wvModal.dur);
+}
+
+// ── Nudge (frame-accurate) ──
+function wvModalNudge(deltaSec){
+  if(!_wvModal.audio) return;
+  _wvModal.audio.currentTime=Math.max(0,Math.min(_wvModal.dur,_wvModal.audio.currentTime+deltaSec));
+}
+
+// ── Transport ──
+function wvModalPlayPause(){
+  const audio=_wvModal.audio; if(!audio) return;
+  if(audio.paused){
+    audio.play().catch(e=>console.warn(e));
+    document.getElementById('wvm-play-btn').textContent='⏸';
+    _wvModal.playing=true;
+  } else {
+    audio.pause();
+    document.getElementById('wvm-play-btn').textContent='▶';
+    _wvModal.playing=false;
+  }
+}
+function wvModalStop(){
+  const audio=_wvModal.audio; if(!audio) return;
+  audio.pause(); audio.currentTime=_wvModal.diffIdx!==null?(D[_wvModal.diffIdx]?.tracks[_wvModal.trackIdx]?.inCue||0):0;
+  document.getElementById('wvm-play-btn').textContent='▶';
+  _wvModal.playing=false;
+}
+function wvModalGoIn(){
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  if(_wvModal.audio) _wvModal.audio.currentTime=t.inCue||0;
+}
+function wvModalGoOut(){
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  if(_wvModal.audio) _wvModal.audio.currentTime=Math.max(0,(t.outCue||_wvModal.dur)-2);
 }
 function wvModalReset(){
   const d=D[_wvModal.diffIdx]; if(!d) return;
   const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
   t.inCue=0; t.outCue=_wvModal.dur;
-  _wvModal._startR=0; _wvModal._endR=1;
-  const cv=document.getElementById('wv-modal-canvas');
-  const data=WV_DATA_CACHE[t.file];
-  if(cv&&data) drawWaveformFromData(cv,data,0,1);
-  wvModalRedraw();
+  _wvModalUpdateHandles(); _wvModalUpdateTC();
 }
-function wvModalApply(){
-  // Les changements sont déjà appliqués en temps réel
-  // Re-render la ligne dans la playlist pour mettre les labels à jour
+
+// Auto-zoom dans l'éditeur quand lecture s'approche du OUT
+function _wvModalAutoZoom(){
+  if(!document.getElementById('wv-modal').classList.contains('open')) return;
+  if(!_wvModal.audio||_wvModal.audio.paused) return;
   const d=D[_wvModal.diffIdx]; if(!d) return;
-  d.render();
-  wvModalClose();
-}
-// Fermer en cliquant sur l'overlay
-document.getElementById('wv-modal').addEventListener('click',e=>{
-  if(e.target===document.getElementById('wv-modal')) wvModalClose();
-});
-
-setTimeout(bindMacroDropZones,500);
-
-// ══════════════════════════════════════════════════════════════
-// SYSTÈME DE PLAYLISTS PERSISTANTES
-// ══════════════════════════════════════════════════════════════
-// Structure sauvegardée dans localStorage :
-// PL_STORAGE_KEY → [ { id, name, tracks:[{title,dur,inCue,outCue,color,fileRef}] } ]
-// fileRef = null (fichier à restaurer) ou blob URL (session courante)
-
-const PL_STORAGE_KEY = 'radio_playlists_v1';
-const DIFF_LABELS_PL = ['DIFF 1','DIFF 2','PUB SAT','PUB DAB+','PUB Hz','NATIONAL'];
-
-var playlists = [];          // tableau en mémoire
-let plPendingRestore = null; // index playlist en attente de restauration
-
-// ── Charger depuis localStorage ──
-function plLoad(){
-  try{
-    const raw = localStorage.getItem(PL_STORAGE_KEY);
-    playlists = raw ? JSON.parse(raw) : [];
-  }catch(e){ playlists = []; }
-}
-
-// ── Sauvegarder ──
-function plSave(){
-  // Ne sauvegarder que les métadonnées (pas les blob URLs qui ne survivent pas)
-  const toSave = playlists.map(pl=>({
-    ...pl,
-    tracks: pl.tracks.map(t=>({ title:t.title, dur:t.dur||0, inCue:t.inCue||0, outCue:t.outCue||null, color:t.color||'#1a6b3a', fileRef:null }))
-  }));
-  localStorage.setItem(PL_STORAGE_KEY, JSON.stringify(toSave));
-}
-
-// ── Générer un ID unique ──
-function plGenId(){ return 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
-
-// ── Créer une playlist ──
-function plCreate(){
-  const input = document.getElementById('pl-new-name');
-  const name = (input.value||'').trim() || 'Playlist ' + (playlists.length+1);
-  input.value = '';
-  playlists.push({ id:plGenId(), name, tracks:[], open:true });
-  plSave();
-  plRender();
-}
-
-// ── Supprimer une playlist ──
-function plDelete(id){
-  if(!confirm('Supprimer cette playlist ?')) return;
-  playlists = playlists.filter(p=>p.id!==id);
-  plSave(); plRender();
-}
-
-// ── Renommer ──
-function plRename(id, newName){
-  const pl = playlists.find(p=>p.id===id);
-  if(pl){ pl.name=newName.trim()||pl.name; plSave(); plRender(); }
-}
-
-// ── Toggle collapsed ──
-function plToggle(id){
-  const pl = playlists.find(p=>p.id===id);
-  if(pl){ pl.open=!pl.open; plRender(); }
-}
-
-// ── Supprimer une piste d'une playlist ──
-function plRemoveTrack(plId, ti){
-  const pl = playlists.find(p=>p.id===plId);
-  if(pl){ pl.tracks.splice(ti,1); plSave(); plRender(); }
-}
-
-// ── Monter / Descendre une piste ──
-function plMoveTrack(plId, ti, dir){
-  const pl = playlists.find(p=>p.id===plId);
-  if(!pl) return;
-  const ni = ti + dir;
-  if(ni<0||ni>=pl.tracks.length) return;
-  [pl.tracks[ti], pl.tracks[ni]] = [pl.tracks[ni], pl.tracks[ti]];
-  plSave(); plRender();
-}
-
-// ── Ajouter des fichiers à une playlist ──
-function plAddFiles(files, plId){
-  const pl = playlists.find(p=>p.id===plId);
-  if(!pl) return;
-  Array.from(files).filter(f=>f.type.startsWith('audio/')).forEach(f=>{
-    const blobUrl = URL.createObjectURL(f);
-    pl.tracks.push({
-      title: f.name.replace(/\.[^/.]+$/,''),
-      dur: 0,
-      inCue: 0, outCue: null,
-      color: COLORS[pl.tracks.length % COLORS.length],
-      fileRef: blobUrl,
-      _file: f   // référence temporaire pour durée
-    });
-    // Lire la durée
-    const a = new Audio(blobUrl);
-    a.addEventListener('loadedmetadata', ()=>{
-      const t = pl.tracks.find(tr=>tr.fileRef===blobUrl);
-      if(t){ t.dur=a.duration; plSave(); plRender(); }
-    });
-  });
-  plSave(); plRender();
-}
-
-// ── Envoyer une playlist dans un diffuseur ──
-function plSendToDiff(plId, diffIdx){
-  const pl = playlists.find(p=>p.id===plId);
-  if(!pl||!pl.tracks.length){ alert('Playlist vide.'); return; }
-  // Vérifier que tous les fichiers sont disponibles (fileRef non null)
-  const missing = pl.tracks.filter(t=>!t.fileRef);
-  if(missing.length){
-    alert(missing.length + ' fichier(s) non chargé(s). Clique sur "RESTAURER LES FICHIERS" pour les recharger.');
-    plPendingRestore = plId;
-    document.getElementById('pl-restore-btn').style.display='inline-block';
-    return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  const pos=_wvModal.audio.currentTime;
+  const outCue=t.outCue||_wvModal.dur;
+  const rem=outCue-pos;
+  if(rem<=20 && rem>0 && _wvModal.zoom<3){
+    wvModalZoomToOut();
   }
-  // Injecter dans le diffuseur
-  const d = D[diffIdx];
-  const cfg = CONFIGS[diffIdx];
-  const newTracks = pl.tracks.map(t=>({
-    file: t.fileRef,
-    title: t.title,
-    color: t.color,
-    inCue: t.inCue||0,
-    outCue: t.outCue||null
-  }));
-  cfg.tracks = [...cfg.tracks, ...newTracks];
-  const total = cfg.tracks.length;
-  const fdzEl = document.getElementById(cfg.fdzCount);
-  if(fdzEl) fdzEl.textContent = total+' fichier'+(total>1?'s':'');
-  d.addTracks(newTracks);
-  // Feedback
-  alert('✓ ' + pl.tracks.length + ' pistes envoyées dans ' + DIFF_LABELS_PL[diffIdx]);
 }
-
-// ── Restaurer les fichiers après rechargement ──
-function plRestoreFiles(files){
-  const fileMap = {};
-  Array.from(files).forEach(f=>{ fileMap[f.name.replace(/\.[^/.]+$/,'')] = f; });
-  const target = plPendingRestore ? [playlists.find(p=>p.id===plPendingRestore)].filter(Boolean) : playlists;
-  let restored=0, missing=0;
-  target.forEach(pl=>{
-    pl.tracks.forEach(t=>{
-      if(t.fileRef) return; // déjà ok
-      const f = fileMap[t.title];
-      if(f){
-        t.fileRef = URL.createObjectURL(f);
-        const a = new Audio(t.fileRef);
-        a.addEventListener('loadedmetadata',()=>{ t.dur=a.duration; plSave(); plRender(); });
-        restored++;
-      } else { missing++; }
-    });
-  });
-  plPendingRestore = null;
-  document.getElementById('pl-restore-btn').style.display = 'none';
-  plSave(); plRender();
-  if(missing) alert(restored+' fichier(s) restauré(s), '+missing+' introuvable(s) (nom différent ?).');
-}
-
-// ── Vérifier si des fichiers manquent (au chargement) ──
-function plCheckMissing(){
-  const hasMissing = playlists.some(pl=>pl.tracks.some(t=>!t.fileRef));
-  document.getElementById('pl-restore-btn').style.display = hasMissing ? 'inline-block' : 'none';
-}
-
-// ── Rendu HTML ──
-function plRender(){
-  const container = document.getElementById('pl-list');
-  if(!container) return;
-  if(!playlists.length){
-    container.innerHTML = '<p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px">Aucune playlist. Crée-en une ci-dessus.</p>';
-    return;
-  }
-  container.innerHTML = playlists.map(pl=>{
-    const missingCount = pl.tracks.filter(t=>!t.fileRef).length;
-    const tracksHtml = pl.tracks.map((t,i)=>`
-      <div class="pl-track-row${t.fileRef?'':' missing'}">
-        <span class="pl-track-num">${i+1}</span>
-        <div class="color-bar" style="background:${t.color};width:3px;height:14px;border-radius:1px;flex-shrink:0"></div>
-        <span class="pl-track-title" title="${t.title}">${t.fileRef?'':' ⚠ '}${t.title}</span>
-        <span class="pl-track-dur">${t.dur?fmtFull(t.dur):'--:--'}</span>
-        <button class="pl-track-del" onclick="plMoveTrack('${pl.id}',${i},-1)" title="Monter">↑</button>
-        <button class="pl-track-del" onclick="plMoveTrack('${pl.id}',${i},+1)" title="Descendre">↓</button>
-        <button class="pl-track-del" onclick="plRemoveTrack('${pl.id}',${i})" title="Supprimer">✕</button>
-      </div>`).join('');
-
-    const sendBtns = DIFF_LABELS_PL.map((lbl,i)=>
-      `<button class="pl-btn send" onclick="plSendToDiff('${pl.id}',${i})">→ ${lbl}</button>`
-    ).join('');
-
-    const inputId = 'pl-file-input-'+pl.id;
-    const dropId  = 'pl-drop-'+pl.id;
-
-    return `<div class="pl-card${pl.open?'':' pl-collapsed'}" id="plcard-${pl.id}">
-  <div class="pl-card-header" onclick="plToggle('${pl.id}')">
-    <span class="pl-chevron">▾</span>
-    <span class="pl-name" ondblclick="event.stopPropagation();plStartRename('${pl.id}',this)" title="Double-clic pour renommer">${pl.name}</span>
-    <span class="pl-count">${pl.tracks.length} piste${pl.tracks.length!==1?'s':''} ${missingCount?'<span style="color:var(--red)">· '+missingCount+' manquant(s)</span>':''}</span>
-    <div class="pl-actions" onclick="event.stopPropagation()">
-      <button class="pl-btn" onclick="plExport('${pl.id}')">⬇ JSON</button>
-      <button class="pl-btn danger" onclick="plDelete('${pl.id}')">✕ SUPPR.</button>
-    </div>
-  </div>
-  <div class="pl-body">
-    ${pl.tracks.length ? tracksHtml : '<p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:4px 0">Aucune piste. Glisse des fichiers ci-dessous.</p>'}
-    <input type="file" id="${inputId}" multiple accept="audio/*" style="display:none"
-      onchange="plAddFiles(this.files,'${pl.id}')">
-    <div class="pl-drop-zone" id="${dropId}"
-      onclick="document.getElementById('${inputId}').click()"
-      ondragover="event.preventDefault();this.classList.add('drag-over')"
-      ondragleave="this.classList.remove('drag-over')"
-      ondrop="event.preventDefault();this.classList.remove('drag-over');plAddFiles(event.dataTransfer.files,'${pl.id}')">
-      ⊕ Ajouter des fichiers audio
-    </div>
-    <div class="pl-send-row">
-      <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;align-self:center">ENVOYER DANS →</span>
-      ${sendBtns}
-    </div>
-  </div>
-</div>`;
-  }).join('');
-}
-
-// ── Renommer inline (double-clic) ──
-function plStartRename(id, el){
-  const oldName = el.textContent;
-  const inp = document.createElement('input');
-  inp.className = 'pl-name-edit';
-  inp.value = oldName;
-  el.replaceWith(inp);
-  inp.focus(); inp.select();
-  const done=()=>{ plRename(id, inp.value||oldName); };
-  inp.onblur = done;
-  inp.onkeydown = e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){inp.value=oldName;inp.blur();} };
-}
-
-// ── Export JSON ──
-function plExport(id){
-  const pl = playlists.find(p=>p.id===id);
-  if(!pl) return;
-  const data = { ...pl, tracks: pl.tracks.map(({title,dur,inCue,outCue,color})=>({title,dur,inCue,outCue,color})) };
-  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = pl.name.replace(/[^a-z0-9]/gi,'_')+'.json';
-  a.click();
-}
-
-// ── Init ──
-function plInit(){
-  plLoad();
-  plCheckMissing();
-  plRender();
-}
-// plInit() appelé depuis _onReady
-
-// switchTab unifié ci-dessus
-
-// ══════════════════════════════════════════════════════════════
-// PIGE — Enregistrement simultané des 3 départs
-// ══════════════════════════════════════════════════════════════
-const PIGE_DEPS=['sat','dab','hz'];
-let pigeRecording=false;
-let pigeStartTime=null, pigeTimerInterval=null;
-let pigeRecords=[];
-
-// Un état par départ
-const pigeState={};
-PIGE_DEPS.forEach(dep=>{
-  pigeState[dep]={
-    mediaRecorder:null, chunks:[], analyser:null, dest:null,
-    animFrame:null, liveData:[]
-  };
-});
-
-// Démarrer / arrêter tous les enregistrements
-async function pigeToggleRec(){
-  if(!pigeRecording){ await pigeStart(); }
-  else { pigeStop(); }
-}
-
-async function pigeStart(){
-  const ctx=getCtx();
-  let anyOk=false;
-
-  for(const dep of PIGE_DEPS){
-    const mn=MON_GAINS[dep];
-    if(!mn) continue; // départ pas encore actif, on skip
-
-    const st=pigeState[dep];
-
-    // Nœud de capture INDÉPENDANT du gain d'écoute — signal toujours plein
-    st.captureGn=ctx.createGain(); st.captureGn.gain.value=1;
-    mn.connect(st.captureGn);
-
-    st.dest=ctx.createMediaStreamDestination();
-    st.captureGn.connect(st.dest);
-
-    // Analyseur pour la waveform live (aussi sur le signal plein)
-    st.analyser=ctx.createAnalyser();
-    st.analyser.fftSize=2048;
-    st.captureGn.connect(st.analyser);
-
-    st.chunks=[];
-    const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ?'audio/webm;codecs=opus':'audio/webm';
-    st.mediaRecorder=new MediaRecorder(st.dest.stream,{mimeType});
-    const capturedDep=dep;
-    st.mediaRecorder.ondataavailable=e=>{ if(e.data.size>0) st.chunks.push(e.data); };
-    st.mediaRecorder.onstop=()=>{
-      mn.disconnect(st.captureGn);
-      st.captureGn=null;
-      st.analyser=null;
-      pigeSaveRecord(capturedDep, st.chunks.slice(), Date.now()-pigeStartTime);
-    };
-    st.mediaRecorder.start(100);
-    anyOk=true;
-
-    const dot=document.getElementById('pige-dot-'+dep);
-    if(dot) dot.classList.add('active');
-  }
-
-  if(!anyOk){ alert('Aucun départ actif. Lance au moins une source.'); return; }
-
-  pigeRecording=true;
-  pigeStartTime=Date.now();
-
-  const btn=document.getElementById('pige-rec-btn');
-  if(btn){btn.textContent='⏹ STOP';btn.classList.add('recording');}
-  const timer=document.getElementById('pige-timer');
-  if(timer) timer.classList.add('running');
-  pigeTimerInterval=setInterval(()=>{
-    const sec=Math.floor((Date.now()-pigeStartTime)/1000);
-    const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
-    const el=document.getElementById('pige-timer');
-    if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  },500);
-
-  pigeLiveLoop();
-}
-
-function pigeStop(){
-  pigeRecording=false;
-  clearInterval(pigeTimerInterval);
-
-  PIGE_DEPS.forEach(dep=>{
-    const st=pigeState[dep];
-    if(st.mediaRecorder && st.mediaRecorder.state!=='inactive') st.mediaRecorder.stop();
-    else if(st.captureGn){ try{MON_GAINS[dep]&&MON_GAINS[dep].disconnect(st.captureGn);}catch(e){} st.captureGn=null; }
-    if(st.animFrame){cancelAnimationFrame(st.animFrame);st.animFrame=null;}
-    const dot=document.getElementById('pige-dot-'+dep);
-    if(dot) dot.classList.remove('active');
-    const cv=document.getElementById('pige-live-'+dep);
-    if(cv){const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);}
-    const lvl=document.getElementById('pige-level-'+dep);
-    if(lvl) lvl.textContent='—∞ dB';
-  });
-
-  const btn=document.getElementById('pige-rec-btn');
-  if(btn){btn.textContent='⏺ ENREGISTRER';btn.classList.remove('recording');}
-  const timer=document.getElementById('pige-timer');
-  if(timer){timer.classList.remove('running');timer.textContent='00:00:00';}
-}
-
-// Boucle live simultanée pour les 3 canaux
-function pigeLiveLoop(){
-  if(!pigeRecording) return;
-  requestAnimationFrame(pigeLiveLoop);
-  PIGE_DEPS.forEach(dep=>{
-    const st=pigeState[dep];
-    if(!st.analyser) return;
-    const cv=document.getElementById('pige-live-'+dep);
-    if(!cv) return;
-    const W=cv.offsetWidth||800, H=70;
-    cv.width=W; cv.height=H;
-    const c=cv.getContext('2d');
-    const data=new Float32Array(st.analyser.fftSize);
-    st.analyser.getFloatTimeDomainData(data);
-
-    c.fillStyle='#04060e'; c.fillRect(0,0,W,H);
-    c.strokeStyle='rgba(30,50,90,.4)';c.lineWidth=1;
-    c.beginPath();c.moveTo(0,H/2+.5);c.lineTo(W,H/2+.5);c.stroke();
-
-    c.strokeStyle='#e03020';c.lineWidth=1.5;
-    c.beginPath();
-    const step=data.length/W;
-    for(let x=0;x<W;x++){
-      const v=data[Math.floor(x*step)]||0;
-      const y=H/2-v*(H/2)*.9;
-      x===0?c.moveTo(x,y):c.lineTo(x,y);
-    }
-    c.stroke();
-
-    // Niveau
-    let rms=0; for(const v of data) rms+=v*v;
-    rms=Math.sqrt(rms/data.length);
-    const db=rms>0?Math.max(-60,20*Math.log10(rms)):-60;
-    const lvl=document.getElementById('pige-level-'+dep);
-    if(lvl){lvl.textContent=db>-60?db.toFixed(1)+' dB':'—∞ dB';lvl.style.color=db>-3?'#e03020':db>-10?'#f5c400':'#00d4f0';}
-  });
-}
-
-// Sauvegarder un enregistrement terminé
-function pigeSaveRecord(dep, chunks, durMs){
-  if(!chunks.length) return;
-  const blob=new Blob(chunks,{type:'audio/webm'});
-  const url=URL.createObjectURL(blob);
-  const dur=Math.round(durMs/1000);
-  const now=new Date();
-  const name=dep.toUpperCase()+' – '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const rec={id:'rec_'+dep+'_'+Date.now(), name, url, blob, dur, dep, wvData:null, audio:null};
-  pigeRecords.unshift(rec);
-
-  // Décoder pour waveform
-  const fr=new FileReader();
-  fr.onload=async e=>{
-    try{
-      const ab=e.target.result;
-      const offCtx=new OfflineAudioContext(1,Math.min(44100*(dur+1),44100*3600),44100);
-      const decoded=await offCtx.decodeAudioData(ab);
-      rec.wvData=decoded.getChannelData(0).slice();
-    }catch(err){}
-    pigeRenderList();
-  };
-  fr.readAsArrayBuffer(blob);
-  pigeRenderList();
-}
-
-function pigeRenderList(){
-  const list=document.getElementById('pige-list');
-  if(!list) return;
-  if(!pigeRecords.length){
-    list.innerHTML='<div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:.5rem 0">Aucun enregistrement.</div>';
-    return;
-  }
-  list.innerHTML='';
-  pigeRecords.forEach(rec=>{
-    const durStr=`${String(Math.floor(rec.dur/60)).padStart(2,'0')}:${String(rec.dur%60).padStart(2,'0')}`;
-    const cvId='pige-wv-'+rec.id, phId='pige-ph-'+rec.id, pgId='pige-pg-'+rec.id;
-    const card=document.createElement('div');
-    card.className='pige-card';
-    card.innerHTML=`
-      <div class="pige-card-header">
-        <span class="pige-card-src">${rec.dep.toUpperCase()}</span>
-        <span class="pige-card-name">${rec.name}</span>
-        <span class="pige-card-dur">${durStr}</span>
-        <div class="pige-card-btns">
-          <button class="pige-small-btn play" onclick="pigePlay('${rec.id}')">▶</button>
-          <button class="pige-small-btn" onclick="pigePause('${rec.id}')">⏸</button>
-          <button class="pige-small-btn" onclick="pigeSeekBack('${rec.id}')">−10s</button>
-          <button class="pige-small-btn" onclick="pigeSeekBegin('${rec.id}')">|◀</button>
-          <a class="pige-small-btn" href="${rec.url}" download="${rec.name}.webm" style="text-decoration:none">⬇</a>
-          <button class="pige-small-btn danger" onclick="pigeDelete('${rec.id}')">✕</button>
-        </div>
-      </div>
-      <div class="pige-wv-wrap" id="${cvId}-wrap" onclick="pigeSeekClick(event,'${rec.id}')">
-        <canvas class="pige-wv-canvas" id="${cvId}"></canvas>
-        <div class="pige-wv-ph" id="${phId}" style="left:0;display:none"></div>
-      </div>
-      <div class="pige-progress" id="${pgId}-track" onclick="pigeSeekClick(event,'${rec.id}')">
-        <div class="pige-progress-fill" id="${pgId}"></div>
-      </div>`;
-    list.appendChild(card);
-    if(rec.wvData){
-      requestAnimationFrame(()=>{
-        const cv=document.getElementById(cvId);
-        if(cv){cv.width=cv.offsetWidth||800;cv.height=50;drawWaveformFromData(cv,rec.wvData,0,1);}
-      });
-    }
-  });
-}
-
-function pigePlay(id){
-  const rec=pigeRecords.find(r=>r.id===id);if(!rec)return;
-  if(!rec.audio){rec.audio=new Audio(rec.url);rec.audio.onended=()=>pigeRenderList();}
-  rec.audio.play().catch(e=>console.warn(e));
-  pigeTrackPlayhead(id);
-}
-function pigePause(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio) r.audio.pause(); }
-function pigeSeekBack(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio) r.audio.currentTime=Math.max(0,r.audio.currentTime-10); }
-function pigeSeekBegin(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio) r.audio.currentTime=0; }
-function pigeSeekClick(e,id){
-  const r=pigeRecords.find(r=>r.id===id);
-  if(!r) return;
-  // Créer l'audio si besoin (seek sans play préalable)
-  if(!r.audio){ r.audio=new Audio(r.url); r.audio.onended=()=>pigeRenderList(); }
-  const rect=e.currentTarget.getBoundingClientRect();
-  const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
-  // Attendre que la durée soit connue
-  const seek=()=>{
-    const dur=r.audio.duration||r.dur||1;
-    r.audio.currentTime=pct*dur;
-    pigeTrackPlayhead(id);
-  };
-  if(r.audio.readyState>=1) seek();
-  else r.audio.addEventListener('loadedmetadata',seek,{once:true});
-}
-function pigeDelete(id){
-  const r=pigeRecords.find(r=>r.id===id);if(!r)return;
-  if(r.audio){r.audio.pause();r.audio=null;}
-  URL.revokeObjectURL(r.url);
-  pigeRecords=pigeRecords.filter(x=>x.id!==id);
-  pigeRenderList();
-}
-function pigeTrackPlayhead(id){
-  const r=pigeRecords.find(r=>r.id===id);if(!r?.audio)return;
-  const ph=document.getElementById('pige-ph-'+id);
-  const pg=document.getElementById('pige-pg-'+id);
-  const dur=r.audio.duration||r.dur||1;
-  const pct=Math.min(100,(r.audio.currentTime/dur)*100).toFixed(1);
-  if(ph){ph.style.display='block';ph.style.left=pct+'%';}
-  if(pg) pg.style.width=pct+'%';
-  if(!r.audio.paused) requestAnimationFrame(()=>pigeTrackPlayhead(id));
-}
-
-// switchTab unifié ci-dessus
-
-
-</script>
-</body>
-</html>
