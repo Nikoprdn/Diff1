@@ -2392,6 +2392,20 @@
           <div class="vu-channel-v"><div class="vu-meter-v" id="vu-nat-L"></div><div class="vu-ch-label">L</div></div>
           <div class="vu-channel-v"><div class="vu-meter-v" id="vu-nat-R"></div><div class="vu-ch-label">R</div></div>
         </div>
+        <div class="vu-wrap" id="vu-wrap-ext" style="border-color:#6a3aaa;opacity:.4;transition:opacity .3s" title="NATIONAL EXT — WebRTC">
+          <div class="vu-label-block">
+            <div class="vu-main-title" style="color:#9b5de5">EXT</div>
+            <div class="vu-db-group">
+              <div class="vu-db-val" id="vu-ext-db" style="color:#9b5de5">—∞</div>
+              <div class="vu-db-unit">dB</div>
+            </div>
+            <div style="font-family:var(--mono);font-size:7px;color:#4a2a7a;margin-top:3px;letter-spacing:1px">NAT EXT</div>
+            <div id="vu-ext-status" style="font-family:var(--mono);font-size:6px;color:#4a2a7a;letter-spacing:1px;margin-top:2px">—</div>
+          </div>
+          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
+          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-ext-L"></div><div class="vu-ch-label">L</div></div>
+          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-ext-R"></div><div class="vu-ch-label">R</div></div>
+        </div>
         <div class="vu-wrap">
           <div class="vu-label-block">
             <div class="vu-main-title">SAT</div>
@@ -3441,31 +3455,102 @@ let _diff2Channel = null;
 let _diff2Ready   = false;  // Diff2 a répondu au ping
 let _diff2PingInterval = null;
 
+// ── WebRTC : recevoir l'audio de Diff2 ──
+let _extPeer = null;   // RTCPeerConnection côté console
+let vuExt    = null;   // {aL, aR} analyseurs du flux EXT
+
 function diff2Connect(){
   // ── 1. BroadcastChannel (même domaine github.io) ──
   try{
     _diff2Channel = new BroadcastChannel('diff2_control');
-    // Écouter les réponses de Diff2 (pong)
     _diff2Channel.addEventListener('message', e=>{
-      if(e.data?.action==='pong'||e.data?.action==='ready'){
+      const msg = e.data || {};
+      if(msg.action==='pong'||msg.action==='ready'){
         _diff2SetStatus(true);
       }
+      // ── Signaling WebRTC ──
+      if(msg.action==='webrtc-offer')  _extHandleOffer(msg.sdp);
+      if(msg.action==='webrtc-ice')    _extHandleIce(msg.candidate);
     });
   } catch(ex){
     console.warn('[Diff2] BroadcastChannel non disponible:', ex);
   }
 
-  // ── 2. postMessage vers l'iframe (fallback cross-origin) ──
+  // ── 2. postMessage iframe (fallback) ──
   window.addEventListener('message', e=>{
     if(!e.origin.startsWith('https://nikoprdn.github.io')) return;
-    if(e.data?.action==='pong'||e.data?.action==='ready'){
-      _diff2SetStatus(true);
-    }
+    const msg = e.data || {};
+    if(msg.action==='pong'||msg.action==='ready') _diff2SetStatus(true);
+    if(msg.action==='webrtc-offer') _extHandleOffer(msg.sdp);
+    if(msg.action==='webrtc-ice')   _extHandleIce(msg.candidate);
   });
 
   // ── 3. Ping immédiat + toutes les 10s ──
   _diff2Ping();
   _diff2PingInterval = setInterval(_diff2Ping, 10000);
+}
+
+// ── Recevoir l'offre WebRTC de Diff2 ──
+async function _extHandleOffer(sdp){
+  try{
+    if(_extPeer) { _extPeer.close(); _extPeer=null; }
+    const ctx = getCtx();
+    _extPeer = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+
+    // Quand on reçoit la piste audio de Diff2
+    _extPeer.ontrack = (e)=>{
+      const stream = e.streams[0] || new MediaStream([e.track]);
+      const src = ctx.createMediaStreamSource(stream);
+      const sp  = ctx.createChannelSplitter(2);
+      const aL  = ctx.createAnalyser(); aL.fftSize=1024; aL.smoothingTimeConstant=0.8;
+      const aR  = ctx.createAnalyser(); aR.fftSize=1024; aR.smoothingTimeConstant=0.8;
+      src.connect(sp);
+      sp.connect(aL, 0);
+      sp.connect(aR, 1);
+      vuExt = {aL, aR};
+      buildBars('vu-ext-L'); buildBars('vu-ext-R');
+      // Allumer le VU
+      const wrap = document.getElementById('vu-wrap-ext');
+      if(wrap) wrap.style.opacity='1';
+      const stEl = document.getElementById('vu-ext-status');
+      if(stEl){ stEl.textContent='LIVE'; stEl.style.color='#9b5de5'; }
+      _diff2SetStatus(true);
+      console.log('[EXT VU] flux audio reçu de Diff2');
+    };
+
+    _extPeer.onicecandidate = (e)=>{
+      if(e.candidate && _diff2Channel){
+        _diff2Channel.postMessage({action:'webrtc-ice-answer', candidate:e.candidate});
+      }
+    };
+
+    _extPeer.onconnectionstatechange = ()=>{
+      const s = _extPeer?.connectionState;
+      const stEl = document.getElementById('vu-ext-status');
+      const wrap  = document.getElementById('vu-wrap-ext');
+      if(s==='connected'){
+        if(wrap) wrap.style.opacity='1';
+        if(stEl){ stEl.textContent='LIVE'; stEl.style.color='#9b5de5'; }
+      } else if(s==='disconnected'||s==='failed'||s==='closed'){
+        vuExt=null;
+        if(wrap) wrap.style.opacity='.4';
+        if(stEl){ stEl.textContent='—'; stEl.style.color='#4a2a7a'; }
+      }
+    };
+
+    await _extPeer.setRemoteDescription({type:'offer', sdp});
+    const answer = await _extPeer.createAnswer();
+    await _extPeer.setLocalDescription(answer);
+    if(_diff2Channel){
+      _diff2Channel.postMessage({action:'webrtc-answer', sdp:answer.sdp});
+    }
+  } catch(ex){ console.warn('[EXT VU] Erreur WebRTC offer:', ex); }
+}
+
+async function _extHandleIce(candidate){
+  try{
+    if(_extPeer && candidate) await _extPeer.addIceCandidate(candidate);
+  } catch(ex){ console.warn('[EXT VU] ICE error:', ex); }
 }
 
 function _diff2Ping(){
@@ -4125,6 +4210,7 @@ function vuLoop(){
   if(vu2)   paintBars('vu2-L','vu2-R',    vu2.aL,   vu2.aR,   'vu2-db',    vu2.gn,  '#00d4f0');
   if(vuNat) paintBars('vu-nat-L','vu-nat-R',vuNat.aL,vuNat.aR,'vu-nat-db', null,    '#8a9098');
   else paintMixEmpty('nat');
+  if(vuExt) paintBars('vu-ext-L','vu-ext-R',vuExt.aL,vuExt.aR,'vu-ext-db', null,    '#9b5de5');
   if(vuSat) paintBars('vu-sat-sm-L','vu-sat-sm-R',vuSat.aL,vuSat.aR,'vu-sat-sm-db',null,'#8a9098');
   if(vuDab) paintBars('vu-dab-sm-L','vu-dab-sm-R',vuDab.aL,vuDab.aR,'vu-dab-sm-db',null,'#8a9098');
   if(vuHz)  paintBars('vu-hz-sm-L', 'vu-hz-sm-R', vuHz.aL, vuHz.aR, 'vu-hz-sm-db', null,'#8a9098');
