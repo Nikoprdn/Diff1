@@ -2760,11 +2760,10 @@ class Diffuser{
     if(t.isMacro){
       if(typeof fireMacroTrack==='function') fireMacroTrack(t.macroKey, this.idx);
       if(t.pinned){
-        // Macro épinglée : exécuter et garder en place (ne pas supprimer)
-        // Passer à la piste suivante s'il y en a une avant la pinnée
+        // Macro épinglée : exécuter, garder en place, et s'arrêter proprement
         this.ci=0;
         this._updateFdzCount();
-        this.playing=false; // stopper — la macro pinnée est seule ou en fin
+        this.playing=false;
         this.render();
       } else {
         this.tracks.splice(i,1);
@@ -2923,6 +2922,9 @@ class Diffuser{
 
   togglePlay(){
     if(!this.tracks.length)return;
+    // Si toutes les pistes sont des macros sans audio, ne pas bloquer
+    const hasAudio=this.tracks.some(t=>!t.isMacro);
+    if(!hasAudio)return;
     if(!this.playing){
       this.playing=true;
       this.ci=0;
