@@ -1281,6 +1281,12 @@
     border:1px solid #6a3aaa;border-radius:2px;padding:1px 4px;
     background:#3a1a6b;
   }
+
+  /* ── Voyant EXT clignotant quand déconnecté ── */
+  @keyframes blink-ext{0%,100%{opacity:1}50%{opacity:.3}}
+  #diff2-status-dot.connected{animation:none!important;}
+  #diff2-status-pill.connected{border-color:#00d96a!important;background:rgba(0,217,106,.06)!important;}
+  #diff2-status-pill.offline{border-color:#e03020!important;background:rgba(220,48,32,.06)!important;}
 </style>
 </head>
 <body>
@@ -1503,9 +1509,14 @@
       </div>
     </div>
     <div class="navbar-item" style="gap:.4rem">
-      <div style="display:flex;align-items:center;gap:5px" title="Statut Diff2 NATIONAL externe">
-        <div id="diff2-status-dot" style="width:6px;height:6px;border-radius:50%;background:#2a3a50;transition:background .4s;flex-shrink:0"></div>
-        <span id="diff2-status-lbl" style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);letter-spacing:1px;white-space:nowrap">EXT —</span>
+      <div style="display:flex;align-items:center;gap:6px;padding:3px 10px;
+        border:1px solid #1e2a40;border-radius:12px;transition:all .3s;cursor:default"
+        id="diff2-status-pill" title="Statut NATIONAL EXT">
+        <div id="diff2-status-dot" style="width:10px;height:10px;border-radius:50%;
+          background:#e03020;box-shadow:0 0 8px #e03020;
+          transition:all .3s;flex-shrink:0;animation:blink-ext .8s step-start infinite"></div>
+        <span id="diff2-status-lbl" style="font-family:var(--mono);font-size:9px;
+          color:#e03020;letter-spacing:1px;white-space:nowrap;font-weight:700">EXT ✗</span>
       </div>
     </div>
     <div class="navbar-item"><div class="clock-display" id="global-clock">00:00:00</div></div>
@@ -3460,6 +3471,28 @@ let _sigD2Online  = false;
 let _sigInterval  = null;
 let _hbInterval   = null;
 
+// ── Statut connexion Diff2 dans la navbar RC ────────────────
+function _diff2SetStatus(online, method){
+  const dot  = document.getElementById('diff2-status-dot');
+  const lbl  = document.getElementById('diff2-status-lbl');
+  const pill = document.getElementById('diff2-status-pill');
+  if(dot){
+    dot.style.background = online ? '#00d96a' : '#e03020';
+    dot.style.boxShadow  = online ? '0 0 8px #00d96a' : '0 0 8px #e03020';
+    dot.classList.toggle('connected', online);
+  }
+  if(lbl){
+    lbl.textContent = online ? ('EXT ● '+(method||'')) : 'EXT ✗';
+    lbl.style.color = online ? '#00d96a' : '#e03020';
+    lbl.style.fontWeight = '700';
+  }
+  if(pill){
+    pill.classList.toggle('connected', online);
+    pill.classList.toggle('offline', !online);
+  }
+}
+
+
 // ── Envoyer un message vers Diff2 ────────────────────────────
 async function sigSend(msg) {
   try {
@@ -3576,8 +3609,12 @@ async function _extHandleOffer(sdp){
       _attachExtStream(stream);
     };
     _extPeer.onicecandidate = e=>{
-      if(e.candidate && _diff2Channel)
-        _diff2Channel.postMessage({action:'rtc-ice-rcd2', c:e.candidate.toJSON()});
+      if(!e.candidate) return;
+      const iceMsg={action:'rtc-ice-rcd2', c:e.candidate.toJSON()};
+      // Via Cloudflare (cross-PC)
+      sigSend(iceMsg);
+      // Via BroadcastChannel (même navigateur)
+      if(_diff2Channel) try{_diff2Channel.postMessage(iceMsg);}catch(ex){}
     };
     _extPeer.onconnectionstatechange = ()=>{
       const s=_extPeer?.connectionState||'';
@@ -3586,8 +3623,11 @@ async function _extHandleOffer(sdp){
     await _extPeer.setRemoteDescription({type:'offer', sdp});
     const answer = await _extPeer.createAnswer();
     await _extPeer.setLocalDescription(answer);
-    if(_diff2Channel)
-      _diff2Channel.postMessage({action:'rtc-answer', sdp:answer.sdp});
+    const answerMsg={action:'rtc-answer', sdp:answer.sdp};
+    // Via Cloudflare (cross-PC)
+    sigSend(answerMsg);
+    // Via BroadcastChannel (même navigateur)
+    if(_diff2Channel) try{_diff2Channel.postMessage(answerMsg);}catch(ex){}
   }catch(e){ console.warn('[EXT WebRTC]',e); }
 }
 
@@ -4261,6 +4301,7 @@ function vuLoop(){
   if(vuNat) paintBars('vu-nat-L','vu-nat-R',vuNat.aL,vuNat.aR,'vu-nat-db', null,    '#8a9098');
   else paintMixEmpty('nat');
   if(vuExt) paintBars('vu-ext-L','vu-ext-R',vuExt.aL,vuExt.aR,'vu-ext-db', null,    '#9b5de5');
+  if(vuExt) paintBars('vu-ext-L','vu-ext-R',vuExt.aL,vuExt.aR,'vu-ext-db', null,    '#9b5de5');
   if(vuSat) paintBars('vu-sat-sm-L','vu-sat-sm-R',vuSat.aL,vuSat.aR,'vu-sat-sm-db',null,'#8a9098');
   if(vuDab) paintBars('vu-dab-sm-L','vu-dab-sm-R',vuDab.aL,vuDab.aR,'vu-dab-sm-db',null,'#8a9098');
   if(vuHz)  paintBars('vu-hz-sm-L', 'vu-hz-sm-R', vuHz.aL, vuHz.aR, 'vu-hz-sm-db', null,'#8a9098');
@@ -4543,14 +4584,26 @@ const MACROS={
     label:'EXT NAT',
     run(diffIdx){
       const msg={action:'play', source:'Radio-Console', ts:Date.now()};
-      // Via Cloudflare (cross-PC/réseau)
+      // Cloudflare (cross-PC/réseau)
       sigSend(msg);
-      // Via BroadcastChannel (même navigateur)
+      // BroadcastChannel (même navigateur)
       if(_diff2Channel){
         try{ _diff2Channel.postMessage(msg); }catch(e){}
       }
-      if(!_sigD2Online && !_diff2Ready){
-        console.warn('[EXT NAT] Diff2 hors-ligne — vérifier que la page est ouverte');
+      // Feedback visuel
+      if(!_sigD2Online){
+        // Clignoter le voyant EXT pour signaler l'état
+        const dot=document.getElementById('diff2-status-dot');
+        if(dot){ dot.style.background='#f5c400'; setTimeout(()=>_diff2SetStatus(false),1500); }
+        console.warn('[EXT NAT] Diff2 hors-ligne');
+      } else {
+        // Flash vert pour confirmer l'envoi
+        const dot=document.getElementById('diff2-status-dot');
+        if(dot){
+          const prev=dot.style.background;
+          dot.style.background='#ffffff'; dot.style.boxShadow='0 0 12px #ffffff';
+          setTimeout(()=>_diff2SetStatus(true,'Cloudflare'),300);
+        }
       }
     }
   },
