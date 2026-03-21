@@ -1193,19 +1193,29 @@
     font-family:var(--mono);font-size:8px;color:#f5c400;letter-spacing:2px;
     padding:1px 6px;margin-left:6px;
   }
+  /* Décompte INTRO — même taille que le OUT blanc */
   .intro-countdown{
-    font-family:var(--mono);font-size:22px;font-weight:700;
-    color:#f5c400;letter-spacing:2px;
-    text-shadow:0 0 12px rgba(245,196,0,.5);
+    font-family:var(--mono);font-size:56px;font-weight:700;
+    color:#f5c400;letter-spacing:3px;line-height:1;
+    text-shadow:0 0 20px rgba(245,196,0,.4);
+    position:relative;z-index:3;
   }
-  /* ── Décompte total grossi ── */
+  /* Décompte OUT — masqué tant que l'intro n'est pas passée */
   .row-active-tc{
     font-family:var(--mono) !important;
-    font-size:26px !important;
+    font-size:56px !important;
     color:#ff4040 !important;
-    letter-spacing:2px !important;
+    letter-spacing:3px !important;
     font-weight:700 !important;
+    line-height:1 !important;
     position:relative;z-index:3;
+  }
+  .row-active-tc.hidden-by-intro{
+    display:none !important;
+  }
+  /* Label sous le compteur */
+  .cd-sublabel{
+    font-family:var(--mono);font-size:7px;letter-spacing:2px;margin-top:3px;opacity:.7;
   }
   /* ── Macro inline sur piste ── */
   .track-macro-btn{
@@ -1267,6 +1277,8 @@
       <!-- playhead -->
       <div id="wv-modal-ph" style="display:none;position:absolute;top:0;bottom:0;width:2px;background:#f5c400;pointer-events:none;z-index:5"></div>
       <div id="wv-modal-intro-line" class="intro-line" style="display:none;left:0"></div>
+      <div id="wv-modal-macro-line" class="intro-line" style="display:none;left:0;background:#f5c400;opacity:.7"
+           data-label="MACRO"></div>
       <!-- Lignes IN/OUT draggables -->
       <div id="wv-modal-in"  class="wvm-cue-line" style="left:0;background:#00e060" data-role="in"></div>
       <div id="wv-modal-out" class="wvm-cue-line" style="left:100%;background:#ff2020" data-role="out"></div>
@@ -1335,36 +1347,66 @@
         </div>
       </div>
 
-      <!-- Saisie précise IN/OUT -->
-      <div style="display:flex;flex-direction:column;gap:.3rem">
-        <div style="display:flex;align-items:center;gap:.4rem">
-          <div style="width:8px;height:8px;border-radius:50%;background:#00e060;flex-shrink:0"></div>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);width:22px">IN</span>
-          <input id="wv-modal-in-input" type="number" step="0.001" min="0" placeholder="0.000"
-            style="background:#080e1c;border:1px solid #1e3060;color:#00e060;font-family:var(--mono);font-size:11px;padding:2px 6px;width:90px;border-radius:2px;outline:none"
-            oninput="wvModalSetIn()" onkeydown="if(event.key==='Enter')wvModalSetIn()">
-          <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute)">sec</span>
-          <button onclick="wvModalSetInNow()" style="background:transparent;border:1px solid #00e060;color:#00e060;font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer">MARK</button>
+      <!-- Points & Macros -->
+      <div style="display:flex;flex-direction:column;gap:.4rem;min-width:280px">
+
+        <!-- Sélecteur de point actif -->
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);letter-spacing:1px;white-space:nowrap">POINT ACTIF</span>
+          <select id="wv-modal-point-select" onchange="wvModalPointSelect()"
+            style="background:#080e1c;border:1px solid #2a3a50;color:var(--cyan);font-family:var(--mono);font-size:10px;
+                   padding:3px 8px;border-radius:2px;outline:none;cursor:pointer;flex:1">
+            <option value="in"    style="color:#00e060">● IN</option>
+            <option value="intro" style="color:#f5c400">● INTRO</option>
+            <option value="out"   style="color:#ff3030">● OUT</option>
+            <option value="macro" style="color:#f5c400">⚡ MACRO</option>
+          </select>
+          <button onclick="wvModalMarkActive()" id="wv-modal-mark-btn"
+            style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);
+                   font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:2px;cursor:pointer;
+                   letter-spacing:1px;white-space:nowrap">
+            ▶ MARK
+          </button>
+          <button onclick="wvModalClearActive()"
+            style="background:transparent;border:1px solid #3a4050;color:#5a7090;
+                   font-family:var(--mono);font-size:9px;padding:3px 7px;border-radius:2px;cursor:pointer">
+            ✕
+          </button>
         </div>
-        <div style="display:flex;align-items:center;gap:.4rem">
-          <div style="width:8px;height:8px;border-radius:50%;background:#f5c400;flex-shrink:0"></div>
-          <span style="font-family:var(--mono);font-size:9px;color:#f5c400;width:22px">INTRO</span>
-          <input id="wv-modal-intro-input" type="number" step="0.001" min="0" placeholder="0.000"
-            style="background:#080e1c;border:1px solid #3a3000;color:#f5c400;font-family:var(--mono);font-size:11px;padding:2px 6px;width:90px;border-radius:2px;outline:none"
-            oninput="wvModalSetIntro()" onkeydown="if(event.key==='Enter')wvModalSetIntro()">
-          <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute)">sec</span>
-          <button onclick="wvModalSetIntroNow()" style="background:transparent;border:1px solid #f5c400;color:#f5c400;font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer">MARK</button>
-          <button onclick="wvModalClearIntro()" style="background:transparent;border:1px solid #3a4050;color:#5a7090;font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer">✕</button>
+
+        <!-- Valeurs actuelles de tous les points -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.3rem">
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <span style="font-family:var(--mono);font-size:7px;color:#00e060;letter-spacing:1px">IN</span>
+            <input id="wv-modal-in-input" type="number" step="0.001" min="0"
+              style="background:#060c18;border:1px solid #1a2a40;color:#00e060;font-family:var(--mono);font-size:10px;
+                     padding:2px 4px;border-radius:2px;outline:none;width:100%"
+              oninput="wvModalSetIn()" onkeydown="if(event.key==='Enter')wvModalSetIn()">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <span style="font-family:var(--mono);font-size:7px;color:#f5c400;letter-spacing:1px">INTRO</span>
+            <input id="wv-modal-intro-input" type="number" step="0.001" min="0" placeholder="—"
+              style="background:#060c18;border:1px solid #2a2000;color:#f5c400;font-family:var(--mono);font-size:10px;
+                     padding:2px 4px;border-radius:2px;outline:none;width:100%"
+              oninput="wvModalSetIntro()" onkeydown="if(event.key==='Enter')wvModalSetIntro()">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <span style="font-family:var(--mono);font-size:7px;color:#ff3030;letter-spacing:1px">OUT</span>
+            <input id="wv-modal-out-input" type="number" step="0.001" min="0"
+              style="background:#060c18;border:1px solid #2a1010;color:#ff3030;font-family:var(--mono);font-size:10px;
+                     padding:2px 4px;border-radius:2px;outline:none;width:100%"
+              oninput="wvModalSetOut()" onkeydown="if(event.key==='Enter')wvModalSetOut()">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <span style="font-family:var(--mono);font-size:7px;color:#f5c400;letter-spacing:1px">MACRO →</span>
+            <select id="wv-modal-macro-select" onchange="wvModalSetMacroFromSelect()"
+              style="background:#060c18;border:1px solid #2a2000;color:#f5c400;font-family:var(--mono);font-size:9px;
+                     padding:2px 3px;border-radius:2px;outline:none;cursor:pointer;width:100%">
+              <option value="">— aucune —</option>
+            </select>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:.4rem">
-          <div style="width:8px;height:8px;border-radius:50%;background:#ff2020;flex-shrink:0"></div>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);width:22px">OUT</span>
-          <input id="wv-modal-out-input" type="number" step="0.001" min="0" placeholder="0.000"
-            style="background:#080e1c;border:1px solid #1e3060;color:#ff3030;font-family:var(--mono);font-size:11px;padding:2px 6px;width:90px;border-radius:2px;outline:none"
-            oninput="wvModalSetOut()" onkeydown="if(event.key==='Enter')wvModalSetOut()">
-          <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute)">sec</span>
-          <button onclick="wvModalSetOutNow()" style="background:transparent;border:1px solid #ff2020;color:#ff2020;font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer">MARK</button>
-        </div>
+
       </div>
 
       <!-- Transport -->
@@ -2767,12 +2809,17 @@ class Diffuser{
           </td>
           <!-- Durée -->
           <td class="cell-dur"><span class="row-active-dur">${fmtFull(this.durs[i]||0)}</span></td>
-          <!-- Décompte : intro jaune ou normal rouge -->
-          <td class="cell-cd">
-            ${this._introOf(i)!==null?
-              `<span class="intro-countdown" id="${this.ids.body}-intro-cd-${i}">${fmtFull(Math.max(0,(this._introOf(i)||0)-pos))}</span>
-               <div style="font-family:var(--mono);font-size:8px;color:#7a6a00;letter-spacing:1px;margin-top:2px">jusqu'au sujet</div>` : ''}
-            <span class="row-active-tc" id="${this.ids.body}-cd-${i}">${fmtFull(rem)}</span>
+          <!-- Décompte : INTRO jaune (si défini et non passé), sinon OUT rouge -->
+          <td class="cell-cd" style="min-width:180px;text-align:right;padding-right:8px">
+            ${this._introOf(i)!==null ? `
+              <div id="${this.ids.body}-intro-wrap-${i}">
+                <span class="intro-countdown" id="${this.ids.body}-intro-cd-${i}">${fmtFull(Math.max(0,(this._introOf(i)||0)-pos))}</span>
+                <div class="cd-sublabel" style="color:#a08000;text-align:right">⚡ INTRO</div>
+              </div>
+              <span class="row-active-tc${pos>=(this._introOf(i)||0)?' ':' hidden-by-intro'}" id="${this.ids.body}-cd-${i}">${fmtFull(rem)}</span>
+            ` : `
+              <span class="row-active-tc" id="${this.ids.body}-cd-${i}">${fmtFull(rem)}</span>
+            `}
           </td>
           <!-- Barre couleur -->
           <td class="cell-bar"><span class="color-bar" style="background:${t.color};height:96px"></span></td>`;
@@ -2977,19 +3024,25 @@ class Diffuser{
       ph.style.display='block'; ph.style.left=(pos/dur*100).toFixed(2)+'%';
     }
 
-    // ── Décompte INTRO ──
+    // ── Décompte INTRO / OUT ──
     const introSec=this._introOf(i);
     const introCdEl=document.getElementById(`${this.ids.body}-intro-cd-${i}`);
-    if(introCdEl&&introSec!==null){
+    const introWrap=document.getElementById(`${this.ids.body}-intro-wrap-${i}`);
+    const outCdEl =document.getElementById(`${this.ids.body}-cd-${i}`);
+    const inPhase  =introSec!==null && pos<introSec;
+
+    if(introCdEl && introSec!==null){
+      // Mise à jour valeur INTRO
       const introRem=Math.max(0,introSec-pos);
       introCdEl.textContent=fmtFull(introRem);
+      // Afficher/masquer selon phase
+      if(introWrap) introWrap.style.display=inPhase?'':'none';
+      if(outCdEl)   outCdEl.classList.toggle('hidden-by-intro', inPhase);
     }
-    // Classe jaune si en phase intro (avant le point INTRO)
+
+    // Classe jaune sur la row
     const ar2=document.querySelector(`#${this.ids.body} tr.row-active`);
-    if(ar2&&introSec!==null){
-      const inPhase=pos<introSec;
-      ar2.classList.toggle('row-intro', inPhase);
-    }
+    if(ar2) ar2.classList.toggle('row-intro', inPhase);
 
     // ── Zoom waveform de fond (bg) sur les 20 dernières secondes ──
     const bgCv=document.getElementById(`wv-${this.idx}-${i}-bg`);
@@ -4479,6 +4532,8 @@ function wvModalOpen(wvId, diffIdx, trackIdx){
   _wvModalBindDrag();
   _wvModalUpdateTC();
   _wvModalStartRAF();
+  _wvModalInitMacroSelect();
+  wvModalPointSelect(); // init couleur bouton MARK
 }
 
 function wvModalClose(){
@@ -4554,6 +4609,19 @@ function _wvModalUpdateHandles(){
     introInput.value=t.introCue!==null&&t.introCue!==undefined?t.introCue.toFixed(3):'';
   }
   _wvModalUpdateIntroLine();
+  // Ligne MACRO
+  const macroLine=document.getElementById('wv-modal-macro-line');
+  if(macroLine){
+    const d2=D[_wvModal.diffIdx];
+    const t2=d2?.tracks[_wvModal.trackIdx];
+    const mc=t2?.macroCue;
+    if(mc!==null&&mc!==undefined){
+      const vs=_wvModal.viewStart,ve=_wvModal.viewEnd,rng=ve-vs||0.001;
+      const mr=((mc/_wvModal.dur)-vs)/rng;
+      macroLine.style.display='block';
+      macroLine.style.left=(Math.max(0,Math.min(1,mr))*100).toFixed(2)+'%';
+    } else { macroLine.style.display='none'; }
+  }
 }
 
 // ── Overview : région zoomée + IN/OUT + playhead ──
@@ -4637,20 +4705,19 @@ function _wvModalBindDrag(){
     if(role==='in'||role==='out'){
       _wvModal.dragging=role;
       e.preventDefault();
-    } else if(e.shiftKey){
-      // Shift+clic = poser IN
-      _wvModal.dragging='in_click';
-      wvModalSetInFromRatio(getPos(e.clientX));
-    } else if(e.altKey){
-      // Alt+clic = poser OUT
-      _wvModal.dragging='out_click';
-      wvModalSetOutFromRatio(getPos(e.clientX));
     } else {
-      // Clic simple = seek
+      // Clic = poser le point actif ou seek
       const ratio=getPos(e.clientX);
       const globalR=_wvModal.viewStart+ratio*(_wvModal.viewEnd-_wvModal.viewStart);
-      const sec=globalR*_wvModal.dur;
-      if(_wvModal.audio) _wvModal.audio.currentTime=sec;
+      const sel=document.getElementById('wv-modal-point-select');
+      const point=sel?.value||'seek';
+      if(point==='in')    { wvModalSetInFromRatio(globalR); }
+      else if(point==='intro') { wvModalSetIntroFromRatio(globalR); }
+      else if(point==='out')   { wvModalSetOutFromRatio(globalR); }
+      else { // seek (point==='macro' ou rien)
+        const sec=globalR*_wvModal.dur;
+        if(_wvModal.audio) _wvModal.audio.currentTime=sec;
+      }
     }
   });
 
@@ -4677,6 +4744,130 @@ function wvModalSetOutFromRatio(r){
   const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
   t.outCue=Math.min(_wvModal.dur,Math.max(r*_wvModal.dur,(t.inCue||0)+0.01));
   _wvModalUpdateHandles();
+  _wvModalUpdateTC();
+}
+
+// ── Sélecteur de point actif ──
+function wvModalPointSelect(){
+  const sel=document.getElementById('wv-modal-point-select');
+  const btn=document.getElementById('wv-modal-mark-btn');
+  const colors={in:'#00e060',intro:'#f5c400',out:'#ff3030',macro:'#f5c400'};
+  const c=colors[sel.value]||'var(--cyan)';
+  if(btn){btn.style.borderColor=c;btn.style.color=c;}
+}
+
+// Clic MARK : poser le point actif à la position courante
+function wvModalMarkActive(){
+  const sel=document.getElementById('wv-modal-point-select');
+  if(!sel||!_wvModal.audio) return;
+  const pos=_wvModal.audio.currentTime;
+  switch(sel.value){
+    case 'in':    wvModalSetInFromRatio(pos/_wvModal.dur); break;
+    case 'intro': wvModalSetIntroNow(); break;
+    case 'out':   wvModalSetOutFromRatio(pos/_wvModal.dur); break;
+    case 'macro': {
+      // Pose une macro à la position courante
+      const macroSel=document.getElementById('wv-modal-macro-select');
+      if(macroSel&&macroSel.value){
+        const d=D[_wvModal.diffIdx]; if(!d) return;
+        const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+        t.onPlayMacro=macroSel.value;
+        // Optionnel : stocker la position de déclenchement
+        t.macroCue=pos;
+        d.render();
+        // Feedback
+        const btn=document.getElementById('wv-modal-mark-btn');
+        if(btn){const orig=btn.textContent;btn.textContent='✓';setTimeout(()=>btn.textContent=orig,800);}
+      }
+      break;
+    }
+  }
+}
+
+// Effacer le point actif
+function wvModalClearActive(){
+  const sel=document.getElementById('wv-modal-point-select');
+  if(!sel) return;
+  switch(sel.value){
+    case 'intro': wvModalClearIntro(); break;
+    case 'macro': {
+      const d=D[_wvModal.diffIdx]; if(!d) return;
+      const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+      t.onPlayMacro=null; t.macroCue=null;
+      d.render();
+      const macroSel=document.getElementById('wv-modal-macro-select');
+      if(macroSel) macroSel.value='';
+      break;
+    }
+    case 'in': {
+      const d=D[_wvModal.diffIdx]; if(!d) return;
+      const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+      t.inCue=0; _wvModalUpdateHandles(); _wvModalUpdateTC();
+      break;
+    }
+    case 'out': {
+      const d=D[_wvModal.diffIdx]; if(!d) return;
+      const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+      t.outCue=_wvModal.dur; _wvModalUpdateHandles(); _wvModalUpdateTC();
+      break;
+    }
+  }
+}
+
+// Remplir le sélecteur de macros au chargement de l'éditeur
+function _wvModalInitMacroSelect(){
+  const sel=document.getElementById('wv-modal-macro-select');
+  if(!sel) return;
+  sel.innerHTML='<option value="">— aucune —</option>';
+  Object.entries(MACROS).forEach(([k,m])=>{
+    const opt=document.createElement('option');
+    opt.value=k; opt.textContent='⚡ '+m.label;
+    sel.appendChild(opt);
+  });
+  // Pré-sélectionner la macro existante
+  const d=D[_wvModal.diffIdx];
+  const t=d?.tracks[_wvModal.trackIdx];
+  if(t?.onPlayMacro) sel.value=t.onPlayMacro;
+}
+
+// Affecter macro depuis le select
+function wvModalSetMacroFromSelect(){
+  const sel=document.getElementById('wv-modal-macro-select');
+  if(!sel) return;
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  t.onPlayMacro=sel.value||null;
+  d.render();
+}
+
+// Clic sur la waveform dans l'éditeur — poser le point actif
+function _wvModalHandleWaveformClick(e){
+  const wrap=document.getElementById('wv-modal-wrap');
+  if(!wrap) return;
+  const rect=wrap.getBoundingClientRect();
+  const ratio=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+  const globalR=_wvModal.viewStart+ratio*(_wvModal.viewEnd-_wvModal.viewStart);
+  const sel=document.getElementById('wv-modal-point-select');
+  const point=sel?.value||'seek';
+  switch(point){
+    case 'in':    wvModalSetInFromRatio(globalR); break;
+    case 'intro': wvModalSetIntroFromRatio(globalR); break;
+    case 'out':   wvModalSetOutFromRatio(globalR); break;
+    default: {
+      // seek
+      const sec=globalR*_wvModal.dur;
+      if(_wvModal.audio) _wvModal.audio.currentTime=sec;
+    }
+  }
+}
+
+function wvModalSetIntroFromRatio(r){
+  const d=D[_wvModal.diffIdx]; if(!d) return;
+  const t=d.tracks[_wvModal.trackIdx]; if(!t) return;
+  t.introCue=Math.max(t.inCue||0,Math.min(r*_wvModal.dur,t.outCue||_wvModal.dur));
+  const input=document.getElementById('wv-modal-intro-input');
+  if(input) input.value=t.introCue.toFixed(3);
+  _wvModalUpdateIntroLine();
   _wvModalUpdateTC();
 }
 
@@ -4772,6 +4963,19 @@ function wvModalClearIntro(){
   const input=document.getElementById('wv-modal-intro-input');
   if(input) input.value='';
   _wvModalUpdateIntroLine();
+  // Ligne MACRO
+  const macroLine=document.getElementById('wv-modal-macro-line');
+  if(macroLine){
+    const d2=D[_wvModal.diffIdx];
+    const t2=d2?.tracks[_wvModal.trackIdx];
+    const mc=t2?.macroCue;
+    if(mc!==null&&mc!==undefined){
+      const vs=_wvModal.viewStart,ve=_wvModal.viewEnd,rng=ve-vs||0.001;
+      const mr=((mc/_wvModal.dur)-vs)/rng;
+      macroLine.style.display='block';
+      macroLine.style.left=(Math.max(0,Math.min(1,mr))*100).toFixed(2)+'%';
+    } else { macroLine.style.display='none'; }
+  }
 }
 function _wvModalUpdateIntroLine(){
   const d=D[_wvModal.diffIdx]; if(!d) return;
