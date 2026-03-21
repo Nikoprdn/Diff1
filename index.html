@@ -1153,6 +1153,9 @@
     height:2px;background:var(--border);border-radius:1px;cursor:pointer;margin-top:2px;
   }
   .pige-progress-fill{height:100%;background:var(--red);border-radius:1px;width:0%;pointer-events:none;}
+
+  .pige-live-dot{width:8px;height:8px;border-radius:50%;background:#2a3040;flex-shrink:0;transition:background .2s;}
+  .pige-live-dot.active{background:#e03020;box-shadow:0 0 6px rgba(220,30,20,.6);animation:live-pulse .8s ease-in-out infinite;}
 </style>
 </head>
 <body>
@@ -2280,34 +2283,59 @@
 
 <!-- ══ Onglet PIGE ══ -->
 <div id="tab-pige" class="tab-panel">
-<section class="section is-console" style="padding-bottom:120px">
+<section class="section is-console" style="padding-bottom:140px">
 
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1rem">
+  <!-- Titre + timer global -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
     <div>
       <div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--red);letter-spacing:3px">⏺ PIGE</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;margin-top:2px">ENREGISTREMENT DES DÉPARTS</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;margin-top:2px">ENREGISTREMENT SIMULTANÉ DES 3 DÉPARTS</div>
     </div>
-    <!-- Sélection départ -->
-    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-      <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px">DÉPART →</span>
-      <button class="pige-src-btn active" id="pige-src-sat" onclick="pigeSelectSrc('sat')">SATELLITE</button>
-      <button class="pige-src-btn" id="pige-src-dab" onclick="pigeSelectSrc('dab')">DAB+</button>
-      <button class="pige-src-btn" id="pige-src-hz"  onclick="pigeSelectSrc('hz')">Hz FM</button>
-    </div>
-    <!-- Contrôles enregistrement -->
-    <div style="display:flex;align-items:center;gap:.5rem">
+    <div style="display:flex;align-items:center;gap:.75rem">
       <button class="pige-btn rec" id="pige-rec-btn" onclick="pigeToggleRec()">⏺ ENREGISTRER</button>
       <span class="pige-timer" id="pige-timer">00:00:00</span>
     </div>
   </div>
 
-  <!-- Waveform temps réel -->
-  <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1rem;position:relative">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
-      <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px">WAVEFORM LIVE</span>
-      <span class="pige-level" id="pige-level">—∞ dB</span>
+  <!-- 3 canaux live empilés -->
+  <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.25rem">
+
+    <!-- SATELLITE -->
+    <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="pige-live-dot" id="pige-dot-sat"></span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-dim);letter-spacing:3px">SATELLITE</span>
+        </div>
+        <span class="pige-level" id="pige-level-sat">—∞ dB</span>
+      </div>
+      <canvas id="pige-live-sat" style="display:block;width:100%;height:70px;"></canvas>
     </div>
-    <canvas id="pige-live-canvas" style="display:block;width:100%;height:100px;"></canvas>
+
+    <!-- DAB+ -->
+    <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="pige-live-dot" id="pige-dot-dab"></span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-dim);letter-spacing:3px">DAB+</span>
+        </div>
+        <span class="pige-level" id="pige-level-dab">—∞ dB</span>
+      </div>
+      <canvas id="pige-live-dab" style="display:block;width:100%;height:70px;"></canvas>
+    </div>
+
+    <!-- Hz FM -->
+    <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="pige-live-dot" id="pige-dot-hz"></span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-dim);letter-spacing:3px">Hz FM</span>
+        </div>
+        <span class="pige-level" id="pige-level-hz">—∞ dB</span>
+      </div>
+      <canvas id="pige-live-hz" style="display:block;width:100%;height:70px;"></canvas>
+    </div>
+
   </div>
 
   <!-- Liste des enregistrements -->
@@ -2539,6 +2567,7 @@ class Diffuser{
     const now=new Date();let cur=new Date(now);
     const starts=this.tracks.map((_,i)=>{const t=new Date(cur);cur=new Date(cur.getTime()+this._playDur(i)*1000);return t;});
     const tbody=document.getElementById(this.ids.body);
+    if(!tbody) return; // DOM pas encore prêt
     tbody.innerHTML='';
     this.tracks.forEach((t,i)=>{
       const isActive=i===this.ci&&this.playing;
@@ -3074,8 +3103,8 @@ class Diffuser{
 const D=CONFIGS.map((cfg,i)=>new Diffuser(cfg,i));
 
 // ── Pré-charger les macros par défaut dans les diffuseurs PUB ──
-(function preloadMacros(){
-  // NATIONAL (D[5]) → macro START LOC en première position
+// preloadMacros — différé après chargement DOM complet
+function preloadMacros(){
   const macroLoc = {
     file:null, title:'START LOC', color:'#00608a',
     inCue:0, outCue:null, isMacro:true, macroKey:'loc', pinned:true
@@ -3084,9 +3113,8 @@ const D=CONFIGS.map((cfg,i)=>new Diffuser(cfg,i));
   D[5].durs.push(0);
   D[5].audios.push(null);
   D[5]._updateFdzCount();
-  D[5].render();
+  // NE PAS appeler render() ici — le DOM n'est pas prêt
 
-  // PUB SAT (D[2]) → macro RACCRO en première position
   const macroRaccro = {
     file:null, title:'RACCRO', color:'#006a30',
     inCue:0, outCue:null, isMacro:true, macroKey:'raccro', pinned:true
@@ -3095,8 +3123,14 @@ const D=CONFIGS.map((cfg,i)=>new Diffuser(cfg,i));
   D[2].durs.push(0);
   D[2].audios.push(null);
   D[2]._updateFdzCount();
-  D[2].render();
-})();
+  // NE PAS appeler render() ici
+}
+// Appeler après chargement DOM
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', ()=>{ preloadMacros(); D.forEach(d=>d.render()); });
+} else {
+  preloadMacros(); D.forEach(d=>d.render());
+}
 
 // Supprimer une piste d'un diffuseur
 function diffRemoveTrack(diffIdx, trackIdx){
@@ -3131,6 +3165,7 @@ const NUM_BARS=24; let sharedCtx=null;
 
 function rowColor(i,t){const p=i/t;return p>.85?'#e03020':p>.65?'#f5c400':'#00d96a';}
 function buildBars(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='';for(let i=0;i<NUM_BARS;i++){const r=document.createElement('div');r.className='vu-row';r.style.background=rowColor(i,NUM_BARS);r.style.opacity='0.1';el.appendChild(r);}}
+function buildBarsGray(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='';for(let i=0;i<NUM_BARS;i++){const r=document.createElement('div');r.className='vu-row';r.style.background='#4a5260';r.style.opacity='0.1';el.appendChild(r);}}
 function getCtx(){if(!sharedCtx)sharedCtx=new(window.AudioContext||window.webkitAudioContext)();return sharedCtx;}
 function getRMS(an){const d=new Float32Array(an.fftSize);an.getFloatTimeDomainData(d);let s=0;for(const v of d)s+=v*v;return Math.sqrt(s/d.length);}
 const TARGET_LUFS=-23;
@@ -3432,8 +3467,8 @@ D[5].togglePlay=function(){
 
 // Barres VU départs (grands)
 ['sat','dab','hz','nat'].forEach(id=>{buildBars('vu-'+id+'-L');buildBars('vu-'+id+'-R');});
-// Barres VU diffuseurs (petits — dans la grille gauche)
-['sat-sm','dab-sm','hz-sm'].forEach(id=>{buildBars('vu-'+id+'-L');buildBars('vu-'+id+'-R');});
+// Barres VU PUB compacts (SAT/DAB+/Hz) — couleur grise comme les diffuseurs PUB
+['sat-sm','dab-sm','hz-sm'].forEach(id=>{buildBarsGray('vu-'+id+'-L');buildBarsGray('vu-'+id+'-R');});
 
 // ── Mix flux de diffusion ──
 function paintMix(id, sources){
@@ -4700,64 +4735,67 @@ plInit();
 // switchTab unifié ci-dessus
 
 // ══════════════════════════════════════════════════════════════
-// PIGE — Enregistrement des départs
+// PIGE — Enregistrement simultané des 3 départs
 // ══════════════════════════════════════════════════════════════
-let pigeRecording=false, pigeMediaRecorder=null, pigeChunks=[];
+const PIGE_DEPS=['sat','dab','hz'];
+let pigeRecording=false;
 let pigeStartTime=null, pigeTimerInterval=null;
-let pigeSrc='sat'; // départ sélectionné
-let pigeRecords=[]; // liste des enregistrements
-let pigeLiveAnim=null;
-let pigeLiveAnalyser=null;
+let pigeRecords=[];
 
-// Sélectionner le départ source
-function pigeSelectSrc(dep){
-  pigeSrc=dep;
-  document.querySelectorAll('.pige-src-btn').forEach(b=>b.classList.remove('active'));
-  const btn=document.getElementById('pige-src-'+dep);
-  if(btn) btn.classList.add('active');
-}
+// Un état par départ
+const pigeState={};
+PIGE_DEPS.forEach(dep=>{
+  pigeState[dep]={
+    mediaRecorder:null, chunks:[], analyser:null, dest:null,
+    animFrame:null, liveData:[]
+  };
+});
 
-// Démarrer / arrêter l'enregistrement
+// Démarrer / arrêter tous les enregistrements
 async function pigeToggleRec(){
-  if(!pigeRecording){
-    await pigeStart();
-  } else {
-    pigeStop();
-  }
+  if(!pigeRecording){ await pigeStart(); }
+  else { pigeStop(); }
 }
 
 async function pigeStart(){
-  // Récupérer le monGn du départ sélectionné
-  const mn=MON_GAINS[pigeSrc];
-  if(!mn){ alert('Départ '+pigeSrc.toUpperCase()+' pas encore actif. Lance au moins une source.'); return; }
-
   const ctx=getCtx();
+  let anyOk=false;
 
-  // Créer un MediaStreamDestination depuis le monGn
-  const dest=ctx.createMediaStreamDestination();
-  mn.connect(dest);
+  for(const dep of PIGE_DEPS){
+    const mn=MON_GAINS[dep];
+    if(!mn) continue; // départ pas encore actif, on skip
 
-  // Analyser pour la waveform live
-  pigeLiveAnalyser=ctx.createAnalyser();
-  pigeLiveAnalyser.fftSize=2048;
-  mn.connect(pigeLiveAnalyser);
+    const st=pigeState[dep];
+    st.dest=ctx.createMediaStreamDestination();
+    mn.connect(st.dest);
 
-  // MediaRecorder sur le stream
-  pigeChunks=[];
-  pigeMediaRecorder=new MediaRecorder(dest.stream, {mimeType:'audio/webm;codecs=opus'});
-  pigeMediaRecorder.ondataavailable=e=>{if(e.data.size>0)pigeChunks.push(e.data);};
-  pigeMediaRecorder.onstop=()=>{
-    mn.disconnect(dest);
-    mn.disconnect(pigeLiveAnalyser);
-    pigeLiveAnalyser=null;
-    pigeSaveRecord();
-  };
-  pigeMediaRecorder.start(100); // chunks de 100ms
+    st.analyser=ctx.createAnalyser();
+    st.analyser.fftSize=2048;
+    mn.connect(st.analyser);
+
+    st.chunks=[];
+    st.mediaRecorder=new MediaRecorder(st.dest.stream,{mimeType:'audio/webm;codecs=opus'});
+    const capturedDep=dep;
+    st.mediaRecorder.ondataavailable=e=>{ if(e.data.size>0) st.chunks.push(e.data); };
+    st.mediaRecorder.onstop=()=>{
+      mn.disconnect(st.dest);
+      mn.disconnect(st.analyser);
+      st.analyser=null;
+      pigeSaveRecord(capturedDep, st.chunks.slice(), Date.now()-pigeStartTime);
+    };
+    st.mediaRecorder.start(100);
+    anyOk=true;
+
+    // Activer le dot
+    const dot=document.getElementById('pige-dot-'+dep);
+    if(dot) dot.classList.add('active');
+  }
+
+  if(!anyOk){ alert('Aucun départ actif. Lance au moins une source.'); return; }
 
   pigeRecording=true;
   pigeStartTime=Date.now();
 
-  // UI
   const btn=document.getElementById('pige-rec-btn');
   if(btn){btn.textContent='⏹ STOP';btn.classList.add('recording');}
   const timer=document.getElementById('pige-timer');
@@ -4766,46 +4804,89 @@ async function pigeStart(){
     const sec=Math.floor((Date.now()-pigeStartTime)/1000);
     const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
     const el=document.getElementById('pige-timer');
-    if(el) el.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   },500);
 
-  // Lancer la waveform live
-  pigeLiveDraw();
+  pigeLiveLoop();
 }
 
 function pigeStop(){
-  if(!pigeMediaRecorder) return;
-  pigeMediaRecorder.stop();
   pigeRecording=false;
   clearInterval(pigeTimerInterval);
-  if(pigeLiveAnim){cancelAnimationFrame(pigeLiveAnim);pigeLiveAnim=null;}
-  // UI
+
+  PIGE_DEPS.forEach(dep=>{
+    const st=pigeState[dep];
+    if(st.mediaRecorder && st.mediaRecorder.state!=='inactive') st.mediaRecorder.stop();
+    if(st.animFrame){cancelAnimationFrame(st.animFrame);st.animFrame=null;}
+    const dot=document.getElementById('pige-dot-'+dep);
+    if(dot) dot.classList.remove('active');
+    // Effacer canvas
+    const cv=document.getElementById('pige-live-'+dep);
+    if(cv){const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);}
+    document.getElementById('pige-level-'+dep) && (document.getElementById('pige-level-'+dep).textContent='—∞ dB');
+  });
+
   const btn=document.getElementById('pige-rec-btn');
   if(btn){btn.textContent='⏺ ENREGISTRER';btn.classList.remove('recording');}
   const timer=document.getElementById('pige-timer');
   if(timer){timer.classList.remove('running');timer.textContent='00:00:00';}
-  // Effacer waveform live
-  const cv=document.getElementById('pige-live-canvas');
-  if(cv){const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);}
-  document.getElementById('pige-level').textContent='—∞ dB';
 }
 
-// Sauvegarder l'enregistrement terminé
-function pigeSaveRecord(){
-  if(!pigeChunks.length) return;
-  const blob=new Blob(pigeChunks,{type:'audio/webm'});
+// Boucle live simultanée pour les 3 canaux
+function pigeLiveLoop(){
+  if(!pigeRecording) return;
+  requestAnimationFrame(pigeLiveLoop);
+  PIGE_DEPS.forEach(dep=>{
+    const st=pigeState[dep];
+    if(!st.analyser) return;
+    const cv=document.getElementById('pige-live-'+dep);
+    if(!cv) return;
+    const W=cv.offsetWidth||800, H=70;
+    cv.width=W; cv.height=H;
+    const c=cv.getContext('2d');
+    const data=new Float32Array(st.analyser.fftSize);
+    st.analyser.getFloatTimeDomainData(data);
+
+    c.fillStyle='#04060e'; c.fillRect(0,0,W,H);
+    c.strokeStyle='rgba(30,50,90,.4)';c.lineWidth=1;
+    c.beginPath();c.moveTo(0,H/2+.5);c.lineTo(W,H/2+.5);c.stroke();
+
+    c.strokeStyle='#e03020';c.lineWidth=1.5;
+    c.beginPath();
+    const step=data.length/W;
+    for(let x=0;x<W;x++){
+      const v=data[Math.floor(x*step)]||0;
+      const y=H/2-v*(H/2)*.9;
+      x===0?c.moveTo(x,y):c.lineTo(x,y);
+    }
+    c.stroke();
+
+    // Niveau
+    let rms=0; for(const v of data) rms+=v*v;
+    rms=Math.sqrt(rms/data.length);
+    const db=rms>0?Math.max(-60,20*Math.log10(rms)):-60;
+    const lvl=document.getElementById('pige-level-'+dep);
+    if(lvl){lvl.textContent=db>-60?db.toFixed(1)+' dB':'—∞ dB';lvl.style.color=db>-3?'#e03020':db>-10?'#f5c400':'#00d4f0';}
+  });
+}
+
+// Sauvegarder un enregistrement terminé
+function pigeSaveRecord(dep, chunks, durMs){
+  if(!chunks.length) return;
+  const blob=new Blob(chunks,{type:'audio/webm'});
   const url=URL.createObjectURL(blob);
-  const dur=Math.round((Date.now()-pigeStartTime)/1000);
+  const dur=Math.round(durMs/1000);
   const now=new Date();
-  const name=pigeSrc.toUpperCase()+' – '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const rec={id:'rec_'+Date.now(), name, url, blob, dur, src:pigeSrc, wvData:null, audio:null};
+  const name=dep.toUpperCase()+' – '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const rec={id:'rec_'+dep+'_'+Date.now(), name, url, blob, dur, dep, wvData:null, audio:null};
   pigeRecords.unshift(rec);
-  // Décoder pour la waveform
+
+  // Décoder pour waveform
   const fr=new FileReader();
   fr.onload=async e=>{
     try{
       const ab=e.target.result;
-      const offCtx=new OfflineAudioContext(1,44100*Math.min(dur+1,3600),44100);
+      const offCtx=new OfflineAudioContext(1,Math.min(44100*(dur+1),44100*3600),44100);
       const decoded=await offCtx.decodeAudioData(ab);
       rec.wvData=decoded.getChannelData(0).slice();
     }catch(err){}
@@ -4815,44 +4896,6 @@ function pigeSaveRecord(){
   pigeRenderList();
 }
 
-// Waveform live (RAF)
-function pigeLiveDraw(){
-  const cv=document.getElementById('pige-live-canvas');
-  if(!cv||!pigeLiveAnalyser||!pigeRecording){return;}
-  pigeLiveAnim=requestAnimationFrame(pigeLiveDraw);
-  const W=cv.offsetWidth||800, H=100;
-  cv.width=W; cv.height=H;
-  const c=cv.getContext('2d');
-
-  const data=new Float32Array(pigeLiveAnalyser.fftSize);
-  pigeLiveAnalyser.getFloatTimeDomainData(data);
-
-  // Fond
-  c.fillStyle='#04060e'; c.fillRect(0,0,W,H);
-  // Grille
-  c.strokeStyle='rgba(30,50,90,.4)'; c.lineWidth=1;
-  c.beginPath();c.moveTo(0,H/2+.5);c.lineTo(W,H/2+.5);c.stroke();
-
-  // Signal
-  c.strokeStyle='#e03020'; c.lineWidth=1.5;
-  c.beginPath();
-  const step=data.length/W;
-  for(let x=0;x<W;x++){
-    const v=data[Math.floor(x*step)]||0;
-    const y=H/2-v*(H/2)*.9;
-    x===0?c.moveTo(x,y):c.lineTo(x,y);
-  }
-  c.stroke();
-
-  // Niveau dB
-  let rms=0; for(const v of data) rms+=v*v;
-  rms=Math.sqrt(rms/data.length);
-  const db=rms>0?Math.max(-60,20*Math.log10(rms)):-60;
-  const lvl=document.getElementById('pige-level');
-  if(lvl){lvl.textContent=db>-60?db.toFixed(1)+' dB':'—∞ dB';lvl.style.color=db>-3?'#e03020':db>-10?'#f5c400':'#00d4f0';}
-}
-
-// Rendu liste des enregistrements
 function pigeRenderList(){
   const list=document.getElementById('pige-list');
   if(!list) return;
@@ -4861,29 +4904,22 @@ function pigeRenderList(){
     return;
   }
   list.innerHTML='';
-  pigeRecords.forEach((rec,idx)=>{
+  pigeRecords.forEach(rec=>{
+    const durStr=`${String(Math.floor(rec.dur/60)).padStart(2,'0')}:${String(rec.dur%60).padStart(2,'0')}`;
+    const cvId='pige-wv-'+rec.id, phId='pige-ph-'+rec.id, pgId='pige-pg-'+rec.id;
     const card=document.createElement('div');
     card.className='pige-card';
-    const durStr=Math.floor(rec.dur/3600)>0
-      ?`${String(Math.floor(rec.dur/3600)).padStart(2,'0')}:${String(Math.floor((rec.dur%3600)/60)).padStart(2,'0')}:${String(rec.dur%60).padStart(2,'0')}`
-      :`${String(Math.floor(rec.dur/60)).padStart(2,'0')}:${String(rec.dur%60).padStart(2,'0')}`;
-
-    // Canvas waveform
-    const cvId='pige-wv-'+rec.id;
-    const phId='pige-ph-'+rec.id;
-    const pgId='pige-pg-'+rec.id;
-
     card.innerHTML=`
       <div class="pige-card-header">
-        <span class="pige-card-src">${rec.src.toUpperCase()}</span>
+        <span class="pige-card-src">${rec.dep.toUpperCase()}</span>
         <span class="pige-card-name">${rec.name}</span>
         <span class="pige-card-dur">${durStr}</span>
         <div class="pige-card-btns">
-          <button class="pige-small-btn play" onclick="pigePlay('${rec.id}')">▶ PLAY</button>
+          <button class="pige-small-btn play" onclick="pigePlay('${rec.id}')">▶</button>
           <button class="pige-small-btn" onclick="pigePause('${rec.id}')">⏸</button>
-          <button class="pige-small-btn" onclick="pigeSeekBack('${rec.id}')">↩ −10s</button>
+          <button class="pige-small-btn" onclick="pigeSeekBack('${rec.id}')">−10s</button>
           <button class="pige-small-btn" onclick="pigeSeekBegin('${rec.id}')">|◀</button>
-          <a class="pige-small-btn" href="${rec.url}" download="${rec.name}.webm" style="text-decoration:none">⬇ DL</a>
+          <a class="pige-small-btn" href="${rec.url}" download="${rec.name}.webm" style="text-decoration:none">⬇</a>
           <button class="pige-small-btn danger" onclick="pigeDelete('${rec.id}')">✕</button>
         </div>
       </div>
@@ -4894,70 +4930,50 @@ function pigeRenderList(){
       <div class="pige-progress" id="${pgId}-track" onclick="pigeSeekClick(event,'${rec.id}')">
         <div class="pige-progress-fill" id="${pgId}"></div>
       </div>`;
-
     list.appendChild(card);
-
-    // Dessiner la waveform si disponible
     if(rec.wvData){
       requestAnimationFrame(()=>{
         const cv=document.getElementById(cvId);
-        if(cv){ cv.width=cv.offsetWidth||800; cv.height=50; drawWaveformFromData(cv,rec.wvData,0,1); }
+        if(cv){cv.width=cv.offsetWidth||800;cv.height=50;drawWaveformFromData(cv,rec.wvData,0,1);}
       });
-    }
-
-    // RAF pour le playhead si en cours de lecture
-    if(rec.audio && !rec.audio.paused){
-      pigeTrackPlayhead(rec.id);
     }
   });
 }
 
-// Lecture
 function pigePlay(id){
-  const rec=pigeRecords.find(r=>r.id===id); if(!rec) return;
-  if(!rec.audio){ rec.audio=new Audio(rec.url); rec.audio.onended=()=>pigeRenderList(); }
+  const rec=pigeRecords.find(r=>r.id===id);if(!rec)return;
+  if(!rec.audio){rec.audio=new Audio(rec.url);rec.audio.onended=()=>pigeRenderList();}
   rec.audio.play().catch(e=>console.warn(e));
   pigeTrackPlayhead(id);
-  pigeRenderList();
 }
-function pigePause(id){
-  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
-  rec.audio.pause();
-}
-function pigeSeekBack(id){
-  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
-  rec.audio.currentTime=Math.max(0,rec.audio.currentTime-10);
-}
-function pigeSeekBegin(id){
-  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
-  rec.audio.currentTime=0;
-}
+function pigePause(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio) r.audio.pause(); }
+function pigeSeekBack(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio) r.audio.currentTime=Math.max(0,r.audio.currentTime-10); }
+function pigeSeekBegin(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio) r.audio.currentTime=0; }
 function pigeSeekClick(e,id){
-  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
+  const r=pigeRecords.find(r=>r.id===id);if(!r?.audio)return;
   const rect=e.currentTarget.getBoundingClientRect();
-  const pct=(e.clientX-rect.left)/rect.width;
-  rec.audio.currentTime=pct*(rec.audio.duration||rec.dur);
+  r.audio.currentTime=(e.clientX-rect.left)/rect.width*(r.audio.duration||r.dur);
 }
 function pigeDelete(id){
-  const rec=pigeRecords.find(r=>r.id===id); if(!rec) return;
-  if(rec.audio){rec.audio.pause();rec.audio=null;}
-  URL.revokeObjectURL(rec.url);
-  pigeRecords=pigeRecords.filter(r=>r.id!==id);
+  const r=pigeRecords.find(r=>r.id===id);if(!r)return;
+  if(r.audio){r.audio.pause();r.audio=null;}
+  URL.revokeObjectURL(r.url);
+  pigeRecords=pigeRecords.filter(x=>x.id!==id);
   pigeRenderList();
 }
-
-// Playhead animé
 function pigeTrackPlayhead(id){
-  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
+  const r=pigeRecords.find(r=>r.id===id);if(!r?.audio)return;
   const ph=document.getElementById('pige-ph-'+id);
   const pg=document.getElementById('pige-pg-'+id);
-  if(!ph&&!pg) return;
-  const dur=rec.audio.duration||rec.dur||1;
-  const pct=Math.min(100,(rec.audio.currentTime/dur)*100);
-  if(ph){ph.style.display='block';ph.style.left=pct.toFixed(1)+'%';}
-  if(pg) pg.style.width=pct.toFixed(1)+'%';
-  if(!rec.audio.paused) requestAnimationFrame(()=>pigeTrackPlayhead(id));
+  const dur=r.audio.duration||r.dur||1;
+  const pct=Math.min(100,(r.audio.currentTime/dur)*100).toFixed(1);
+  if(ph){ph.style.display='block';ph.style.left=pct+'%';}
+  if(pg) pg.style.width=pct+'%';
+  if(!r.audio.paused) requestAnimationFrame(()=>pigeTrackPlayhead(id));
 }
+
+// switchTab unifié ci-dessus
+
 
 </script>
 </body>
