@@ -7,6 +7,7 @@
 <!-- EmailJS SDK — envoi d'alertes silence par email -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -3448,157 +3449,243 @@ function preloadMacros(){
 // Appeler après chargement DOM
 
 // ══════════════════════════════════════════════════════════════
-// CONNEXION AUTOMATIQUE DIFF2
+// CONNEXION DIFF2 — PeerJS (cross-PC, cross-réseau)
+// + BroadcastChannel (même navigateur, même domaine — fallback)
 // ══════════════════════════════════════════════════════════════
-const DIFF2_URL = 'https://nikoprdn.github.io/Diff2/';
-let _diff2Channel = null;
-let _diff2Ready   = false;  // Diff2 a répondu au ping
+const PEER_ID_RC  = 'radioconsolemain2024rc';  // ID fixe Radio-Console
+const PEER_ID_D2  = 'radioconsolediff22024d2'; // ID fixe Diff2
+
+let _diff2Channel  = null;  // BroadcastChannel (même PC)
+let _extPeer       = null;  // RTCPeerConnection WebRTC EXT
+let _peerJS        = null;  // PeerJS instance
+let _peerConn      = null;  // PeerJS DataConnection (commandes)
+let _peerMedia     = null;  // PeerJS MediaConnection (audio)
+let _diff2Ready    = false;
+let _diff2LastSeen = 0;
 let _diff2PingInterval = null;
+let vuExt          = null;  // {aL, aR} analyseurs flux EXT
 
-// ── WebRTC : recevoir l'audio de Diff2 ──
-let _extPeer = null;   // RTCPeerConnection côté console
-let vuExt    = null;   // {aL, aR} analyseurs du flux EXT
-
-function diff2Connect(){
-  // ── 1. BroadcastChannel (même domaine github.io) ──
-  try{
-    _diff2Channel = new BroadcastChannel('diff2_control');
-    _diff2Channel.addEventListener('message', async e=>{
-      const m = e.data || {};
-      if(m.action==='pong'||m.action==='ready') _diff2SetStatus(true);
-      // WebRTC signaling
-      if(m.action==='rtc-offer') await _extHandleOffer(m.sdp);
-      if(m.action==='rtc-ice-d2rc') await _extHandleIce(m.c);
-      // Diff2 nous pingue
-      if(m.action==='d2-ping'){
-        _diff2SetStatus(true);
-        _diff2Channel.postMessage({action:'d2-pong', source:'Radio-Console'});
-      }
-      // Macro RACCRO EXT : Diff2 demande à lancer DIFF1
-      if(m.action==='raccro-ext'){
-        if(D[0]&&!D[0].playing) D[0].togglePlay();
-        console.log('[RC] RACCRO EXT reçu de Diff2 → DIFF1 lancé');
-      }
-    });
-  } catch(ex){
-    console.warn('[Diff2] BroadcastChannel non disponible:', ex);
-  }
-
-  // ── 2. postMessage iframe (fallback) ──
-  window.addEventListener('message', e=>{
-    if(!e.origin.startsWith('https://nikoprdn.github.io')) return;
-    const msg = e.data || {};
-    if(msg.action==='pong'||msg.action==='ready') _diff2SetStatus(true);
-    if(msg.action==='rtc-offer') _extHandleOffer(msg.sdp);
-    if(msg.action==='rtc-ice-d2rc') _extHandleIce(msg.c);
-    if(msg.action==='d2-ping'){
-      _diff2SetStatus(true);
-      e.source?.postMessage({action:'d2-pong',source:'Radio-Console'}, e.origin);
-    }
-    if(msg.action==='raccro-ext'){
-      if(D[0]&&!D[0].playing) D[0].togglePlay();
-    }
-  });
-
-  // ── 3. Ping immédiat + toutes les 10s ──
-  _diff2Ping();
-  _diff2PingInterval = setInterval(_diff2Ping, 10000);
-}
-
-// ── Recevoir l'offre WebRTC de Diff2 ──
-async function _extHandleOffer(sdp){
-  try{
-    if(_extPeer) { _extPeer.close(); _extPeer=null; }
-    const ctx = getCtx();
-    _extPeer = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
-
-    // Quand on reçoit la piste audio de Diff2
-    _extPeer.ontrack = (e)=>{
-      const stream = e.streams[0] || new MediaStream([e.track]);
-      const src = ctx.createMediaStreamSource(stream);
-      const sp  = ctx.createChannelSplitter(2);
-      const aL  = ctx.createAnalyser(); aL.fftSize=1024; aL.smoothingTimeConstant=0.8;
-      const aR  = ctx.createAnalyser(); aR.fftSize=1024; aR.smoothingTimeConstant=0.8;
-      src.connect(sp);
-      sp.connect(aL, 0);
-      sp.connect(aR, 1);
-      vuExt = {aL, aR};
-      buildBars('vu-ext-L'); buildBars('vu-ext-R');
-      // Allumer le VU
-      const wrap = document.getElementById('vu-wrap-ext');
-      if(wrap) wrap.style.opacity='1';
-      const stEl = document.getElementById('vu-ext-status');
-      if(stEl){ stEl.textContent='LIVE'; stEl.style.color='#9b5de5'; }
-      _diff2SetStatus(true);
-      console.log('[EXT VU] flux audio reçu de Diff2');
-    };
-
-    _extPeer.onicecandidate = (e)=>{
-      if(e.candidate && _diff2Channel){
-        _diff2Channel.postMessage({action:'rtc-ice-rcd2', c:e.candidate.toJSON()});
-      }
-    };
-
-    _extPeer.onconnectionstatechange = ()=>{
-      const s = _extPeer?.connectionState;
-      const stEl = document.getElementById('vu-ext-status');
-      const wrap  = document.getElementById('vu-wrap-ext');
-      if(s==='connected'){
-        if(wrap) wrap.style.opacity='1';
-        if(stEl){ stEl.textContent='LIVE'; stEl.style.color='#9b5de5'; }
-      } else if(s==='disconnected'||s==='failed'||s==='closed'){
-        vuExt=null;
-        if(wrap) wrap.style.opacity='.4';
-        if(stEl){ stEl.textContent='—'; stEl.style.color='#4a2a7a'; }
-      }
-    };
-
-    await _extPeer.setRemoteDescription({type:'offer', sdp});
-    const answer = await _extPeer.createAnswer();
-    await _extPeer.setLocalDescription(answer);
-    if(_diff2Channel){
-      _diff2Channel.postMessage({action:'rtc-answer', sdp:answer.sdp});
-    }
-  } catch(ex){ console.warn('[EXT VU] Erreur WebRTC offer:', ex); }
-}
-
-async function _extHandleIce(candidate){
-  try{
-    if(_extPeer && candidate) await _extPeer.addIceCandidate(candidate);
-  } catch(ex){ console.warn('[EXT VU] ICE error:', ex); }
-}
-
-function _diff2Ping(){
-  const msg = {action:'ping', source:'Radio-Console', ts:Date.now()};
-  // Via BroadcastChannel
-  if(_diff2Channel){
-    try{ _diff2Channel.postMessage(msg); }catch(e){}
-  }
-  // Via iframe postMessage
-  const frame = document.getElementById('diff2-frame');
-  if(frame?.contentWindow){
-    try{ frame.contentWindow.postMessage(msg, DIFF2_URL); }catch(e){}
-  }
-  // Si pas de réponse dans 3s, marquer hors-ligne
-  clearTimeout(_diff2Channel?._pingTimeout);
-  if(_diff2Channel) _diff2Channel._pingTimeout=setTimeout(()=>{
-    if(_diff2Ready) _diff2SetStatus(false);
-  }, 3000);
-}
-
-function _diff2SetStatus(online){
-  _diff2Ready = online;
+// ── Statut connexion ──────────────────────────────────────────
+function _diff2SetStatus(online, method){
+  _diff2Ready    = online;
+  _diff2LastSeen = Date.now();
   const dot = document.getElementById('diff2-status-dot');
   const lbl = document.getElementById('diff2-status-lbl');
-  if(dot) dot.style.background = online ? '#00d96a' : '#2a3a50';
+  if(dot){
+    dot.style.background = online ? '#00d96a' : '#2a3a50';
+    dot.style.boxShadow  = online ? '0 0 4px #00d96a' : 'none';
+  }
   if(lbl){
-    lbl.textContent = online ? 'EXT ●' : 'EXT —';
+    lbl.textContent = online ? 'EXT ● '+(method||'') : 'EXT —';
     lbl.style.color = online ? '#00d96a' : 'var(--txt-mute)';
   }
 }
 
-// Mettre à jour la macro EXT pour utiliser _diff2Channel global
-// (remplace le _channel interne de la macro)
+function _extVuSetStatus(online){
+  const wrap = document.getElementById('vu-wrap-ext');
+  const stEl = document.getElementById('vu-ext-status');
+  if(wrap) wrap.style.opacity = online ? '1' : '.4';
+  if(stEl){ stEl.textContent = online ? 'LIVE' : '—';
+            stEl.style.color = online ? '#9b5de5' : '#4a2a7a'; }
+  if(!online){ vuExt = null; }
+}
+
+// ── Branchement d'un MediaStream reçu sur le VU-mètre ────────
+function _attachExtStream(stream){
+  try{
+    const ctx = getCtx();
+    const src = ctx.createMediaStreamSource(stream);
+    const sp  = ctx.createChannelSplitter(2);
+    const aL  = ctx.createAnalyser(); aL.fftSize=1024; aL.smoothingTimeConstant=0.8;
+    const aR  = ctx.createAnalyser(); aR.fftSize=1024; aR.smoothingTimeConstant=0.8;
+    src.connect(sp); sp.connect(aL,0); sp.connect(aR,1);
+    vuExt = {aL, aR};
+    buildBars('vu-ext-L'); buildBars('vu-ext-R');
+    _extVuSetStatus(true);
+    console.log('[EXT VU] Stream audio attaché');
+  }catch(e){ console.warn('[EXT VU] attachExtStream:', e); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// PEERJS — connexion cross-PC
+// ══════════════════════════════════════════════════════════════
+function diff2InitPeer(){
+  if(_peerJS && !_peerJS.destroyed) return;
+  try{
+    _peerJS = new Peer(PEER_ID_RC, {
+      host: 'peerjs.nikoprdn.workers.dev',  // sera overridé par le serveur public
+      debug: 0
+    });
+  }catch(e){
+    // Fallback : serveur PeerJS public
+    _peerJS = new Peer(PEER_ID_RC, { debug: 0 });
+  }
+
+  _peerJS.on('open', id=>{
+    console.log('[PeerJS] RC connecté, ID:', id);
+    // Essayer de se connecter à Diff2
+    _peerConnectToD2();
+  });
+
+  _peerJS.on('error', err=>{
+    console.warn('[PeerJS] RC error:', err.type, err.message);
+    // Réessayer si ID déjà pris (une autre instance RC)
+    if(err.type==='unavailable-id'){
+      setTimeout(()=>{
+        if(_peerJS) _peerJS.destroy();
+        _peerJS = new Peer(PEER_ID_RC+'-'+Date.now().toString(36), {debug:0});
+      }, 2000);
+    }
+  });
+
+  _peerJS.on('connection', conn=>{
+    console.log('[PeerJS] Connexion entrante de:', conn.peer);
+    _setupDataConn(conn);
+  });
+
+  _peerJS.on('call', call=>{
+    console.log('[PeerJS] Appel média entrant de:', call.peer);
+    _peerMedia = call;
+    call.answer(); // répondre sans envoyer de stream (on reçoit juste)
+    call.on('stream', stream=>{
+      _attachExtStream(stream);
+    });
+    call.on('close', ()=>_extVuSetStatus(false));
+    call.on('error', ()=>_extVuSetStatus(false));
+  });
+}
+
+function _peerConnectToD2(){
+  if(!_peerJS || _peerJS.destroyed) return;
+  if(_peerConn && _peerConn.open) return; // déjà connecté
+
+  const conn = _peerJS.connect(PEER_ID_D2, {reliable:true, label:'control'});
+  conn.on('open', ()=>{
+    console.log('[PeerJS] DataConnection ouverte avec Diff2');
+    _setupDataConn(conn);
+    _diff2SetStatus(true, 'PeerJS');
+    // Ping immédiat
+    conn.send({action:'ping', source:'RC'});
+  });
+  conn.on('error', err=> console.warn('[PeerJS] DataConn error:', err));
+  conn.on('close', ()=>{
+    console.log('[PeerJS] DataConnection fermée');
+    _diff2SetStatus(false);
+    _peerConn = null;
+    // Réessayer dans 5s
+    setTimeout(_peerConnectToD2, 5000);
+  });
+}
+
+function _setupDataConn(conn){
+  _peerConn = conn;
+  conn.on('data', msg=>{
+    if(!msg||!msg.action) return;
+    if(msg.action==='pong'||msg.action==='ready') _diff2SetStatus(true, 'PeerJS');
+    if(msg.action==='raccro-ext'){
+      if(D[0]&&!D[0].playing) D[0].togglePlay();
+      console.log('[RC] RACCRO EXT de Diff2 → DIFF1 lancé');
+    }
+    if(msg.action==='d2-ping'){
+      _diff2SetStatus(true, 'PeerJS');
+      conn.send({action:'d2-pong', source:'RC'});
+    }
+    if(msg.action==='status'){
+      // Diff2 envoie son état (playing, track, etc.)
+      const dot = document.getElementById('diff2-status-dot');
+      const lbl = document.getElementById('diff2-status-lbl');
+      if(dot) dot.style.background = msg.playing ? '#00d96a' : '#f5c400';
+      if(lbl) lbl.textContent = 'EXT ' + (msg.playing ? '▶ '+( msg.track||'') : '● prêt');
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// BROADCASTCHANNEL — même navigateur (fallback / complément)
+// ══════════════════════════════════════════════════════════════
+function diff2InitBC(){
+  try{
+    _diff2Channel = new BroadcastChannel('diff2_control');
+    _diff2Channel.addEventListener('message', async e=>{
+      const m = e.data||{};
+      if(m.action==='pong'||m.action==='ready') _diff2SetStatus(true, 'BC');
+      if(m.action==='rtc-offer')    await _extHandleOffer(m.sdp);
+      if(m.action==='rtc-ice-d2rc') await _extHandleIce(m.c);
+      if(m.action==='d2-ping'){
+        _diff2SetStatus(true, 'BC');
+        _diff2Channel.postMessage({action:'d2-pong', source:'RC'});
+      }
+      if(m.action==='raccro-ext'){
+        if(D[0]&&!D[0].playing) D[0].togglePlay();
+      }
+    });
+  }catch(e){ console.warn('[BC] non disponible:', e); }
+}
+
+// ── WebRTC natif (fallback même PC via BC) ───────────────────
+async function _extHandleOffer(sdp){
+  try{
+    if(_extPeer){ _extPeer.close(); _extPeer=null; }
+    const ctx = getCtx();
+    _extPeer = new RTCPeerConnection({iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'}
+    ]});
+    _extPeer.ontrack = e=>{
+      const stream = e.streams[0]||new MediaStream([e.track]);
+      _attachExtStream(stream);
+    };
+    _extPeer.onicecandidate = e=>{
+      if(e.candidate && _diff2Channel)
+        _diff2Channel.postMessage({action:'rtc-ice-rcd2', c:e.candidate.toJSON()});
+    };
+    _extPeer.onconnectionstatechange = ()=>{
+      const s=_extPeer?.connectionState;
+      if(s==='disconnected'||s==='failed'||s==='closed') _extVuSetStatus(false);
+    };
+    await _extPeer.setRemoteDescription({type:'offer', sdp});
+    const answer = await _extPeer.createAnswer();
+    await _extPeer.setLocalDescription(answer);
+    if(_diff2Channel)
+      _diff2Channel.postMessage({action:'rtc-answer', sdp:answer.sdp});
+  }catch(e){ console.warn('[EXT WebRTC]', e); }
+}
+async function _extHandleIce(c){
+  try{ if(_extPeer&&c) await _extPeer.addIceCandidate(c); }
+  catch(e){ console.warn('[EXT ICE]', e); }
+}
+
+// ── Ping watchdog ─────────────────────────────────────────────
+function _diff2Ping(){
+  // Via PeerJS DataConnection
+  if(_peerConn && _peerConn.open){
+    try{ _peerConn.send({action:'ping', source:'RC'}); }catch(e){}
+  } else {
+    // Essayer de se reconnecter
+    _peerConnectToD2();
+  }
+  // Via BroadcastChannel (même PC)
+  if(_diff2Channel){
+    try{ _diff2Channel.postMessage({action:'ping', source:'RC'}); }catch(e){}
+  }
+  // Watchdog : si pas de réponse depuis 25s → hors-ligne
+  if(_diff2Ready && Date.now()-_diff2LastSeen > 25000){
+    _diff2SetStatus(false);
+    _extVuSetStatus(false);
+  }
+}
+
+// ── Point d'entrée principal ──────────────────────────────────
+function diff2Connect(){
+  diff2InitBC();     // BroadcastChannel (même PC)
+  diff2InitPeer();   // PeerJS (cross-PC)
+  _diff2Ping();      // Ping immédiat
+  _diff2PingInterval = setInterval(_diff2Ping, 10000);
+}
+
+// Commande play via la macro EXT — utilise PeerJS en priorité
+// (utilisé dans MACROS.ext.run)
+
 
 function _onReady(){
   preloadMacros();
@@ -4508,17 +4595,17 @@ const MACROS={
     label:'EXT NAT',
     run(diffIdx){
       const msg={action:'play', source:'Radio-Console', ts:Date.now()};
-      // Via BroadcastChannel global (init dans diff2Connect)
+      let sent=false;
+      // 1. PeerJS DataConnection (cross-PC)
+      if(_peerConn && _peerConn.open){
+        try{ _peerConn.send(msg); sent=true; }catch(e){}
+      }
+      // 2. BroadcastChannel (même PC)
       if(_diff2Channel){
-        try{ _diff2Channel.postMessage(msg); }catch(e){}
+        try{ _diff2Channel.postMessage(msg); sent=true; }catch(e){}
       }
-      // Via iframe postMessage (fallback)
-      const frame=document.getElementById('diff2-frame');
-      if(frame?.contentWindow){
-        try{ frame.contentWindow.postMessage(msg,DIFF2_URL); }catch(e){}
-      }
-      if(!_diff2Ready){
-        console.warn('[EXT NAT] Diff2 hors-ligne — vérifier que la page est ouverte');
+      if(!sent || !_diff2Ready){
+        console.warn('[EXT NAT] Diff2 hors-ligne (EXT —) — ouvrir la page Diff2');
       }
     }
   },
