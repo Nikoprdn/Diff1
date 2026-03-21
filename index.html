@@ -2366,6 +2366,18 @@ const fmtFull=s=>{s=Math.round(s||0);return fmt2(Math.floor(s/3600))+':'+fmt2(Ma
 const fmtMs=s=>{s=Math.max(0,s||0);const m=Math.floor(s/60),sec=Math.floor(s%60),ms=Math.round((s%1)*10);return fmt2(m)+':'+fmt2(sec)+'.'+ms;};
 const nowClock=()=>{const d=new Date();return[d.getHours(),d.getMinutes(),d.getSeconds()].map(fmt2).join(':');};
 
+
+const rdvMaster = {
+  armed:   false,
+  winMin:  4,
+  sign:    'minus',   // 'minus' | 'none' | 'plus'
+  targets: new Set([0]),
+  triggerSec: null,
+  bipTimer: null,
+  extWin: null,
+  _readyPoll: null
+};
+
 // ── Chargement ADDITIF des fichiers ──
 function handleFiles(files,idx){
   const arr=Array.from(files).filter(f=>f.type.startsWith('audio/'));
@@ -3126,10 +3138,17 @@ function preloadMacros(){
   // NE PAS appeler render() ici
 }
 // Appeler après chargement DOM
+function _onReady(){
+  preloadMacros();
+  D.forEach(d=>d.render());
+  mainLoop();                // démarrer la boucle RAF après init complète
+  if(typeof plInit==='function') plInit();
+  if(typeof initPubAuto==='function') initPubAuto();
+}
 if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded', ()=>{ preloadMacros(); D.forEach(d=>d.render()); });
+  document.addEventListener('DOMContentLoaded', _onReady);
 } else {
-  preloadMacros(); D.forEach(d=>d.render());
+  _onReady();
 }
 
 // Supprimer une piste d'un diffuseur
@@ -3714,20 +3733,20 @@ document.addEventListener('click',function initBipOnce(){
   document.removeEventListener('click',initBipOnce);
 },{once:true});
 
-// Boucle principale via requestAnimationFrame (fluide 60fps) + horloge à 1s
-let _lastClockSec=-1;
-(function mainLoop(){
+// Boucle principale — démarrée après DOMContentLoaded (voir bas du script)
+var _lastClockSec=-1;
+function mainLoop(){
   requestAnimationFrame(mainLoop);
   D.forEach(d=>d.tick());
-  // Horloge + RDV tick à 1s seulement (pas besoin de 60fps)
   const now=new Date();
   const sec=now.getSeconds();
   if(sec!==_lastClockSec){
     _lastClockSec=sec;
-    document.getElementById('global-clock').textContent=nowClock();
-    rdvTick();
+    const clk=document.getElementById('global-clock');
+    if(clk) clk.textContent=nowClock();
+    if(typeof rdvTick==='function') rdvTick();
   }
-})();
+}
 
 // ══════════════════════════════════════
 // ONGLETS
@@ -3755,21 +3774,11 @@ function switchTab(name){
 function initPubAuto(){
   [2,3,4,5].forEach(i=>{ if(D[i]&&!D[i].auto) D[i].toggleAuto(); });
 }
-initPubAuto();
+// initPubAuto() appelé depuis _onReady
 
 // ══════════════════════════════════════
 // RENDEZ-VOUS UNIFIÉ (un seul encart)
 // ══════════════════════════════════════
-const rdvMaster = {
-  armed:   false,
-  winMin:  4,
-  sign:    'minus',   // 'minus' | 'none' | 'plus'
-  targets: new Set([0]),
-  triggerSec: null,
-  bipTimer: null,
-  extWin: null,
-  _readyPoll: null
-};
 
 // Mise à jour de l'affichage de la fenêtre
 function rdvUpdateWinDisplay(){
@@ -3892,7 +3901,7 @@ function rdvTick(){
   // Mise à jour horloge dans l'encart RDV
   const clk=document.getElementById('rdv-clock-now');
   if(clk) clk.textContent=nowClock();
-
+  if(typeof rdvMaster==='undefined'||!rdvMaster) return;
   if(!rdvMaster.armed) return;
   const s=rdvMaster;
   const now=new Date();
@@ -4180,7 +4189,7 @@ stripLoop();
 
 
 // ── Wiring DIFF TEST (D[6]) ──
-let vuTx=null;
+var vuTx=null;
 const _tx_orig=D[6].togglePlay.bind(D[6]);
 D[6].togglePlay=function(){
   const el=D[6].audios[D[6].ci];
@@ -4487,7 +4496,7 @@ setTimeout(bindMacroDropZones,500);
 const PL_STORAGE_KEY = 'radio_playlists_v1';
 const DIFF_LABELS_PL = ['DIFF 1','DIFF 2','PUB SAT','PUB DAB+','PUB Hz','NATIONAL'];
 
-let playlists = [];          // tableau en mémoire
+var playlists = [];          // tableau en mémoire
 let plPendingRestore = null; // index playlist en attente de restauration
 
 // ── Charger depuis localStorage ──
@@ -4730,7 +4739,7 @@ function plInit(){
   plCheckMissing();
   plRender();
 }
-plInit();
+// plInit() appelé depuis _onReady
 
 // switchTab unifié ci-dessus
 
