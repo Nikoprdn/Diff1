@@ -1097,6 +1097,62 @@
     .card-header-title { font-size: 11px !important; }
     .diff-badge { font-size: 9px !important; padding: 1px 6px !important; }
   }
+
+  /* ── Onglet PIGE ── */
+  .pige-src-btn{
+    font-family:var(--mono);font-size:10px;letter-spacing:1px;padding:3px 10px;
+    background:transparent;border:1px solid var(--border);color:var(--txt-mute);
+    border-radius:2px;cursor:pointer;transition:all .12s;
+  }
+  .pige-src-btn:hover{border-color:var(--cyan-dim);color:var(--cyan-dim);}
+  .pige-src-btn.active{border-color:var(--cyan);color:var(--cyan);background:#030a14;}
+  .pige-btn{
+    font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:5px 14px;
+    background:transparent;border-radius:2px;cursor:pointer;transition:all .15s;
+  }
+  .pige-btn.rec{border:1px solid var(--red);color:var(--red);}
+  .pige-btn.rec:hover{background:#1a0000;}
+  .pige-btn.rec.recording{
+    background:#2a0000;border-color:#ff3030;color:#ff3030;
+    animation:live-pulse .8s ease-in-out infinite;
+  }
+  .pige-btn.stop{border:1px solid var(--txt-mute);color:var(--txt-mute);}
+  .pige-btn.stop:hover{border-color:var(--txt);color:var(--txt);}
+  .pige-timer{
+    font-family:var(--mono);font-size:18px;color:var(--red);letter-spacing:3px;min-width:90px;
+  }
+  .pige-timer.running{color:#ff3030;}
+  .pige-level{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:1px;}
+
+  /* Carte enregistrement */
+  .pige-card{
+    background:var(--s1);border:1px solid var(--border);border-radius:6px;
+    padding:.6rem .75rem;display:flex;flex-direction:column;gap:.5rem;
+  }
+  .pige-card-header{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+  .pige-card-name{font-family:var(--mono);font-size:11px;color:var(--txt);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pige-card-dur{font-family:var(--mono);font-size:10px;color:var(--txt-mute);}
+  .pige-card-src{font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:2px;}
+  .pige-card-btns{display:flex;gap:.35rem;flex-wrap:wrap;}
+  .pige-small-btn{
+    font-family:var(--mono);font-size:9px;padding:2px 8px;letter-spacing:1px;
+    background:transparent;border:1px solid var(--border);color:var(--txt-mute);
+    border-radius:2px;cursor:pointer;transition:all .1s;
+  }
+  .pige-small-btn:hover{border-color:var(--cyan-dim);color:var(--cyan-dim);}
+  .pige-small-btn.play{border-color:#00d96a;color:#00d96a;}
+  .pige-small-btn.play:hover{background:#052210;}
+  .pige-small-btn.danger{border-color:var(--red);color:var(--red);}
+  .pige-small-btn.danger:hover{background:#150000;}
+
+  /* Waveform d'un enregistrement */
+  .pige-wv-wrap{position:relative;height:50px;cursor:pointer;border-radius:3px;overflow:hidden;}
+  .pige-wv-canvas{display:block;width:100%;height:50px;}
+  .pige-wv-ph{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,60,60,.8);pointer-events:none;}
+  .pige-progress{
+    height:2px;background:var(--border);border-radius:1px;cursor:pointer;margin-top:2px;
+  }
+  .pige-progress-fill{height:100%;background:var(--red);border-radius:1px;width:0%;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -1269,6 +1325,7 @@
   <button class="tab-btn"        onclick="switchTab('rdv')">⏱ Rendez-vous</button>
   <button class="tab-btn"        onclick="switchTab('macros')">⚡ Macros</button>
   <button class="tab-btn"        onclick="switchTab('playlist')">📋 Playlists</button>
+  <button class="tab-btn"        onclick="switchTab('pige')" style="color:#e03020">⏺ PIGE</button>
   <button class="tab-btn"        onclick="switchTab('test')" style="color:#007a8a">🔬 TEST</button>
 </div>
 
@@ -2219,6 +2276,48 @@
   </div>
 
 </div>
+
+
+<!-- ══ Onglet PIGE ══ -->
+<div id="tab-pige" class="tab-panel">
+<section class="section is-console" style="padding-bottom:120px">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1rem">
+    <div>
+      <div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--red);letter-spacing:3px">⏺ PIGE</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;margin-top:2px">ENREGISTREMENT DES DÉPARTS</div>
+    </div>
+    <!-- Sélection départ -->
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px">DÉPART →</span>
+      <button class="pige-src-btn active" id="pige-src-sat" onclick="pigeSelectSrc('sat')">SATELLITE</button>
+      <button class="pige-src-btn" id="pige-src-dab" onclick="pigeSelectSrc('dab')">DAB+</button>
+      <button class="pige-src-btn" id="pige-src-hz"  onclick="pigeSelectSrc('hz')">Hz FM</button>
+    </div>
+    <!-- Contrôles enregistrement -->
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="pige-btn rec" id="pige-rec-btn" onclick="pigeToggleRec()">⏺ ENREGISTRER</button>
+      <span class="pige-timer" id="pige-timer">00:00:00</span>
+    </div>
+  </div>
+
+  <!-- Waveform temps réel -->
+  <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1rem;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px">WAVEFORM LIVE</span>
+      <span class="pige-level" id="pige-level">—∞ dB</span>
+    </div>
+    <canvas id="pige-live-canvas" style="display:block;width:100%;height:100px;"></canvas>
+  </div>
+
+  <!-- Liste des enregistrements -->
+  <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;margin-bottom:.5rem">ENREGISTREMENTS</div>
+  <div id="pige-list" style="display:flex;flex-direction:column;gap:.5rem">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:.5rem 0">Aucun enregistrement.</div>
+  </div>
+
+</section>
+</div><!-- /tab-pige -->
 
 <script>
 const COLORS=['#1a6b3a','#1a3a6e','#5b21b6','#6b3a1a','#1a5a6b','#3a1a6b','#6b5a1a','#1a6b5a'];
@@ -3605,12 +3704,16 @@ function switchTab(name){
   if(panel) panel.classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>{
     const txt=b.textContent.toLowerCase();
-    const match=(name==='rdv'&&txt.includes('rendez'))||
+    const match=(name==='rdv'&&(txt.includes('rendez')||txt.includes('rdv')))||
                 (name==='diffusion'&&txt.includes('diffusion'))||
                 (name==='macros'&&txt.includes('macro'))||
-                (name==='test'&&txt.includes('test'));
+                (name==='test'&&txt.includes('test'))||
+                (name==='playlist'&&(txt.includes('playlist')||txt.includes('📋')))||
+                (name==='pige'&&(txt.includes('pige')||txt.includes('⏺')));
     if(match) b.classList.add('active');
   });
+  // Hooks par onglet
+  if(name==='playlist') { try{ plRender(); }catch(e){} }
 }
 
 // ── AUTO activé d'office sur les PUB + NATIONAL ──
@@ -4594,18 +4697,268 @@ function plInit(){
 }
 plInit();
 
-// Mettre à jour switchTab pour 'playlist'
-const _origSwitchTab = switchTab;
-switchTab = function(name){
-  _origSwitchTab(name);
-  if(name==='playlist') plRender();
-  // Corriger le bouton actif pour playlist
-  if(name==='playlist'){
-    document.querySelectorAll('.tab-btn').forEach(b=>{
-      if(b.textContent.toLowerCase().includes('playlist')) b.classList.add('active');
-    });
+// switchTab unifié ci-dessus
+
+// ══════════════════════════════════════════════════════════════
+// PIGE — Enregistrement des départs
+// ══════════════════════════════════════════════════════════════
+let pigeRecording=false, pigeMediaRecorder=null, pigeChunks=[];
+let pigeStartTime=null, pigeTimerInterval=null;
+let pigeSrc='sat'; // départ sélectionné
+let pigeRecords=[]; // liste des enregistrements
+let pigeLiveAnim=null;
+let pigeLiveAnalyser=null;
+
+// Sélectionner le départ source
+function pigeSelectSrc(dep){
+  pigeSrc=dep;
+  document.querySelectorAll('.pige-src-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('pige-src-'+dep);
+  if(btn) btn.classList.add('active');
+}
+
+// Démarrer / arrêter l'enregistrement
+async function pigeToggleRec(){
+  if(!pigeRecording){
+    await pigeStart();
+  } else {
+    pigeStop();
   }
-};
+}
+
+async function pigeStart(){
+  // Récupérer le monGn du départ sélectionné
+  const mn=MON_GAINS[pigeSrc];
+  if(!mn){ alert('Départ '+pigeSrc.toUpperCase()+' pas encore actif. Lance au moins une source.'); return; }
+
+  const ctx=getCtx();
+
+  // Créer un MediaStreamDestination depuis le monGn
+  const dest=ctx.createMediaStreamDestination();
+  mn.connect(dest);
+
+  // Analyser pour la waveform live
+  pigeLiveAnalyser=ctx.createAnalyser();
+  pigeLiveAnalyser.fftSize=2048;
+  mn.connect(pigeLiveAnalyser);
+
+  // MediaRecorder sur le stream
+  pigeChunks=[];
+  pigeMediaRecorder=new MediaRecorder(dest.stream, {mimeType:'audio/webm;codecs=opus'});
+  pigeMediaRecorder.ondataavailable=e=>{if(e.data.size>0)pigeChunks.push(e.data);};
+  pigeMediaRecorder.onstop=()=>{
+    mn.disconnect(dest);
+    mn.disconnect(pigeLiveAnalyser);
+    pigeLiveAnalyser=null;
+    pigeSaveRecord();
+  };
+  pigeMediaRecorder.start(100); // chunks de 100ms
+
+  pigeRecording=true;
+  pigeStartTime=Date.now();
+
+  // UI
+  const btn=document.getElementById('pige-rec-btn');
+  if(btn){btn.textContent='⏹ STOP';btn.classList.add('recording');}
+  const timer=document.getElementById('pige-timer');
+  if(timer) timer.classList.add('running');
+  pigeTimerInterval=setInterval(()=>{
+    const sec=Math.floor((Date.now()-pigeStartTime)/1000);
+    const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+    const el=document.getElementById('pige-timer');
+    if(el) el.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  },500);
+
+  // Lancer la waveform live
+  pigeLiveDraw();
+}
+
+function pigeStop(){
+  if(!pigeMediaRecorder) return;
+  pigeMediaRecorder.stop();
+  pigeRecording=false;
+  clearInterval(pigeTimerInterval);
+  if(pigeLiveAnim){cancelAnimationFrame(pigeLiveAnim);pigeLiveAnim=null;}
+  // UI
+  const btn=document.getElementById('pige-rec-btn');
+  if(btn){btn.textContent='⏺ ENREGISTRER';btn.classList.remove('recording');}
+  const timer=document.getElementById('pige-timer');
+  if(timer){timer.classList.remove('running');timer.textContent='00:00:00';}
+  // Effacer waveform live
+  const cv=document.getElementById('pige-live-canvas');
+  if(cv){const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);}
+  document.getElementById('pige-level').textContent='—∞ dB';
+}
+
+// Sauvegarder l'enregistrement terminé
+function pigeSaveRecord(){
+  if(!pigeChunks.length) return;
+  const blob=new Blob(pigeChunks,{type:'audio/webm'});
+  const url=URL.createObjectURL(blob);
+  const dur=Math.round((Date.now()-pigeStartTime)/1000);
+  const now=new Date();
+  const name=pigeSrc.toUpperCase()+' – '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const rec={id:'rec_'+Date.now(), name, url, blob, dur, src:pigeSrc, wvData:null, audio:null};
+  pigeRecords.unshift(rec);
+  // Décoder pour la waveform
+  const fr=new FileReader();
+  fr.onload=async e=>{
+    try{
+      const ab=e.target.result;
+      const offCtx=new OfflineAudioContext(1,44100*Math.min(dur+1,3600),44100);
+      const decoded=await offCtx.decodeAudioData(ab);
+      rec.wvData=decoded.getChannelData(0).slice();
+    }catch(err){}
+    pigeRenderList();
+  };
+  fr.readAsArrayBuffer(blob);
+  pigeRenderList();
+}
+
+// Waveform live (RAF)
+function pigeLiveDraw(){
+  const cv=document.getElementById('pige-live-canvas');
+  if(!cv||!pigeLiveAnalyser||!pigeRecording){return;}
+  pigeLiveAnim=requestAnimationFrame(pigeLiveDraw);
+  const W=cv.offsetWidth||800, H=100;
+  cv.width=W; cv.height=H;
+  const c=cv.getContext('2d');
+
+  const data=new Float32Array(pigeLiveAnalyser.fftSize);
+  pigeLiveAnalyser.getFloatTimeDomainData(data);
+
+  // Fond
+  c.fillStyle='#04060e'; c.fillRect(0,0,W,H);
+  // Grille
+  c.strokeStyle='rgba(30,50,90,.4)'; c.lineWidth=1;
+  c.beginPath();c.moveTo(0,H/2+.5);c.lineTo(W,H/2+.5);c.stroke();
+
+  // Signal
+  c.strokeStyle='#e03020'; c.lineWidth=1.5;
+  c.beginPath();
+  const step=data.length/W;
+  for(let x=0;x<W;x++){
+    const v=data[Math.floor(x*step)]||0;
+    const y=H/2-v*(H/2)*.9;
+    x===0?c.moveTo(x,y):c.lineTo(x,y);
+  }
+  c.stroke();
+
+  // Niveau dB
+  let rms=0; for(const v of data) rms+=v*v;
+  rms=Math.sqrt(rms/data.length);
+  const db=rms>0?Math.max(-60,20*Math.log10(rms)):-60;
+  const lvl=document.getElementById('pige-level');
+  if(lvl){lvl.textContent=db>-60?db.toFixed(1)+' dB':'—∞ dB';lvl.style.color=db>-3?'#e03020':db>-10?'#f5c400':'#00d4f0';}
+}
+
+// Rendu liste des enregistrements
+function pigeRenderList(){
+  const list=document.getElementById('pige-list');
+  if(!list) return;
+  if(!pigeRecords.length){
+    list.innerHTML='<div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:.5rem 0">Aucun enregistrement.</div>';
+    return;
+  }
+  list.innerHTML='';
+  pigeRecords.forEach((rec,idx)=>{
+    const card=document.createElement('div');
+    card.className='pige-card';
+    const durStr=Math.floor(rec.dur/3600)>0
+      ?`${String(Math.floor(rec.dur/3600)).padStart(2,'0')}:${String(Math.floor((rec.dur%3600)/60)).padStart(2,'0')}:${String(rec.dur%60).padStart(2,'0')}`
+      :`${String(Math.floor(rec.dur/60)).padStart(2,'0')}:${String(rec.dur%60).padStart(2,'0')}`;
+
+    // Canvas waveform
+    const cvId='pige-wv-'+rec.id;
+    const phId='pige-ph-'+rec.id;
+    const pgId='pige-pg-'+rec.id;
+
+    card.innerHTML=`
+      <div class="pige-card-header">
+        <span class="pige-card-src">${rec.src.toUpperCase()}</span>
+        <span class="pige-card-name">${rec.name}</span>
+        <span class="pige-card-dur">${durStr}</span>
+        <div class="pige-card-btns">
+          <button class="pige-small-btn play" onclick="pigePlay('${rec.id}')">▶ PLAY</button>
+          <button class="pige-small-btn" onclick="pigePause('${rec.id}')">⏸</button>
+          <button class="pige-small-btn" onclick="pigeSeekBack('${rec.id}')">↩ −10s</button>
+          <button class="pige-small-btn" onclick="pigeSeekBegin('${rec.id}')">|◀</button>
+          <a class="pige-small-btn" href="${rec.url}" download="${rec.name}.webm" style="text-decoration:none">⬇ DL</a>
+          <button class="pige-small-btn danger" onclick="pigeDelete('${rec.id}')">✕</button>
+        </div>
+      </div>
+      <div class="pige-wv-wrap" id="${cvId}-wrap" onclick="pigeSeekClick(event,'${rec.id}')">
+        <canvas class="pige-wv-canvas" id="${cvId}"></canvas>
+        <div class="pige-wv-ph" id="${phId}" style="left:0;display:none"></div>
+      </div>
+      <div class="pige-progress" id="${pgId}-track" onclick="pigeSeekClick(event,'${rec.id}')">
+        <div class="pige-progress-fill" id="${pgId}"></div>
+      </div>`;
+
+    list.appendChild(card);
+
+    // Dessiner la waveform si disponible
+    if(rec.wvData){
+      requestAnimationFrame(()=>{
+        const cv=document.getElementById(cvId);
+        if(cv){ cv.width=cv.offsetWidth||800; cv.height=50; drawWaveformFromData(cv,rec.wvData,0,1); }
+      });
+    }
+
+    // RAF pour le playhead si en cours de lecture
+    if(rec.audio && !rec.audio.paused){
+      pigeTrackPlayhead(rec.id);
+    }
+  });
+}
+
+// Lecture
+function pigePlay(id){
+  const rec=pigeRecords.find(r=>r.id===id); if(!rec) return;
+  if(!rec.audio){ rec.audio=new Audio(rec.url); rec.audio.onended=()=>pigeRenderList(); }
+  rec.audio.play().catch(e=>console.warn(e));
+  pigeTrackPlayhead(id);
+  pigeRenderList();
+}
+function pigePause(id){
+  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
+  rec.audio.pause();
+}
+function pigeSeekBack(id){
+  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
+  rec.audio.currentTime=Math.max(0,rec.audio.currentTime-10);
+}
+function pigeSeekBegin(id){
+  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
+  rec.audio.currentTime=0;
+}
+function pigeSeekClick(e,id){
+  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
+  const rect=e.currentTarget.getBoundingClientRect();
+  const pct=(e.clientX-rect.left)/rect.width;
+  rec.audio.currentTime=pct*(rec.audio.duration||rec.dur);
+}
+function pigeDelete(id){
+  const rec=pigeRecords.find(r=>r.id===id); if(!rec) return;
+  if(rec.audio){rec.audio.pause();rec.audio=null;}
+  URL.revokeObjectURL(rec.url);
+  pigeRecords=pigeRecords.filter(r=>r.id!==id);
+  pigeRenderList();
+}
+
+// Playhead animé
+function pigeTrackPlayhead(id){
+  const rec=pigeRecords.find(r=>r.id===id); if(!rec||!rec.audio) return;
+  const ph=document.getElementById('pige-ph-'+id);
+  const pg=document.getElementById('pige-pg-'+id);
+  if(!ph&&!pg) return;
+  const dur=rec.audio.duration||rec.dur||1;
+  const pct=Math.min(100,(rec.audio.currentTime/dur)*100);
+  if(ph){ph.style.display='block';ph.style.left=pct.toFixed(1)+'%';}
+  if(pg) pg.style.width=pct.toFixed(1)+'%';
+  if(!rec.audio.paused) requestAnimationFrame(()=>pigeTrackPlayhead(id));
+}
+
 </script>
 </body>
 </html>
