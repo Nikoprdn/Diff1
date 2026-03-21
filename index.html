@@ -1284,6 +1284,13 @@
 </head>
 <body>
 
+<!-- ══ Iframe invisible Diff2 — connexion automatique ══ -->
+<iframe id="diff2-frame"
+  src="https://nikoprdn.github.io/Diff2/"
+  style="display:none;width:0;height:0;border:none;position:absolute;left:-9999px"
+  title="Diff2 NATIONAL externe"
+  allow="autoplay"
+></iframe>
 
 <!-- ══ ÉDITEUR IN/OUT ══ -->
 <div class="wv-modal-overlay" id="wv-modal">
@@ -1492,6 +1499,12 @@
         <button class="listen-btn" id="listen-hz" onclick="setListenMode('hz')">
           Hz<span class="sil-dot" id="sil-nav-hz"></span>
         </button>
+      </div>
+    </div>
+    <div class="navbar-item" style="gap:.4rem">
+      <div style="display:flex;align-items:center;gap:5px" title="Statut Diff2 NATIONAL externe">
+        <div id="diff2-status-dot" style="width:6px;height:6px;border-radius:50%;background:#2a3a50;transition:background .4s;flex-shrink:0"></div>
+        <span id="diff2-status-lbl" style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);letter-spacing:1px;white-space:nowrap">EXT —</span>
       </div>
     </div>
     <div class="navbar-item"><div class="clock-display" id="global-clock">00:00:00</div></div>
@@ -3419,6 +3432,74 @@ function preloadMacros(){
   // NE PAS appeler render() ici
 }
 // Appeler après chargement DOM
+
+// ══════════════════════════════════════════════════════════════
+// CONNEXION AUTOMATIQUE DIFF2
+// ══════════════════════════════════════════════════════════════
+const DIFF2_URL = 'https://nikoprdn.github.io/Diff2/';
+let _diff2Channel = null;
+let _diff2Ready   = false;  // Diff2 a répondu au ping
+let _diff2PingInterval = null;
+
+function diff2Connect(){
+  // ── 1. BroadcastChannel (même domaine github.io) ──
+  try{
+    _diff2Channel = new BroadcastChannel('diff2_control');
+    // Écouter les réponses de Diff2 (pong)
+    _diff2Channel.addEventListener('message', e=>{
+      if(e.data?.action==='pong'||e.data?.action==='ready'){
+        _diff2SetStatus(true);
+      }
+    });
+  } catch(ex){
+    console.warn('[Diff2] BroadcastChannel non disponible:', ex);
+  }
+
+  // ── 2. postMessage vers l'iframe (fallback cross-origin) ──
+  window.addEventListener('message', e=>{
+    if(!e.origin.startsWith('https://nikoprdn.github.io')) return;
+    if(e.data?.action==='pong'||e.data?.action==='ready'){
+      _diff2SetStatus(true);
+    }
+  });
+
+  // ── 3. Ping immédiat + toutes les 10s ──
+  _diff2Ping();
+  _diff2PingInterval = setInterval(_diff2Ping, 10000);
+}
+
+function _diff2Ping(){
+  const msg = {action:'ping', source:'Radio-Console', ts:Date.now()};
+  // Via BroadcastChannel
+  if(_diff2Channel){
+    try{ _diff2Channel.postMessage(msg); }catch(e){}
+  }
+  // Via iframe postMessage
+  const frame = document.getElementById('diff2-frame');
+  if(frame?.contentWindow){
+    try{ frame.contentWindow.postMessage(msg, DIFF2_URL); }catch(e){}
+  }
+  // Si pas de réponse dans 3s, marquer hors-ligne
+  clearTimeout(_diff2Channel?._pingTimeout);
+  if(_diff2Channel) _diff2Channel._pingTimeout=setTimeout(()=>{
+    if(_diff2Ready) _diff2SetStatus(false);
+  }, 3000);
+}
+
+function _diff2SetStatus(online){
+  _diff2Ready = online;
+  const dot = document.getElementById('diff2-status-dot');
+  const lbl = document.getElementById('diff2-status-lbl');
+  if(dot) dot.style.background = online ? '#00d96a' : '#2a3a50';
+  if(lbl){
+    lbl.textContent = online ? 'EXT ●' : 'EXT —';
+    lbl.style.color = online ? '#00d96a' : 'var(--txt-mute)';
+  }
+}
+
+// Mettre à jour la macro EXT pour utiliser _diff2Channel global
+// (remplace le _channel interne de la macro)
+
 function _onReady(){
   preloadMacros();
   D.forEach(d=>d.render());
@@ -4324,26 +4405,20 @@ const MACROS={
   },
   ext:{
     label:'EXT NAT',
-    _channel: null,
-    _getChannel(){
-      if(!this._channel){
-        // BroadcastChannel : parle à toutes les instances Diff2 ouvertes
-        // dans le même navigateur, même domaine
-        try{ this._channel=new BroadcastChannel('diff2_control'); }
-        catch(e){ this._channel=null; }
-      }
-      return this._channel;
-    },
     run(diffIdx){
       const msg={action:'play', source:'Radio-Console', ts:Date.now()};
-      // 1. BroadcastChannel (même navigateur, même origine — le plus fiable)
-      const ch=this._getChannel();
-      if(ch){
-        ch.postMessage(msg);
-        console.log('[EXT NAT] BroadcastChannel → play envoyé');
+      // Via BroadcastChannel global (init dans diff2Connect)
+      if(_diff2Channel){
+        try{ _diff2Channel.postMessage(msg); }catch(e){}
       }
-      // 2. postMessage à toutes les fenêtres connues (cross-origin ou fallback)
-      // Diff2 doit être ouvert manuellement dans un onglet
+      // Via iframe postMessage (fallback)
+      const frame=document.getElementById('diff2-frame');
+      if(frame?.contentWindow){
+        try{ frame.contentWindow.postMessage(msg,DIFF2_URL); }catch(e){}
+      }
+      if(!_diff2Ready){
+        console.warn('[EXT NAT] Diff2 hors-ligne — vérifier que la page est ouverte');
+      }
     }
   },
   stop3:{
@@ -5466,6 +5541,8 @@ function _onReady(){
     const btn=document.getElementById('listen-'+k);
     if(btn) btn.classList.toggle('active', k===listenMode);
   });
+  // Connexion automatique Diff2
+  diff2Connect();
 }
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', _onReady);
