@@ -544,12 +544,9 @@ async function sigSend(msg){
 
 async function sigPoll(){
   try{
-    // Poller les messages de d2 ET d3
-    const [r2,r3]=await Promise.all([
-      fetch(`${SIG_URL}/poll?role=rc`),
-      fetch(`${SIG_URL}/poll?role=rc-d3`).catch(()=>null)
-    ]);
-    if(r2?.ok){const data=await r2.json();for(const msg of(data.messages||[]))sigHandleMessage(msg);}
+    // Un seul appel — le worker agrège d2-rc + d3-rc pour le rôle "rc"
+    const r=await fetch(`${SIG_URL}/poll?role=rc`);
+    if(r.ok){const data=await r.json();for(const msg of(data.messages||[]))sigHandleMessage(msg);}
   }catch(e){}
 }
 
