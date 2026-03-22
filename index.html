@@ -4,12 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radio Console</title>
-<!-- EmailJS SDK — envoi d'alertes silence par email -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
 <style>
+
   :root {
     --mono:'Share Tech Mono',monospace; --display:'Oswald',sans-serif;
     --bg:#080d18; --s1:#0d1428; --s2:#111c38; --s3:#0c1530;
@@ -1287,19 +1285,47 @@
   #diff2-status-dot.connected{animation:none!important;}
   #diff2-status-pill.connected{border-color:#00d96a!important;background:rgba(0,217,106,.06)!important;}
   #diff2-status-pill.offline{border-color:#e03020!important;background:rgba(220,48,32,.06)!important;}
+
+
+  @keyframes blink-ext{0%,100%{opacity:1}50%{opacity:.3}}
+  #diff2-status-dot.connected{animation:none!important;}
+
+  /* Barre de progression fluide */
+  .diff-progress-wrap{
+    position:relative; height:4px; background:#0a1020; overflow:hidden;
+  }
+  .diff-progress-fill{
+    position:absolute; left:0; top:0; height:100%;
+    background:linear-gradient(90deg,#00d96a,#00d4f0);
+    transition:width .08s linear;
+    box-shadow:0 0 8px rgba(0,217,106,.5);
+  }
+  .diff-progress-fill.active{
+    background:linear-gradient(90deg,#e03020,#f5c400,#00d96a);
+    box-shadow:0 0 10px rgba(220,50,30,.4);
+  }
+
+  /* Row active avec fond dégradé de gauche */
+  .row-active{
+    background:transparent;
+    position:relative;
+  }
+  .row-active::before{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(90deg, rgba(220,48,32,.35) 0%, rgba(220,48,32,.05) 100%);
+    pointer-events:none;
+    z-index:0;
+    transform-origin:left;
+    transform:scaleX(var(--prog,0));
+    transition:transform .08s linear;
+  }
+  .row-active td{ position:relative; z-index:1; }
+
 </style>
 </head>
 <body>
 
-<!-- ══ Iframe invisible Diff2 — connexion automatique ══ -->
-<iframe id="diff2-frame"
-  src="https://nikoprdn.github.io/Diff2/"
-  style="display:none;width:0;height:0;border:none;position:absolute;left:-9999px"
-  title="Diff2 NATIONAL externe"
-  allow="autoplay"
-></iframe>
-
-<!-- ══ ÉDITEUR IN/OUT ══ -->
 <div class="wv-modal-overlay" id="wv-modal">
   <div class="wv-modal" id="wv-modal-box" style="width:min(96vw,1100px);max-height:92vh;display:flex;flex-direction:column">
 
@@ -1493,54 +1519,25 @@
     </a>
   </div>
   <div class="navbar-end">
-    <div class="navbar-item">
-      <div class="listen-mode-wrap">
-        <span class="listen-mode-label">Écoute</span>
-        <button class="listen-btn" id="listen-mix" onclick="setListenMode('mix')">MIX</button>
-        <button class="listen-btn active" id="listen-sat" onclick="setListenMode('sat')">
-          SAT<span class="sil-dot" id="sil-nav-sat"></span>
-        </button>
-        <button class="listen-btn" id="listen-dab" onclick="setListenMode('dab')">
-          DAB+<span class="sil-dot" id="sil-nav-dab"></span>
-        </button>
-        <button class="listen-btn" id="listen-hz" onclick="setListenMode('hz')">
-          Hz<span class="sil-dot" id="sil-nav-hz"></span>
-        </button>
-      </div>
-    </div>
-    <div class="navbar-item" style="gap:.4rem">
+    <div class="navbar-item" style="gap:.6rem;display:flex;align-items:center">
+      <!-- Voyant EXT Diff2 -->
       <div style="display:flex;align-items:center;gap:6px;padding:3px 10px;
         border:1px solid #1e2a40;border-radius:12px;transition:all .3s;cursor:default"
         id="diff2-status-pill" title="Statut NATIONAL EXT">
         <div id="diff2-status-dot" style="width:10px;height:10px;border-radius:50%;
-          background:#e03020;box-shadow:0 0 8px #e03020;
-          transition:all .3s;flex-shrink:0;animation:blink-ext .8s step-start infinite"></div>
+          background:#e03020;box-shadow:0 0 8px #e03020;transition:all .3s;
+          animation:blink-ext .8s step-start infinite"></div>
         <span id="diff2-status-lbl" style="font-family:var(--mono);font-size:9px;
-          color:#e03020;letter-spacing:1px;white-space:nowrap;font-weight:700">EXT ✗</span>
+          color:#e03020;letter-spacing:1px;font-weight:700">EXT ✗</span>
       </div>
+      <div class="clock-display" id="clock-main">--:--:--</div>
     </div>
-    <div class="navbar-item"><div class="clock-display" id="global-clock">00:00:00</div></div>
   </div>
 </nav>
 
-<!-- Barre d'onglets principale -->
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('diffusion')">▶ Diffusion</button>
-  <button class="tab-btn"        onclick="switchTab('rdv')">⏱ Rendez-vous</button>
-  <button class="tab-btn"        onclick="switchTab('macros')">⚡ Macros</button>
-  <button class="tab-btn"        onclick="switchTab('playlist')">📋 Playlists</button>
-  <button class="tab-btn"        onclick="switchTab('pige')" style="color:#e03020">⏺ PIGE</button>
-  <button class="tab-btn"        onclick="switchTab('test')" style="color:#007a8a">🔬 TEST</button>
-</div>
-
-<!-- Panneau Diffusion -->
-<div id="tab-diffusion" class="tab-panel active">
 <section class="section is-console">
-<div style="display:flex;flex-direction:column;gap:1rem;">
+<div style="display:flex;flex-direction:column;gap:1rem">
 
-<!-- ══ LIGNE 1 : DIFF 1 + DIFF 2 ══ -->
-<div class="diff-grid-2">
-<!-- ══ DIFF 1 ══ -->
 <div class="card is-dark-card">
   <div class="card-header diff-card-header" id="diff-header-0" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
@@ -1587,7 +1584,9 @@
       <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060">PISTE <strong id="c1-counter" style="color:#5a7090;margin-left:4px">0/0</strong></span>
     </div>
   </div>
-  <progress class="progress is-elapsed" id="c1-progress" value="0" max="100"></progress>
+  <div class="diff-progress-wrap">
+  <div class="diff-progress-fill" id="c1-progress-fill" style="width:0%"></div>
+</div>
   <div class="file-drop-zone" id="fdz1" onclick="document.getElementById('fi1').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,0)">
     <input type="file" id="fi1" multiple accept="audio/*" onchange="handleFiles(this.files,0)">
     <div class="fdz-row">
@@ -1629,1022 +1628,20 @@
   </div>
 </div>
 
-<!-- ══ DIFF 2 ══ -->
-<div class="card is-dark-card">
-  <div class="card-header diff-card-header" id="diff-header-1" id="diff-header-4" style="display:flex;align-items:stretch">
-    <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
-      <span class="tag diff-badge" style="background:#160d2a;color:#9b5de5;border:1px solid #6a3aaa">DIFF 2</span>
-    </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
-      <p style="font-family:var(--mono);font-size:9px;color:#3a5070">RADIO02_EST</p>
-    </div>
-    <div class="timer-group">
-      <div class="timer-box"><span class="label-txt">Avant fenêtre</span><span class="val-txt" id="c2-avant" style="color:#00d96a">00:00:00</span></div>
-      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="c2-avance" style="color:#f5c400">00:00:00</span></div>
-    </div>
-  </div>
-  <div class="notification is-onair diff-onair-bar" id="diff-onair-1">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span class="dot-live"></span><span class="onair-title">DIFF 2</span><span id="onair-track-1" class="onair-track-name"></span>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <button class="button is-success is-small is-outlined" onclick="D[1].togglePlay()">▶ PLAY</button>
-      <button class="button is-danger is-small is-outlined"  onclick="D[1].stopAll()">■ STOP</button>
-      <button class="button is-dark is-small" onclick="D[1].prevTrack()">|◀</button>
-      <button class="button is-dark is-small" onclick="D[1].nextTrack()">▶|</button>
-      <button class="button is-auto is-small" id="auto-btn-1" onclick="D[1].toggleAuto()">AUTO</button>
-      <div class="macro-dropdown-wrap">
-        <button class="macro-dropdown-btn" id="mdrop-btn-1" onclick="toggleMacroMenu(1)">⚡ MACRO ▾</button>
-        <div class="macro-dropdown-menu" id="mdrop-menu-1">
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(1,'nat');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(1,'loc');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(1,'raccro');flashMacroItem(this)">
-            <div><div class="mdrop-badge">RACCRO</div><div class="mdrop-desc">Lance DIFF 1</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(1,'ext');flashMacroItem(this)" style="border-top:1px solid #1a0a3a">
-            <div><div class="mdrop-badge" style="color:#9b5de5;border-color:#6a3aaa">EXT NAT</div><div class="mdrop-desc">Lance le diffuseur NATIONAL externe</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(1,'stop3');flashMacroItem(this)" style="border-top:1px solid #3a1010">
-            <div><div class="mdrop-badge" style="color:#e03020;border-color:#e03020">STOP −3s</div><div class="mdrop-desc">Arrêt avec délai 3s</div></div>
-          </div>
-        </div>
-      </div>
-      <span class="tag" style="background:#160d2a;color:#7a5aaa;border:1px solid #6a3aaa">PISTE <strong id="c2-counter" style="color:#6a3aaa;margin-left:4px">0/0</strong></span>
-    </div>
-  </div>
-  <progress class="progress is-elapsed" id="c2-progress" style="--progress-color:#9b5de5" value="0" max="100"></progress>
-  <div class="file-drop-zone" id="fdz2" onclick="document.getElementById('fi2').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,1)">
-    <input type="file" id="fi2" multiple accept="audio/*" onchange="handleFiles(this.files,1)">
-    <div class="fdz-row">
-      <span class="fdz-icon">⊕</span>
-      <span class="fdz-text">Glisser des fichiers audio · ou cliquer</span>
-      <span class="fdz-add-badge">+ AJOUTER</span>
-      <span class="fdz-count" id="fdz2-count">Aucun fichier</span>
-    </div>
-  </div>
-  <div class="card-content">
-    <table class="table is-radio is-fullwidth is-narrow">
-      <thead><tr>
-        <th style="width:36px">#</th>
-        <th style="width:80px">Horaire</th>
-        <th style="width:140px">Titre</th>
-        <th>Waveform · IN / OUT</th>
-        <th style="width:64px;text-align:right">Durée</th>
-        <th style="width:84px;text-align:right;padding-right:10px">Décompte</th>
-        <th style="width:5px"></th>
-      </tr></thead>
-      <tbody id="c2-body"></tbody>
-    </table>
-  </div>
-  <div class="card-footer">
-    <span class="card-footer-item">Durée écoulée&nbsp;<strong id="c2-micros" style="color:#9b5de5;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="c2-total" style="color:#ddeeff;font-family:var(--mono);font-size:18px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="c2-suffix" style="color:#9b5de5;font-family:var(--display);font-size:16px;font-weight:700">A</span></span>
-  </div>
-  <div class="vu-strip" id="vu-strip-d1"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
-  <!-- Popup rendez-vous DIFF 2 -->
-  <div class="rdv-popup" id="rdv-popup-1">
-    <div class="rdv-popup-inner">
-      <div class="rdv-popup-label">Rendez-vous · DIFF 2</div>
-      <div class="rdv-popup-target" id="rdv-popup-target-1">00:00:00</div>
-      <div class="rdv-popup-win" id="rdv-popup-win-1">fenêtre ± 0 min</div>
-      <div class="rdv-popup-countdown" id="rdv-popup-cd-1" style="color:#f5c400">--:--</div>
-      <div class="rdv-popup-bar-wrap"><div class="rdv-popup-bar" id="rdv-popup-bar-1" style="width:100%"></div></div>
-      <button class="rdv-popup-cancel" onclick="rdvCancel(1)">✕ ANNULER</button>
-    </div>
-  </div>
 
-</div><!-- /grid DIFF1+2 -->
-</div><!-- /DIFF 1+2 -->
 
-<!-- ══ NATIONAL (pleine largeur) ══ -->
-<!-- ══ NATIONAL ══ -->
-<div class="column is-full">
-<div class="card is-pub-card">
-  <div class="card-header diff-card-header" id="diff-header-5" style="display:flex;align-items:stretch">
-    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #2a2e34">
-      <span class="tag diff-badge" style="background:#1c1c1c;color:#909090;border:1px solid #404040;letter-spacing:4px">NATIONAL</span>
-    </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #2a2e34;flex:1">
-      <p class="card-header-title" style="padding:0;font-size:13px;color:#7a8088">PUB NATIONAL</p>
-      <p style="font-family:var(--mono);font-size:9px;color:#3a4048">NAT_OUT</p>
-    </div>
-    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
-      <div class="timer-box"><span class="label-txt" style="color:#3a4048">Avancé</span><span class="val-txt" id="pn-avant" style="color:#5a6370">00:00:00</span></div>
-    </div>
-  </div>
-  <div class="notification is-onair diff-onair-bar" id="diff-onair-5" style="padding:.4rem .75rem">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="dot-live" style="background:#5a6370"></span>
-      <span class="onair-title" style="font-size:16px;letter-spacing:4px;color:#6a7280">NATIONAL</span><span id="onair-track-5" class="onair-track-name" style="font-size:13px;color:#8a9098"></span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <div class="macro-dropdown-wrap">
-        <button class="macro-dropdown-btn" id="mdrop-btn-5" onclick="toggleMacroMenu(5)">⚡ MACRO ▾</button>
-        <div class="macro-dropdown-menu" id="mdrop-menu-5">
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(5,'nat');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(5,'loc');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(5,'raccro');flashMacroItem(this)">
-            <div><div class="mdrop-badge">RACCRO</div><div class="mdrop-desc">Lance DIFF 1</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(5,'ext');flashMacroItem(this)" style="border-top:1px solid #1a0a3a">
-            <div><div class="mdrop-badge" style="color:#9b5de5;border-color:#6a3aaa">EXT NAT</div><div class="mdrop-desc">Lance le diffuseur NATIONAL externe</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(5,'stop3');flashMacroItem(this)" style="border-top:1px solid #3a1010">
-            <div><div class="mdrop-badge" style="color:#e03020;border-color:#e03020">STOP −3s</div><div class="mdrop-desc">Arrêt avec délai 3s</div></div>
-          </div>
-        </div>
-      </div>
-      <span class="tag" style="background:#141618;color:#3a4048;border:1px solid #2a2e34;font-size:9px">PISTE <strong id="pn-counter" style="color:#4a5260;margin-left:3px">0/0</strong></span>
-    </div>
-  </div>
-  <progress class="progress is-elapsed" id="pn-progress" value="0" max="100"></progress>
-  <div class="file-drop-zone" id="fdz6" onclick="document.getElementById('fi6').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,5)" style="margin:6px 10px">
-    <input type="file" id="fi6" multiple accept="audio/*" onchange="handleFiles(this.files,5)">
-    <div class="fdz-row"><span class="fdz-icon" style="color:#4a5260">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz6-count">Aucun fichier</span></div>
-  </div>
-  <div class="card-content">
-    <table class="table is-radio is-fullwidth is-narrow">
-      <thead><tr>
-        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
-        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
-        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
-      </tr></thead>
-      <tbody id="pn-body"></tbody>
-    </table>
-  </div>
-  <div class="card-footer">
-    <span class="card-footer-item">Écoulé&nbsp;<strong id="pn-micros" style="color:#4a5260;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="pn-total" style="color:#7a8088;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="pn-suffix" style="color:#6a7280;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
-  </div>
-<div class="vu-strip" id="vu-strip-nat"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
 </div>
-</div><!-- /NATIONAL -->
-
-<!-- ══ LIGNE 3 : PUB SAT + PUB DAB+ + PUB Hz ══ -->
-<div class="diff-grid-3">
-
-<!-- PUB SAT -->
-<div class="card is-pub-card">
-  <div class="card-header diff-card-header" id="diff-header-2" style="display:flex;align-items:stretch">
-    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
-      <span class="tag diff-badge" style="background:#1a2a00;color:#f5c400;border:1px solid #3a4a00">PUB SAT</span>
-    </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #1e3060;flex:1">
-      <p class="card-header-title" style="padding:0;font-size:13px">SATELLITE</p>
-      <p style="font-family:var(--mono);font-size:9px;color:#3a5070;padding-left:0">PUB_SAT_OUT</p>
-    </div>
-    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
-      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="ps-avant" style="color:#f5c400">00:00:00</span></div>
-    </div>
-  </div>
-  <div class="notification is-onair diff-onair-bar" id="diff-onair-2" style="padding:.4rem .75rem">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="dot-live"></span><span class="onair-title" style="font-size:16px;letter-spacing:2px">PUB SAT</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <div class="macro-dropdown-wrap">
-        <button class="macro-dropdown-btn" id="mdrop-btn-2" onclick="toggleMacroMenu(2)">⚡ MACRO ▾</button>
-        <div class="macro-dropdown-menu" id="mdrop-menu-2">
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(2,'nat');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(2,'loc');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(2,'raccro');flashMacroItem(this)">
-            <div><div class="mdrop-badge">RACCRO</div><div class="mdrop-desc">Lance DIFF 1</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(2,'ext');flashMacroItem(this)" style="border-top:1px solid #1a0a3a">
-            <div><div class="mdrop-badge" style="color:#9b5de5;border-color:#6a3aaa">EXT NAT</div><div class="mdrop-desc">Lance le diffuseur NATIONAL externe</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(2,'stop3');flashMacroItem(this)" style="border-top:1px solid #3a1010">
-            <div><div class="mdrop-badge" style="color:#e03020;border-color:#e03020">STOP −3s</div><div class="mdrop-desc">Arrêt avec délai 3s</div></div>
-          </div>
-        </div>
-      </div>
-      <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="ps-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
-    </div>
-  </div>
-  <progress class="progress is-elapsed" id="ps-progress" value="0" max="100"></progress>
-  <div class="file-drop-zone" id="fdz3" onclick="document.getElementById('fi3').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,2)">
-    <input type="file" id="fi3" multiple accept="audio/*" onchange="handleFiles(this.files,2)">
-    <div class="fdz-row"><span class="fdz-icon">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz3-count">Aucun fichier</span></div>
-  </div>
-  <div class="card-content">
-    <table class="table is-radio is-fullwidth is-narrow">
-      <thead><tr>
-        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
-        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
-        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
-      </tr></thead>
-      <tbody id="ps-body"></tbody>
-    </table>
-  </div>
-  <div class="card-footer">
-    <span class="card-footer-item">Écoulé&nbsp;<strong id="ps-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="ps-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="ps-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
-  </div>
-<div class="vu-strip" id="vu-strip-sat"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
-</div>
-
-<!-- PUB DAB+ -->
-<div class="card is-pub-card">
-  <div class="card-header diff-card-header" id="diff-header-3" style="display:flex;align-items:stretch">
-    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
-      <span class="tag diff-badge" style="background:#001a2a;color:#00d4f0;border:1px solid #003a5a">PUB DAB+</span>
-    </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #1e3060;flex:1">
-      <p class="card-header-title" style="padding:0;font-size:13px">DAB+</p>
-      <p style="font-family:var(--mono);font-size:9px;color:#3a5070">PUB_DAB_OUT</p>
-    </div>
-    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
-      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="pd-avant" style="color:#f5c400">00:00:00</span></div>
-    </div>
-  </div>
-  <div class="notification is-onair diff-onair-bar" id="diff-onair-3" style="padding:.4rem .75rem">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="dot-live"></span><span class="onair-title" style="font-size:16px;letter-spacing:2px">PUB DAB+</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <div class="macro-dropdown-wrap">
-        <button class="macro-dropdown-btn" id="mdrop-btn-3" onclick="toggleMacroMenu(3)">⚡ MACRO ▾</button>
-        <div class="macro-dropdown-menu" id="mdrop-menu-3">
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(3,'nat');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(3,'loc');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(3,'raccro');flashMacroItem(this)">
-            <div><div class="mdrop-badge">RACCRO</div><div class="mdrop-desc">Lance DIFF 1</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(3,'ext');flashMacroItem(this)" style="border-top:1px solid #1a0a3a">
-            <div><div class="mdrop-badge" style="color:#9b5de5;border-color:#6a3aaa">EXT NAT</div><div class="mdrop-desc">Lance le diffuseur NATIONAL externe</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(3,'stop3');flashMacroItem(this)" style="border-top:1px solid #3a1010">
-            <div><div class="mdrop-badge" style="color:#e03020;border-color:#e03020">STOP −3s</div><div class="mdrop-desc">Arrêt avec délai 3s</div></div>
-          </div>
-        </div>
-      </div>
-      <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="pd-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
-    </div>
-  </div>
-  <progress class="progress is-elapsed" id="pd-progress" value="0" max="100"></progress>
-  <div class="file-drop-zone" id="fdz4" onclick="document.getElementById('fi4').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,3)">
-    <input type="file" id="fi4" multiple accept="audio/*" onchange="handleFiles(this.files,3)">
-    <div class="fdz-row"><span class="fdz-icon">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz4-count">Aucun fichier</span></div>
-  </div>
-  <div class="card-content">
-    <table class="table is-radio is-fullwidth is-narrow">
-      <thead><tr>
-        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
-        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
-        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
-      </tr></thead>
-      <tbody id="pd-body"></tbody>
-    </table>
-  </div>
-  <div class="card-footer">
-    <span class="card-footer-item">Écoulé&nbsp;<strong id="pd-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="pd-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="pd-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
-  </div>
-<div class="vu-strip" id="vu-strip-dab"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
-</div>
-
-<!-- PUB Hz -->
-<div class="card is-pub-card">
-  <div class="card-header" style="display:flex;align-items:stretch">
-    <div style="display:flex;align-items:center;padding:0 .75rem;border-right:1px solid #1e3060">
-      <span class="tag diff-badge" style="background:#160d2a;color:#9b5de5;border:1px solid #6a3aaa">PUB Hz</span>
-    </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid #1e3060;flex:1">
-      <p class="card-header-title" style="padding:0;font-size:13px">Hz FM</p>
-      <p style="font-family:var(--mono);font-size:9px;color:#3a5070">PUB_HZ_OUT</p>
-    </div>
-    <div class="timer-group" style="gap:.5rem;padding-right:.75rem">
-      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="ph-avant" style="color:#f5c400">00:00:00</span></div>
-    </div>
-  </div>
-  <div class="notification is-onair diff-onair-bar" id="diff-onair-4" style="padding:.4rem .75rem">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="dot-live"></span><span class="onair-title" style="font-size:16px;letter-spacing:2px">PUB Hz</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <div class="macro-dropdown-wrap">
-        <button class="macro-dropdown-btn" id="mdrop-btn-4" onclick="toggleMacroMenu(4)">⚡ MACRO ▾</button>
-        <div class="macro-dropdown-menu" id="mdrop-menu-4">
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(4,'nat');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(4,'loc');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(4,'raccro');flashMacroItem(this)">
-            <div><div class="mdrop-badge">RACCRO</div><div class="mdrop-desc">Lance DIFF 1</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(4,'ext');flashMacroItem(this)" style="border-top:1px solid #1a0a3a">
-            <div><div class="mdrop-badge" style="color:#9b5de5;border-color:#6a3aaa">EXT NAT</div><div class="mdrop-desc">Lance le diffuseur NATIONAL externe</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(4,'stop3');flashMacroItem(this)" style="border-top:1px solid #3a1010">
-            <div><div class="mdrop-badge" style="color:#e03020;border-color:#e03020">STOP −3s</div><div class="mdrop-desc">Arrêt avec délai 3s</div></div>
-          </div>
-        </div>
-      </div>
-      <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060;font-size:9px">PISTE <strong id="ph-counter" style="color:#5a7090;margin-left:3px">0/0</strong></span>
-    </div>
-  </div>
-  <progress class="progress is-elapsed" id="ph-progress" value="0" max="100"></progress>
-  <div class="file-drop-zone" id="fdz5" onclick="document.getElementById('fi5').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,4)">
-    <input type="file" id="fi5" multiple accept="audio/*" onchange="handleFiles(this.files,4)">
-    <div class="fdz-row"><span class="fdz-icon">⊕</span><span class="fdz-text">Fichiers audio</span><span class="fdz-add-badge">+ AJOUTER</span><span class="fdz-count" id="fdz5-count">Aucun fichier</span></div>
-  </div>
-  <div class="card-content">
-    <table class="table is-radio is-fullwidth is-narrow">
-      <thead><tr>
-        <th style="width:30px">#</th><th style="width:70px">Horaire</th><th>Titre</th>
-        <th>Waveform</th><th style="width:56px;text-align:right">Durée</th>
-        <th style="width:76px;text-align:right;padding-right:8px">Décompte</th><th style="width:5px"></th>
-      </tr></thead>
-      <tbody id="ph-body"></tbody>
-    </table>
-  </div>
-  <div class="card-footer">
-    <span class="card-footer-item">Écoulé&nbsp;<strong id="ph-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="ph-total" style="color:#ddeeff;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="ph-suffix" style="color:#00d4f0;font-family:var(--display);font-size:14px;font-weight:700">A</span></span>
-  </div>
-<div class="vu-strip" id="vu-strip-hz"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
-</div>
-
-</div><!-- /grid PUB -->
-
-</div><!-- /flex layout -->
 </section>
-</div><!-- /tab-diffusion -->
-
-<div id="tab-rdv" class="tab-panel">
-<div class="rdv-section" style="min-height:80vh;padding-bottom:120px">
-
-  <!-- ── SECTION RENDEZ-VOUS ── -->
-  <div class="rdv-title">Fenêtres de rendez-vous</div>
-  <div class="rdv-simple-card" id="rdv-master-card">
-    <!-- Heure actuelle affichée -->
-    <div class="rdv-simple-row">
-      <span class="rdv-simple-label">Heure actuelle</span>
-      <span class="rdv-clock-now" id="rdv-clock-now">00:00:00</span>
-    </div>
-    <!-- Fenêtre : signe + valeur en minutes -->
-    <div class="rdv-simple-row">
-      <span class="rdv-simple-label">Fenêtre</span>
-      <div class="rdv-window-signed">
-        <button class="rdv-win-sign active" id="rdv-sign-minus" onclick="rdvSetSign('minus')">−</button>
-        <button class="rdv-win-sign"        id="rdv-sign-none"  onclick="rdvSetSign('none')">= 0</button>
-        <button class="rdv-win-sign"        id="rdv-sign-plus"  onclick="rdvSetSign('plus')">+</button>
-        <span class="rdv-win-minutes" id="rdv-win-disp">4 min</span>
-        <button class="rdv-win-btn" onclick="rdvMasterWinAdj(-1)">−</button>
-        <button class="rdv-win-btn" onclick="rdvMasterWinAdj(+1)">+</button>
-      </div>
-    </div>
-    <!-- Cibles -->
-    <div class="rdv-simple-row">
-      <span class="rdv-simple-label">Cible</span>
-      <div class="rdv-target-wrap" id="rdv-master-targets">
-        <button class="rdv-target-btn sel" data-target="0" onclick="rdvMasterToggleTarget(0)">DIFF 1</button>
-        <button class="rdv-target-btn" data-target="1" onclick="rdvMasterToggleTarget(1)">DIFF 2</button>
-        <button class="rdv-target-btn" data-target="2" onclick="rdvMasterToggleTarget(2)">PUB SAT</button>
-        <button class="rdv-target-btn" data-target="3" onclick="rdvMasterToggleTarget(3)">PUB DAB+</button>
-        <button class="rdv-target-btn" data-target="4" onclick="rdvMasterToggleTarget(4)">PUB Hz</button>
-        <button class="rdv-target-btn" data-target="5" onclick="rdvMasterToggleTarget(5)">NATIONAL</button>
-        <button class="rdv-target-btn" data-target="ext" onclick="rdvMasterToggleTarget('ext')">EXT.</button>
-        <button class="rdv-target-btn" data-target="all" onclick="rdvMasterToggleTarget('all')">TOUS</button>
-      </div>
-    </div>
-    <!-- Décompte et boutons -->
-    <div class="rdv-countdown" id="rdv-master-cd">—</div>
-    <div class="rdv-actions">
-      <button class="rdv-arm-btn" id="rdv-master-arm" onclick="rdvMasterToggleArm()">⏱ ARMER</button>
-      <button class="rdv-cancel-btn" onclick="rdvMasterCancel()">✕</button>
-    </div>
-    <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-top:2px">
-      Le diffuseur partira à l'heure actuelle + la fenêtre sélectionnée
-    </div>
-  </div>
-
-  <!-- Popup sur chaque card DIFF (inchangé, géré par rdvArm) -->
-
-  <div style="height:2rem"></div>
-
-  <!-- ── SECTION MACROS ── -->
-  <div class="rdv-title">Macros</div>
-  <p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:.75rem;letter-spacing:1px;">
-    Lance un groupe de diffuseurs d'un seul clic. Utilisable depuis n'importe quel diffuseur comme une action instantanée.
-  </p>
-  <div class="macro-grid">
-
-    <!-- START NAT -->
-    <div class="macro-card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="diff-badge" style="background:#1c1c1c;color:#909090;border:1px solid #404040;letter-spacing:3px;font-size:10px">START NAT</span>
-      </div>
-      <div class="macro-desc">Lance le diffuseur NATIONAL</div>
-      <div class="macro-desc" style="color:var(--txt-dim)">Diffuseurs concernés : NATIONAL (D[5])</div>
-      <button class="macro-run-btn" id="macro-nat-btn" onclick="runMacro('nat')">▶ EXÉCUTER</button>
-    </div>
-
-    <!-- START LOC -->
-    <div class="macro-card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="diff-badge" style="background:#0d1020;color:#6a8890;border:1px solid #1a3040;letter-spacing:3px;font-size:10px">START LOC</span>
-      </div>
-      <div class="macro-desc">Lance les 3 diffuseurs pub locaux</div>
-      <div class="macro-desc" style="color:var(--txt-dim)">Diffuseurs concernés : PUB SAT · PUB DAB+ · PUB Hz</div>
-      <button class="macro-run-btn" id="macro-loc-btn" onclick="runMacro('loc')">▶ EXÉCUTER</button>
-    </div>
-
-  </div>
-
-</div>
-</div><!-- /tab-rdv -->
-
-<div id="tab-macros" class="tab-panel">
-<div class="rdv-section" style="min-height:80vh;padding-bottom:120px">
-  <div class="rdv-title">Macros</div>
-  <p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:1.5rem;letter-spacing:1px;">
-    Clique sur un diffuseur pour y ajouter la macro comme action dans la playlist.
-    La macro s'exécutera automatiquement quand le diffuseur arrivera à cette position.
-  </p>
-  <div class="macro-grid">
-
-    <!-- START NAT -->
-    <div class="macro-card">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span class="diff-badge" style="background:#1c1c1c;color:#909090;border:1px solid #404040;letter-spacing:3px;font-size:11px">START NAT</span>
-      </div>
-      <div class="macro-desc" style="margin-bottom:10px">Lance le diffuseur NATIONAL</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:8px;letter-spacing:1px">AJOUTER DANS →</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px" id="macro-nat-add-btns">
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(0,'nat',this)">DIFF 1</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(1,'nat',this)">DIFF 2</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(2,'nat',this)">PUB SAT</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(3,'nat',this)">PUB DAB+</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(4,'nat',this)">PUB Hz</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(5,'nat',this)">NATIONAL</button>
-      </div>
-      <div style="border-top:1px solid var(--border);padding-top:8px">
-        <button class="macro-run-btn" id="macro-nat-btn" onclick="runMacro('nat')">▶ EXÉCUTER MAINTENANT</button>
-      </div>
-    </div>
-
-    <!-- START LOC -->
-    <div class="macro-card">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span class="diff-badge" style="background:#0d1020;color:#6a8890;border:1px solid #1a3040;letter-spacing:3px;font-size:11px">START LOC</span>
-      </div>
-      <div class="macro-desc" style="margin-bottom:10px">Lance PUB SAT · PUB DAB+ · PUB Hz</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:8px;letter-spacing:1px">AJOUTER DANS →</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(0,'loc',this)">DIFF 1</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(1,'loc',this)">DIFF 2</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(2,'loc',this)">PUB SAT</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(3,'loc',this)">PUB DAB+</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(4,'loc',this)">PUB Hz</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(5,'loc',this)">NATIONAL</button>
-      </div>
-      <div style="border-top:1px solid var(--border);padding-top:8px">
-        <button class="macro-run-btn" id="macro-loc-btn" onclick="runMacro('loc')">▶ EXÉCUTER MAINTENANT</button>
-      </div>
-    </div>
-
-    <!-- RACCRO -->
-    <div class="macro-card">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span class="diff-badge" style="background:#001a0a;color:#00d96a;border:1px solid #004a20;letter-spacing:3px;font-size:11px">RACCRO</span>
-      </div>
-      <div class="macro-desc" style="margin-bottom:10px">Lance DIFF 1</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:8px;letter-spacing:1px">AJOUTER DANS →</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(0,'raccro',this)">DIFF 1</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(1,'raccro',this)">DIFF 2</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(2,'raccro',this)">PUB SAT</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(3,'raccro',this)">PUB DAB+</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(4,'raccro',this)">PUB Hz</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(5,'raccro',this)">NATIONAL</button>
-      </div>
-      <div style="border-top:1px solid var(--border);padding-top:8px">
-        <button class="macro-run-btn" id="macro-raccro-btn" onclick="runMacro('raccro')">▶ EXÉCUTER MAINTENANT</button>
-      </div>
-    </div>
-
-    <!-- STOP −3s -->
-    <div class="macro-card" style="border-color:#3a1010">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span class="diff-badge" style="background:#1a0000;color:#e03020;border:1px solid #5a1010;letter-spacing:3px;font-size:11px">STOP −3s</span>
-      </div>
-      <div class="macro-desc" style="margin-bottom:10px">Arrête le diffuseur qui la lit, après 3 secondes</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:8px;letter-spacing:1px">AJOUTER DANS →</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(0,'stop3',this)">DIFF 1</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(1,'stop3',this)">DIFF 2</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(2,'stop3',this)">PUB SAT</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(3,'stop3',this)">PUB DAB+</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(4,'stop3',this)">PUB Hz</button>
-        <button class="macro-add-diff-btn" onclick="insertMacroInDiff(5,'stop3',this)">NATIONAL</button>
-      </div>
-      <div style="border-top:1px solid var(--border);padding-top:8px">
-        <button class="macro-run-btn" id="macro-stop3-btn" onclick="runMacro('stop3')" style="border-color:#5a1010;color:#e03020">▶ EXÉCUTER MAINTENANT</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-</div><!-- /tab-macros -->
-
-<!-- Panneau Playlists -->
-<div id="tab-playlist" class="tab-panel">
-<div class="rdv-section" style="min-height:80vh;padding-bottom:120px">
-  <div class="rdv-title">Playlists</div>
-  <p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-bottom:1.5rem;letter-spacing:1px;">
-    Crée et nomme des playlists. Elles sont sauvegardées dans le navigateur. Lors du rechargement, sélectionne les fichiers audio pour les restaurer.
-  </p>
-
-  <!-- Barre d'actions -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.2rem;flex-wrap:wrap">
-    <input id="pl-new-name" type="text" placeholder="Nom de la playlist…"
-      style="background:var(--s2);border:1px solid var(--border);color:var(--txt);font-family:var(--mono);font-size:12px;
-             padding:5px 10px;border-radius:3px;width:200px;outline:none;"
-      onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border)'"
-      onkeydown="if(event.key==='Enter')plCreate()">
-    <button onclick="plCreate()" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);
-      font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:2px;cursor:pointer;letter-spacing:1px;transition:all .15s"
-      onmouseover="this.style.background='#0a1c28'" onmouseout="this.style.background='transparent'">+ CRÉER</button>
-    <input id="pl-restore-input" type="file" multiple accept="audio/*" style="display:none"
-      onchange="plRestoreFiles(this.files)">
-    <button onclick="document.getElementById('pl-restore-input').click()" id="pl-restore-btn"
-      style="display:none;background:transparent;border:1px solid var(--yellow);color:var(--yellow);
-      font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:2px;cursor:pointer;letter-spacing:1px;transition:all .15s"
-      onmouseover="this.style.background='#1a1400'" onmouseout="this.style.background='transparent'">
-      ⚠ RESTAURER LES FICHIERS
-    </button>
-  </div>
-
-  <!-- Liste des playlists -->
-  <div id="pl-list"></div>
-</div>
-</div><!-- /tab-playlist -->
-
-<!-- Panneau TEST -->
-<div id="tab-test" class="tab-panel">
-<section class="section is-console">
-<div style="display:grid;grid-template-columns:1fr 260px;gap:1.5rem;align-items:start">
-
-<!-- ══ DIFFUSEUR TEST ══ -->
-<div class="card is-dark-card">
-  <div class="card-header" style="display:flex;align-items:stretch">
-    <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
-      <span class="tag diff-badge" style="background:#001a1a;color:#00e5ff;border:1px solid #007a8a;letter-spacing:3px">TEST</span>
-    </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
-      <p style="font-family:var(--mono);font-size:9px;color:#3a5070">DIFFUSEUR_TEST</p>
-    </div>
-    <div class="timer-group">
-      <div class="timer-box"><span class="label-txt">Avant fenêtre</span><span class="val-txt" id="tx-avant" style="color:#00d96a">00:00:00</span></div>
-      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="tx-avance" style="color:#f5c400">00:00:00</span></div>
-    </div>
-  </div>
-  <div class="notification is-onair">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span class="dot-live"></span>
-      <span class="onair-title" style="color:#00e5ff">TEST</span><span id="onair-track-6" class="onair-track-name" style="color:#00e5ff"></span>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <button class="button is-success is-small is-outlined" onclick="D[6].togglePlay()">▶ PLAY</button>
-      <button class="button is-danger is-small is-outlined"  onclick="D[6].stopAll()">■ STOP</button>
-      <button class="button is-auto is-small" id="auto-btn-6" onclick="D[6].toggleAuto()">AUTO</button>
-      <div class="macro-dropdown-wrap">
-        <button class="macro-dropdown-btn" id="mdrop-btn-6" onclick="toggleMacroMenu(6)">⚡ MACRO ▾</button>
-        <div class="macro-dropdown-menu" id="mdrop-menu-6">
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'nat');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START NAT</div><div class="mdrop-desc">Lance NATIONAL</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'loc');flashMacroItem(this)">
-            <div><div class="mdrop-badge">START LOC</div><div class="mdrop-desc">Lance PUB SAT · DAB+ · Hz</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'raccro');flashMacroItem(this)">
-            <div><div class="mdrop-badge">RACCRO</div><div class="mdrop-desc">Lance DIFF 1</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'ext');flashMacroItem(this)" style="border-top:1px solid #1a0a3a">
-            <div><div class="mdrop-badge" style="color:#9b5de5;border-color:#6a3aaa">EXT NAT</div><div class="mdrop-desc">Lance le diffuseur NATIONAL externe</div></div>
-          </div>
-          <div class="macro-dropdown-item" onclick="insertMacroInDiff(6,'stop3');flashMacroItem(this)" style="border-top:1px solid #3a1010">
-            <div><div class="mdrop-badge" style="color:#e03020;border-color:#e03020">STOP −3s</div><div class="mdrop-desc">Arrêt avec délai 3s</div></div>
-          </div>
-        </div>
-      </div>
-      <span class="tag" style="background:#001a1a;color:#007a8a;border:1px solid #003a40">PISTE <strong id="tx-counter" style="color:#00a0b0;margin-left:4px">0/0</strong></span>
-    </div>
-  </div>
-  <progress class="progress is-elapsed" id="tx-progress" value="0" max="100"></progress>
-  <div class="file-drop-zone" id="fdz7" onclick="document.getElementById('fi7').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,6)">
-    <input type="file" id="fi7" multiple accept="audio/*" onchange="handleFiles(this.files,6)">
-    <div class="fdz-row">
-      <span class="fdz-icon">⊕</span>
-      <span class="fdz-text">Glisser des fichiers audio · ou cliquer</span>
-      <span class="fdz-add-badge">+ AJOUTER</span>
-      <span class="fdz-count" id="fdz7-count">Aucun fichier</span>
-    </div>
-  </div>
-  <div class="card-content">
-    <table class="table is-radio is-fullwidth is-narrow">
-      <thead><tr>
-        <th style="width:36px">#</th>
-        <th style="width:80px">Horaire</th>
-        <th style="width:140px">Titre</th>
-        <th>Waveform · IN / OUT</th>
-        <th style="width:64px;text-align:right">Durée</th>
-        <th style="width:84px;text-align:right;padding-right:10px">Décompte</th>
-        <th style="width:5px"></th>
-      </tr></thead>
-      <tbody id="tx-body"></tbody>
-    </table>
-  </div>
-  <div class="card-footer">
-    <span class="card-footer-item">Durée écoulée&nbsp;<strong id="tx-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="tx-total" style="color:#ddeeff;font-family:var(--mono);font-size:18px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="tx-suffix" style="color:#00e5ff;font-family:var(--display);font-size:16px;font-weight:700">A</span></span>
-  </div>
-  <div class="vu-strip" id="vu-strip-tx"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
-  <!-- Popup rendez-vous TEST -->
-  <div class="rdv-popup" id="rdv-popup-6">
-    <div class="rdv-popup-inner">
-      <div class="rdv-popup-label">Rendez-vous · TEST</div>
-      <div class="rdv-popup-target" id="rdv-popup-target-6">00:00:00</div>
-      <div class="rdv-popup-win" id="rdv-popup-win-6">fenêtre ± 0 min</div>
-      <div class="rdv-popup-countdown" id="rdv-popup-cd-6" style="color:#f5c400">--:--</div>
-      <div class="rdv-popup-bar-wrap"><div class="rdv-popup-bar" id="rdv-popup-bar-6" style="width:100%"></div></div>
-      <button class="rdv-popup-cancel" onclick="rdvCancel(6)">✕ ANNULER</button>
-    </div>
-  </div>
-</div>
-
-<div style="margin-top:1rem;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;border:1px dashed #1e3060;padding:.75rem 1rem;border-radius:4px">
-  <strong style="color:#00e5ff">MODE TEST</strong> · Ce diffuseur est indépendant des 3 départs de diffusion.
-  Il partage toute la logique (playlist, macros, waveform, IN/OUT, auto-suppression après lecture).
-  Les modifications validées ici seront appliquées à tous les diffuseurs.
-</div>
-
-</div><!-- col diffuseur -->
-
-<!-- ══ VOYANTS MACRO ══ -->
-<div style="display:flex;flex-direction:column;gap:1rem;padding-top:0">
-
-  <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Voyants Macro</div>
-
-  <!-- START NAT -->
-  <div class="macro-voyant-card" id="voyant-nat">
-    <div class="macro-voyant-dot" id="voyant-dot-nat"></div>
-    <div>
-      <div class="macro-voyant-label">START NAT</div>
-      <div class="macro-voyant-desc">Lance NATIONAL</div>
-    </div>
-  </div>
-
-  <!-- START LOC -->
-  <div class="macro-voyant-card" id="voyant-loc">
-    <div class="macro-voyant-dot" id="voyant-dot-loc"></div>
-    <div>
-      <div class="macro-voyant-label">START LOC</div>
-      <div class="macro-voyant-desc">Lance PUB SAT · DAB+ · Hz</div>
-    </div>
-  </div>
-
-  <!-- RACCRO -->
-  <div class="macro-voyant-card" id="voyant-raccro">
-    <div class="macro-voyant-dot" id="voyant-dot-raccro" style="background:#00d96a;border-color:#004a20"></div>
-    <div>
-      <div class="macro-voyant-label" style="color:#00d96a">RACCRO</div>
-      <div class="macro-voyant-desc">Stoppe ce diffuseur</div>
-    </div>
-  </div>
-
-  <!-- STOP −3s -->
-  <div class="macro-voyant-card" id="voyant-stop3">
-    <div class="macro-voyant-dot" id="voyant-dot-stop3" style="background:#e03020;border-color:#5a1010"></div>
-    <div>
-      <div class="macro-voyant-label" style="color:#e03020">STOP −3s</div>
-      <div class="macro-voyant-desc">Arrêt avec délai 3s</div>
-    </div>
-  </div>
-
-  <!-- EXT NAT -->
-  <div class="macro-voyant-card" id="voyant-ext" style="border-color:#6a3aaa">
-    <div class="macro-voyant-dot" id="voyant-dot-ext" style="background:#9b5de5;border-color:#6a3aaa"></div>
-    <div>
-      <div class="macro-voyant-label" style="color:#9b5de5">EXT NAT</div>
-      <div class="macro-voyant-desc">Lance le diffuseur NATIONAL externe</div>
-    </div>
-  </div>
-
-  <div style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);margin-top:.5rem;letter-spacing:1px">
-    Les voyants s'allument 1,5s à chaque déclenchement.
-  </div>
-</div><!-- col voyants -->
-
-</div><!-- /grid test -->
-
-</section>
-</div><!-- /tab-test -->
-
-<!-- VU MÈTRES STICKY : DIFF 1 + DIFF 2 — toujours visible -->
-<div class="vu-section">
-
-  <!-- Ligne 1 : VU de chaque diffuseur -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem">
-    <div class="vu-group-label">Diffuseurs</div>
-  </div>
-  <div class="vu-row-wrap" style="margin-bottom:.6rem">
-        <div class="vu-wrap">
-          <div class="vu-label-block">
-            <div class="vu-main-title">DIFF 1</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu1-db" style="color:#c0c8d8">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu1-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu1-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap">
-          <div class="vu-label-block">
-            <div class="vu-main-title">DIFF 2</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-d2-db" style="color:#c0c8d8">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-d2-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-d2-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap">
-          <div class="vu-label-block">
-            <div class="vu-main-title">NAT</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-nat-db" style="color:#8a9098">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div><div style="font-family:var(--mono);font-size:7px;color:#2a4060;margin-top:3px;letter-spacing:1px">NATIONAL</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-nat-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-nat-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap" id="vu-wrap-ext" style="border-color:#6a3aaa;opacity:.4;transition:opacity .3s" title="NATIONAL EXT — WebRTC">
-          <div class="vu-label-block">
-            <div class="vu-main-title" style="color:#9b5de5">EXT</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-ext-db" style="color:#9b5de5">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div>
-            <div style="font-family:var(--mono);font-size:7px;color:#4a2a7a;margin-top:3px;letter-spacing:1px">NAT EXT</div>
-            <div id="vu-ext-status" style="font-family:var(--mono);font-size:6px;color:#4a2a7a;letter-spacing:1px;margin-top:2px">—</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-ext-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-ext-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap">
-          <div class="vu-label-block">
-            <div class="vu-main-title">SAT</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-sat-sm-db" style="color:#8a9098">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div><div style="font-family:var(--mono);font-size:7px;color:#2a4060;margin-top:3px;letter-spacing:1px">PUB SAT</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-sat-sm-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-sat-sm-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap">
-          <div class="vu-label-block">
-            <div class="vu-main-title">DAB+</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-dab-sm-db" style="color:#8a9098">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div><div style="font-family:var(--mono);font-size:7px;color:#2a4060;margin-top:3px;letter-spacing:1px">PUB DAB+</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-dab-sm-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-dab-sm-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap">
-          <div class="vu-label-block">
-            <div class="vu-main-title">Hz</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-hz-sm-db" style="color:#8a9098">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div><div style="font-family:var(--mono);font-size:7px;color:#2a4060;margin-top:3px;letter-spacing:1px">PUB Hz</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-hz-sm-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-hz-sm-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-  </div>
-
-  <!-- Séparateur -->
-  <div style="height:1px;background:#1e2840;margin-bottom:.5rem"></div>
-
-  <!-- Ligne 2 : 3 départs de diffusion + BIP SILENCE -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem">
-    <div class="vu-group-label" style="color:#2a4a8a;letter-spacing:4px">— Flux de diffusion —</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);letter-spacing:1px">BIP SILENCE</span>
-      <input type="range" id="bip-vol" min="0" max="100" value="5"
-        style="-webkit-appearance:none;width:70px;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;"
-        oninput="bipVolChange(this.value)">
-      <span id="bip-vol-val" style="font-family:var(--mono);font-size:8px;color:var(--cyan);min-width:24px">5%</span>
-      <button onclick="playBip()" style="background:transparent;border:1px solid var(--border);color:var(--txt-mute);font-family:var(--mono);font-size:8px;padding:1px 6px;border-radius:2px;cursor:pointer"
-        onmouseover="this.style.borderColor='#00d4f0';this.style.color='#00d4f0'"
-        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt-mute)'">▶ TEST</button>
-    </div>
-  </div>
-  <div class="vu-row-wrap">
-        <div class="vu-wrap vu-depart" id="vu-wrap-satellite">
-          <div class="vu-label-block">
-            <div class="vu-main-title">SATELLITE</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-sat-db" style="color:#00d4f0">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div><div style="font-family:var(--mono);font-size:7px;color:#2a4060;margin-top:4px;letter-spacing:1px">DIFF1 · DIFF2 · NAT · PUB SAT</div><div class="vu-silence-alert" id="sil-sat">⚠ SILENCE</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-40</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-sat-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-sat-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap vu-depart" id="vu-wrap-dabplus">
-          <div class="vu-label-block">
-            <div class="vu-main-title">DAB+</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-dab-db" style="color:#00d4f0">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div><div style="font-family:var(--mono);font-size:7px;color:#2a4060;margin-top:4px;letter-spacing:1px">DIFF1 · DIFF2 · NAT · PUB DAB+</div><div class="vu-silence-alert" id="sil-dab">⚠ SILENCE</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-40</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-dab-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-dab-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-        <div class="vu-wrap vu-depart" id="vu-wrap-hz-fm">
-          <div class="vu-label-block">
-            <div class="vu-main-title">Hz FM</div>
-            <div class="vu-db-group">
-              <div class="vu-db-val" id="vu-hz-db" style="color:#00d4f0">—∞</div>
-              <div class="vu-db-unit">dB</div>
-            </div><div style="font-family:var(--mono);font-size:7px;color:#2a4060;margin-top:4px;letter-spacing:1px">DIFF1 · DIFF2 · NAT · PUB Hz</div><div class="vu-silence-alert" id="sil-hz">⚠ SILENCE</div>
-          </div>
-          <div class="vu-scale-v"><span>0</span><span>-3</span><span>-6</span><span>-10</span><span>-20</span><span>-40</span><span>-60</span></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-hz-L"></div><div class="vu-ch-label">L</div></div>
-          <div class="vu-channel-v"><div class="vu-meter-v" id="vu-hz-R"></div><div class="vu-ch-label">R</div></div>
-        </div>
-  </div>
-
-  <!-- IDs cachés Radio Monaco -->
-  <div style="display:none">
-    <div id="vu2-L"></div><div id="vu2-R"></div><div id="vu2-db">—∞</div>
-  </div>
-
-  <!-- ── Journal de modulation ── -->
-  <div style="height:1px;background:#0e1828;margin:.5rem 0"></div>
-  <div class="mod-journal" id="mod-journal">
-    <div class="mod-journal-empty" id="mod-journal-empty">— Aucun événement de modulation —</div>
-  </div>
-
-</div>
-
-
-<!-- ══ Onglet PIGE ══ -->
-<div id="tab-pige" class="tab-panel">
-<section class="section is-console" style="padding-bottom:140px">
-
-  <!-- Titre + timer global -->
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
-    <div>
-      <div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--red);letter-spacing:3px">⏺ PIGE</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;margin-top:2px">ENREGISTREMENT SIMULTANÉ DES 3 DÉPARTS</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:.75rem">
-      <button class="pige-btn rec" id="pige-rec-btn" onclick="pigeToggleRec()">⏺ ENREGISTRER</button>
-      <span class="pige-timer" id="pige-timer">00:00:00</span>
-    </div>
-  </div>
-
-  <!-- 3 canaux live empilés -->
-  <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.25rem">
-
-    <!-- SATELLITE -->
-    <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:.5rem">
-          <span class="pige-live-dot" id="pige-dot-sat"></span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-dim);letter-spacing:3px">SATELLITE</span>
-        </div>
-        <span class="pige-level" id="pige-level-sat">—∞ dB</span>
-      </div>
-      <canvas id="pige-live-sat" style="display:block;width:100%;height:70px;"></canvas>
-    </div>
-
-    <!-- DAB+ -->
-    <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:.5rem">
-          <span class="pige-live-dot" id="pige-dot-dab"></span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-dim);letter-spacing:3px">DAB+</span>
-        </div>
-        <span class="pige-level" id="pige-level-dab">—∞ dB</span>
-      </div>
-      <canvas id="pige-live-dab" style="display:block;width:100%;height:70px;"></canvas>
-    </div>
-
-    <!-- Hz FM -->
-    <div style="background:#04060e;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem .75rem;background:#060a14;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:.5rem">
-          <span class="pige-live-dot" id="pige-dot-hz"></span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--txt-dim);letter-spacing:3px">Hz FM</span>
-        </div>
-        <span class="pige-level" id="pige-level-hz">—∞ dB</span>
-      </div>
-      <canvas id="pige-live-hz" style="display:block;width:100%;height:70px;"></canvas>
-    </div>
-
-  </div>
-
-  <!-- Liste des enregistrements -->
-  <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;margin-bottom:.5rem">ENREGISTREMENTS</div>
-  <div id="pige-list" style="display:flex;flex-direction:column;gap:.5rem">
-    <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:.5rem 0">Aucun enregistrement.</div>
-  </div>
-
-</section>
-</div><!-- /tab-pige -->
 
 <script>
-const COLORS=['#1a6b3a','#1a3a6e','#5b21b6','#6b3a1a','#1a5a6b','#3a1a6b','#6b5a1a','#1a6b5a'];
+
+
 const CONFIGS=[
-  {tracks:[],ids:{avant:'c1-avant',avance:'c1-avance',counter:'c1-counter',body:'c1-body',micros:'c1-micros',total:'c1-total',suffix:'c1-suffix',progress:'c1-progress'},fdzCount:'fdz1-count',autoBtn:'auto-btn-0'},
-  {tracks:[],ids:{avant:'c2-avant',avance:'c2-avance',counter:'c2-counter',body:'c2-body',micros:'c2-micros',total:'c2-total',suffix:'c2-suffix',progress:'c2-progress'},fdzCount:'fdz2-count',autoBtn:'auto-btn-1'},
-  {tracks:[],ids:{avant:'ps-avant',avance:'ps-avance',counter:'ps-counter',body:'ps-body',micros:'ps-micros',total:'ps-total',suffix:'ps-suffix',progress:'ps-progress'},fdzCount:'fdz3-count',autoBtn:'auto-btn-2'},
-  {tracks:[],ids:{avant:'pd-avant',avance:'pd-avance',counter:'pd-counter',body:'pd-body',micros:'pd-micros',total:'pd-total',suffix:'pd-suffix',progress:'pd-progress'},fdzCount:'fdz4-count',autoBtn:'auto-btn-3'},
-  {tracks:[],ids:{avant:'ph-avant',avance:'ph-avance',counter:'ph-counter',body:'ph-body',micros:'ph-micros',total:'ph-total',suffix:'ph-suffix',progress:'ph-progress'},fdzCount:'fdz5-count',autoBtn:'auto-btn-4'},
-  {tracks:[],ids:{avant:'pn-avant',avance:'pn-avant',counter:'pn-counter',body:'pn-body',micros:'pn-micros',total:'pn-total',suffix:'pn-suffix',progress:'pn-progress'},fdzCount:'fdz6-count',autoBtn:'auto-btn-5'},
-  // ── DIFFUSEUR TEST (index 6) ──
-  {tracks:[],ids:{avant:'tx-avant',avance:'tx-avance',counter:'tx-counter',body:'tx-body',micros:'tx-micros',total:'tx-total',suffix:'tx-suffix',progress:'tx-progress'},fdzCount:'fdz7-count',autoBtn:'auto-btn-6'}
+  {tracks:[],ids:{avant:'c1-avant',avance:'c1-avance',counter:'c1-counter',
+    body:'c1-body',micros:'c1-micros',total:'c1-total',suffix:'c1-suffix',progress:'c1-progress'},
+    fdzCount:'fdz1-count',autoBtn:'auto-btn-0'},
 ];
 
-const fmt2=n=>String(n).padStart(2,'0');
-const fmtSec=s=>{s=Math.round(s||0);return fmt2(Math.floor(s/60))+':'+fmt2(s%60);};
-const fmtFull=s=>{s=Math.round(s||0);return fmt2(Math.floor(s/3600))+':'+fmt2(Math.floor((s%3600)/60))+':'+fmt2(s%60);};
-const fmtMs=s=>{s=Math.max(0,s||0);const m=Math.floor(s/60),sec=Math.floor(s%60),ms=Math.round((s%1)*10);return fmt2(m)+':'+fmt2(sec)+'.'+ms;};
-const nowClock=()=>{const d=new Date();return[d.getHours(),d.getMinutes(),d.getSeconds()].map(fmt2).join(':');};
-
-const rdvMaster = {
-  armed:   false,
-  winMin:  4,
-  sign:    'minus',   // 'minus' | 'none' | 'plus'
-  targets: new Set([0]),
-  triggerSec: null,
-  bipTimer: null,
-  extWin: null,
-  _readyPoll: null
-};
-
-// ── Chargement ADDITIF des fichiers ──
-function handleFiles(files,idx){
-  const arr=Array.from(files).filter(f=>f.type.startsWith('audio/'));
-  if(!arr.length)return;
-  arr.sort((a,b)=>a.name.localeCompare(b.name));
-  const d=D[idx];
-  const insertAt=d._insertionIndex(); // avant les pistes pinnées
-  const existing=CONFIGS[idx].tracks;
-  const newTracks=arr.map((f,i)=>({
-    file:URL.createObjectURL(f),
-    title:f.name.replace(/\.[^/.]+$/,''),
-    color:COLORS[(insertAt+i)%COLORS.length],
-    inCue:0, outCue:null
-  }));
-  // Mettre à jour CONFIGS.tracks (reflet de d.tracks)
-  CONFIGS[idx].tracks=[...existing,...newTracks]; // sera resynchronisé par addTracks→render
-  const total=d.tracks.length+newTracks.length;
-  document.getElementById(CONFIGS[idx].fdzCount).textContent=total+' fichier'+(total>1?'s':'');
-  d.addTracks(newTracks);
-}
-function handleDrop(ev,idx){ev.preventDefault();document.getElementById('fdz'+(idx+1)).classList.remove('drag-over');handleFiles(ev.dataTransfer.files,idx);}
-
-// ── Dessin waveform ──
 const WV_DATA_CACHE={}; // file → Float32Array (cache pour zoom)
 
 async function drawWaveform(canvas, file, startRatio=0, endRatio=1){
@@ -2961,7 +1958,12 @@ class Diffuser{
           <td class="cell-wv" style="width:50px;text-align:center">
             <button class="wv-edit-btn" onclick="wvModalOpen('${wvId}',${this.idx},${i})" title="Éditer IN/OUT" style="position:static;opacity:1">✎</button>
           </td>
-          <td class="cell-dur">${fmtFull(this.durs[i]||0)}</td>
+          <td class="cell-dur" style="position:relative;min-width:90px">
+            <span style="font-family:var(--mono);font-size:10px">${fmtFull(this.durs[i]||0)}</span>
+            <div style="position:absolute;bottom:2px;left:4px;right:4px;height:2px;background:#0a1020;border-radius:1px">
+              <div style="position:absolute;left:${inPct}%;width:${Math.max(1,outPct-parseFloat(inPct))}%;height:100%;background:${t.color||'#3a5080'};border-radius:1px;opacity:.7"></div>
+            </div>
+          </td>
           <td class="cell-cd">${fmtFull(this._playDur(i))}</td>
           <td class="cell-bar"><span class="color-bar" style="background:${t.color}"></span></td>`;
         tbody.appendChild(tr);
@@ -3182,8 +2184,11 @@ class Diffuser{
     const prog=Math.min(1,Math.max(0,(pos-inCue)/Math.max(0.01,this._playDur(i))));
     const ar=document.querySelector(`#${this.ids.body} tr.row-active`);
     if(ar) ar.style.setProperty('--prog',prog.toFixed(4));
-    const pb=document.getElementById(this.ids.progress);
-    if(pb) pb.value=Math.round(prog*100);
+    const pb=document.getElementById(this.ids.progress+'-fill');
+    if(pb){
+      pb.style.width=(prog*100).toFixed(2)+'%';
+      pb.classList.toggle('active', this.playing);
+    }
     document.getElementById(this.ids.avant).textContent  = fmtFull(rem);
     document.getElementById(this.ids.avance).textContent = fmtFull(pos-inCue);
     document.getElementById(this.ids.micros).textContent = fmtSec(pos-inCue);
@@ -3415,7 +2420,7 @@ class Diffuser{
     this.playing=false;
     this.ci=0;
     this._chainDone.clear();
-    const pb=document.getElementById(this.ids.progress);if(pb)pb.value=0;
+    const pb=document.getElementById(this.ids.progress+'-fill');if(pb){pb.style.width='0%';pb.classList.remove('active');}
     this.render();
   }
 
@@ -3436,32 +2441,11 @@ class Diffuser{
 
 const D=CONFIGS.map((cfg,i)=>new Diffuser(cfg,i));
 
-// ── Pré-charger les macros par défaut dans les diffuseurs PUB ──
-// preloadMacros — différé après chargement DOM complet
-function preloadMacros(){
-  const macroLoc = {
-    file:null, title:'START LOC', color:'#00608a',
-    inCue:0, outCue:null, isMacro:true, macroKey:'loc', pinned:true
-  };
-  D[5].tracks.push(macroLoc);
-  D[5].durs.push(0);
-  D[5].audios.push(null);
-  D[5]._updateFdzCount();
-  // NE PAS appeler render() ici — le DOM n'est pas prêt
+function preloadMacros(){}
 
-  const macroRaccro = {
-    file:null, title:'RACCRO', color:'#006a30',
-    inCue:0, outCue:null, isMacro:true, macroKey:'raccro', pinned:true
-  };
-  D[2].tracks.push(macroRaccro);
-  D[2].durs.push(0);
-  D[2].audios.push(null);
-  D[2]._updateFdzCount();
-  // NE PAS appeler render() ici
-}
-// Appeler après chargement DOM
-// SIGNALING via Cloudflare Worker (polling HTTP)
-// URL : https://radio-signaling.nicolas7lejeune.workers.dev
+const _t0_orig=D[0].togglePlay.bind(D[0]);
+D[0].togglePlay=function(){ getCtx().resume(); _t0_orig(); };
+
 const SIG_URL  = 'https://radio-signaling.nicolas7lejeune.workers.dev';
 const SIG_ROLE = 'rc'; // ce côté = Radio-Console
 
@@ -3784,106 +2768,13 @@ function wireAudioToDiff(el,diffIdx){
 }
 
 // togglePlay overrides
-const _t0_orig=D[0].togglePlay.bind(D[0]);D[0].togglePlay=function(){getCtx().resume();_t0_orig();};
-const _t1_orig=D[1].togglePlay.bind(D[1]);D[1].togglePlay=function(){getCtx().resume();_t1_orig();};
-const _t2_orig=D[2].togglePlay.bind(D[2]);D[2].togglePlay=function(){getCtx().resume();_t2_orig();};
-const _t3_orig=D[3].togglePlay.bind(D[3]);D[3].togglePlay=function(){getCtx().resume();_t3_orig();};
-const _t4_orig=D[4].togglePlay.bind(D[4]);D[4].togglePlay=function(){getCtx().resume();_t4_orig();};
-const _t5_orig=D[5].togglePlay.bind(D[5]);D[5].togglePlay=function(){getCtx().resume();_t5_orig();};
+function vuLoop(){ requestAnimationFrame(vuLoop); }
 
-// Init barres VU
-['vu1-L','vu1-R','vu-d2-L','vu-d2-R','vu-nat-L','vu-nat-R'].forEach(buildBars);
-['sat','dab','hz','nat'].forEach(id=>{buildBars('vu-'+id+'-L');buildBars('vu-'+id+'-R');});
-
-// paintMix départs
-function paintMix(id,sources){
-  const active=sources.filter(Boolean);
-  if(!active.length){paintMixEmpty(id);return -60;}
-  let rL=0,rR=0;
-  active.forEach(v=>{rL+=getRMS(v.aL);rR+=getRMS(v.aR);});
-  rL/=active.length;rR/=active.length;
-  const db=20*Math.log10(Math.max(rL,rR,1e-6));
-  const norm=Math.max(0,Math.min(1,(db+60)/60));
-  const lit=Math.round(norm*NUM_BARS);
-  ['L','R'].forEach(ch=>{
-    const el=document.getElementById('vu-'+id+'-'+ch);if(!el)return;
-    el.querySelectorAll('.vu-row').forEach((r,i)=>{
-      const fromBottom=NUM_BARS-1-i;
-      r.style.opacity=fromBottom<lit?'1':'0.08';
-      r.style.background=rowColor(fromBottom,NUM_BARS);
-    });
-  });
-  const dbEl=document.getElementById('vu-'+id+'-db');
-  if(dbEl)dbEl.textContent=isFinite(db)?db.toFixed(1)+'dB':'\u2014\u221e';
-  return db;
-}
-
-
-function vuLoop(){
-  requestAnimationFrame(vuLoop);
-
-  // ── VU diffuseurs individuels (bande sticky gauche) ──
-  if(vu1)   paintBars('vu1-L','vu1-R',    vu1.aL,   vu1.aR,   'vu1-db',    vu1.gn,  '#00d4f0');
-  if(vuD2)  paintBars('vu-d2-L','vu-d2-R',vuD2.aL,  vuD2.aR,  'vu-d2-db',  vuD2.gn, '#9b5de5');
-  if(vu2)   paintBars('vu2-L','vu2-R',    vu2.aL,   vu2.aR,   'vu2-db',    vu2.gn,  '#00d4f0');
-  if(vuNat) paintBars('vu-nat-L','vu-nat-R',vuNat.aL,vuNat.aR,'vu-nat-db', null,    '#8a9098');
-  else paintMixEmpty('nat');
-  if(vuExt) paintBars('vu-ext-L','vu-ext-R',vuExt.aL,vuExt.aR,'vu-ext-db', null,    '#9b5de5');
-  if(vuExt) paintBars('vu-ext-L','vu-ext-R',vuExt.aL,vuExt.aR,'vu-ext-db', null,    '#9b5de5');
-  if(vuSat) paintBars('vu-sat-sm-L','vu-sat-sm-R',vuSat.aL,vuSat.aR,'vu-sat-sm-db',null,'#8a9098');
-  if(vuDab) paintBars('vu-dab-sm-L','vu-dab-sm-R',vuDab.aL,vuDab.aR,'vu-dab-sm-db',null,'#8a9098');
-  if(vuHz)  paintBars('vu-hz-sm-L', 'vu-hz-sm-R', vuHz.aL, vuHz.aR, 'vu-hz-sm-db', null,'#8a9098');
-
-  // ── VU 3 départs : DIFF1 + DIFF2 + NATIONAL + PUB dédié ──
-  let dbSat=-60, dbDab=-60, dbHz=-60;
-
-  const srcsSat=[vu1, vuD2, vuNatSat, vuSat].filter(Boolean);
-  if(srcsSat.length) dbSat=paintMix('sat', srcsSat); else paintMixEmpty('sat');
-
-  const srcsDab=[vu1, vuD2, vuNatDab, vuDab].filter(Boolean);
-  if(srcsDab.length) dbDab=paintMix('dab', srcsDab); else paintMixEmpty('dab');
-
-  const srcsHz=[vu1, vuD2, vuNatHz, vuHz].filter(Boolean);
-  if(srcsHz.length) dbHz=paintMix('hz', srcsHz); else paintMixEmpty('hz');
-
-  checkSilence('sat', dbSat);
-  checkSilence('dab', dbDab);
-  checkSilence('hz',  dbHz);
-}
 function paintMixEmpty(id){
   ['L','R'].forEach(ch=>{document.querySelectorAll(`#vu-${id}-${ch} .vu-row`).forEach(r=>r.style.opacity='0.1');});
   const el=document.getElementById(`vu-${id}-db`);
   if(el){el.textContent='—∞';el.style.color='#00d4f0';}
 }
-function getDbFromVU(vu){
-  const rms=Math.max(getRMS(vu.aL),getRMS(vu.aR));
-  return rms>0?Math.max(-60,20*Math.log10(rms)):-60;
-}
-vuLoop();
-
-// Init UI bouton écoute par défaut (SAT)
-(function(){
-  ['mix','sat','dab','hz'].forEach(k=>{
-    const btn=document.getElementById('listen-'+k);
-    if(btn) btn.classList.toggle('active', k===listenMode);
-  });
-})();
-
-// ── Contrôle volume bip ──
-let _bipVolume=0.05;
-function bipVolChange(v){
-  _bipVolume=v/100;
-  document.getElementById('bip-vol-val').textContent=v+'%';
-}
-
-// Pré-initialiser le contexte bip au premier clic sur la page (débloque autoplay)
-document.addEventListener('click',function initBipOnce(){
-  try{ getBipCtx(); }catch(e){}
-  document.removeEventListener('click',initBipOnce);
-},{once:true});
-
-// Boucle principale — démarrée après DOMContentLoaded (voir bas du script)
-var _lastClockSec=-1;
 function mainLoop(){
   requestAnimationFrame(mainLoop);
   D.forEach(d=>d.tick());
@@ -4933,253 +3824,6 @@ function switchTab(name){
   });
   if(name==='playlist'){ try{ plRender(); }catch(e){} }
 }
-
-// ── AUTO activé d'office sur les PUB + NATIONAL ──
-function initPubAuto(){
-  [2,3,4,5].forEach(i=>{ if(D[i]&&!D[i].auto) D[i].toggleAuto(); });
-}
-// initPubAuto() appelé depuis _onReady
-// PLAYLISTS
-const PL_STORAGE_KEY='radio_playlists_v1';
-const DIFF_LABELS_PL=['DIFF 1','DIFF 2','PUB SAT','PUB DAB+','PUB Hz','NATIONAL'];
-var playlists=[];
-let plPendingRestore=null;
-function plGenId(){ return 'pl_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
-function plLoad(){
-  try{ const raw=localStorage.getItem(PL_STORAGE_KEY); playlists=raw?JSON.parse(raw):[]; }catch(e){ playlists=[]; }
-}
-function plSave(){
-  const toSave=playlists.map(pl=>({
-    id:pl.id, name:pl.name, open:pl.open,
-    tracks:pl.tracks.map(t=>({title:t.title,dur:t.dur,inCue:t.inCue,outCue:t.outCue,color:t.color,fileRef:null}))
-  }));
-  try{ localStorage.setItem(PL_STORAGE_KEY,JSON.stringify(toSave)); }catch(e){}
-}
-function plCreate(){
-  const input=document.getElementById('pl-new-name');
-  const name=(input.value||'').trim()||'Playlist '+(playlists.length+1);
-  input.value='';
-  playlists.push({id:plGenId(),name,tracks:[],open:true});
-  plSave(); plRender();
-}
-function plDelete(id){ if(!confirm('Supprimer cette playlist ?')) return; playlists=playlists.filter(p=>p.id!==id); plSave(); plRender(); }
-function plToggle(id){ const pl=playlists.find(p=>p.id===id); if(pl){pl.open=!pl.open; plSave(); plRender();} }
-function plStartRename(id,el){
-  const pl=playlists.find(p=>p.id===id); if(!pl) return;
-  const input=document.createElement('input');
-  input.value=pl.name;
-  input.style='font-family:var(--mono);font-size:11px;background:#080e1c;border:1px solid var(--cyan);color:var(--txt);padding:1px 6px;border-radius:2px;width:160px';
-  el.replaceWith(input);
-  input.focus();
-  input.select();
-  const save=()=>{ pl.name=input.value.trim()||pl.name; plSave(); plRender(); };
-  input.addEventListener('blur',save);
-  input.addEventListener('keydown',e=>{ if(e.key==='Enter')save(); if(e.key==='Escape'){plSave();plRender();} });
-}
-function plAddFiles(files,plId){
-  const pl=playlists.find(p=>p.id===plId); if(!pl) return;
-  Array.from(files).filter(f=>f.type.startsWith('audio/')).forEach(f=>{
-    const url=URL.createObjectURL(f);
-    const t={title:f.name.replace(/\.[^/.]+$/,''),dur:0,inCue:0,outCue:null,color:COLORS[pl.tracks.length%COLORS.length],fileRef:url};
-    const a=new Audio(url);
-    a.addEventListener('loadedmetadata',()=>{ t.dur=a.duration; t.outCue=a.duration; plSave(); plRender(); });
-    pl.tracks.push(t);
-  });
-  plSave(); plRender();
-}
-function plRemoveTrack(plId,i){ const pl=playlists.find(p=>p.id===plId); if(pl){pl.tracks.splice(i,1); plSave(); plRender();} }
-function plMoveTrack(plId,i,dir){
-  const pl=playlists.find(p=>p.id===plId); if(!pl) return;
-  const j=i+dir; if(j<0||j>=pl.tracks.length) return;
-  [pl.tracks[i],pl.tracks[j]]=[pl.tracks[j],pl.tracks[i]];
-  plSave(); plRender();
-}
-function plExport(id){
-  const pl=playlists.find(p=>p.id===id); if(!pl) return;
-  const a=document.createElement('a');
-  a.href='data:application/json,'+encodeURIComponent(JSON.stringify(pl,null,2));
-  a.download=pl.name+'.json'; a.click();
-}
-function plSendToDiff(plId,diffIdx){
-  const pl=playlists.find(p=>p.id===plId);
-  if(!pl||!pl.tracks.length){alert('Playlist vide.');return;}
-  const missing=pl.tracks.filter(t=>!t.fileRef);
-  if(missing.length){
-    alert(missing.length+' fichier(s) non chargé(s). Utilise le bouton RESTAURER LES FICHIERS.');
-    plPendingRestore=plId;
-    const btn=document.getElementById('pl-restore-btn');
-    if(btn) btn.style.display='inline-block';
-    return;
-  }
-  const d=D[diffIdx];
-  const newTracks=pl.tracks.map(t=>({file:t.fileRef,title:t.title,color:t.color,inCue:t.inCue||0,outCue:t.outCue||null}));
-  d.addTracks(newTracks);
-  alert('✓ '+pl.tracks.length+' piste(s) envoyée(s) dans '+DIFF_LABELS_PL[diffIdx]);
-}
-function plRestoreFiles(files){
-  const fileMap={};
-  Array.from(files).forEach(f=>{ fileMap[f.name.replace(/\.[^/.]+$/,'')]=f; });
-  const target=plPendingRestore?[playlists.find(p=>p.id===plPendingRestore)].filter(Boolean):playlists;
-  let restored=0,missing=0;
-  target.forEach(pl=>{ pl.tracks.forEach(t=>{ if(t.fileRef)return; const f=fileMap[t.title]; if(f){t.fileRef=URL.createObjectURL(f);const a=new Audio(t.fileRef);a.addEventListener('loadedmetadata',()=>{t.dur=a.duration;plSave();plRender();});restored++;}else{missing++;} }); });
-  plPendingRestore=null;
-  const btn=document.getElementById('pl-restore-btn'); if(btn) btn.style.display='none';
-  plSave(); plRender();
-  if(missing) alert(restored+' restauré(s), '+missing+' introuvable(s).');
-}
-function plCheckMissing(){
-  const has=playlists.some(pl=>pl.tracks.some(t=>!t.fileRef));
-  const btn=document.getElementById('pl-restore-btn'); if(btn) btn.style.display=has?'inline-block':'none';
-}
-function plRender(){
-  const container=document.getElementById('pl-list'); if(!container) return;
-  if(!playlists.length){ container.innerHTML='<p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px">Aucune playlist. Crée-en une ci-dessus.</p>'; return; }
-  container.innerHTML=playlists.map(pl=>{
-    const missingCount=pl.tracks.filter(t=>!t.fileRef).length;
-    const tracksHtml=pl.tracks.map((t,i)=>`<div class="pl-track-row${t.fileRef?'':' missing'}"><span class="pl-track-num">${i+1}</span><div class="color-bar" style="background:${t.color};width:3px;height:14px;border-radius:1px;flex-shrink:0"></div><span class="pl-track-title" title="${t.title}">${t.fileRef?'':' ⚠ '}${t.title}</span><span class="pl-track-dur">${t.dur?fmtFull(t.dur):'--:--'}</span><button class="pl-track-del" onclick="plMoveTrack('${pl.id}',${i},-1)">↑</button><button class="pl-track-del" onclick="plMoveTrack('${pl.id}',${i},+1)">↓</button><button class="pl-track-del" onclick="plRemoveTrack('${pl.id}',${i})">✕</button></div>`).join('');
-    const sendBtns=DIFF_LABELS_PL.map((lbl,i)=>`<button class="pl-btn send" onclick="plSendToDiff('${pl.id}',${i})">→ ${lbl}</button>`).join('');
-    const inputId='pl-file-input-'+pl.id, dropId='pl-drop-'+pl.id;
-    return `<div class="pl-card${pl.open?'':' pl-collapsed'}" id="plcard-${pl.id}"><div class="pl-card-header" onclick="plToggle('${pl.id}')"><span class="pl-chevron">▾</span><span class="pl-name" ondblclick="event.stopPropagation();plStartRename('${pl.id}',this)">${pl.name}</span><span class="pl-count">${pl.tracks.length} piste${pl.tracks.length!==1?'s':''} ${missingCount?'<span style="color:var(--red)">· '+missingCount+' manquant(s)</span>':''}</span><div class="pl-actions" onclick="event.stopPropagation()"><button class="pl-btn" onclick="plExport('${pl.id}')">⬇ JSON</button><button class="pl-btn danger" onclick="plDelete('${pl.id}')">✕ SUPPR.</button></div></div><div class="pl-body">${pl.tracks.length?tracksHtml:'<p style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:4px 0">Aucune piste.</p>'}<input type="file" id="${inputId}" multiple accept="audio/*" style="display:none" onchange="plAddFiles(this.files,'${pl.id}')"><div class="pl-drop-zone" id="${dropId}" onclick="document.getElementById('${inputId}').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');plAddFiles(event.dataTransfer.files,'${pl.id}')">⊕ Ajouter des fichiers audio</div><div class="pl-send-row"><span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;align-self:center">ENVOYER DANS →</span>${sendBtns}</div></div></div>`;
-  }).join('');
-}
-function plInit(){ plLoad(); plCheckMissing(); plRender(); }
-// plInit() appelé depuis _onReady
-// PIGE — Enregistrement simultané des 3 départs
-const PIGE_DEPS=['sat','dab','hz'];
-let pigeRecording=false;
-let pigeStartTime=null, pigeTimerInterval=null;
-var pigeRecords=[];
-const pigeState={};
-PIGE_DEPS.forEach(dep=>{ pigeState[dep]={mediaRecorder:null,chunks:[],analyser:null,dest:null,captureGn:null,animFrame:null}; });
-
-function pigeToggleRec(){ if(!pigeRecording){pigeStart();}else{pigeStop();} }
-
-function pigeStart(){
-  const ctx=getCtx(); let anyOk=false;
-  for(const dep of PIGE_DEPS){
-    const mn=MON_GAINS[dep]; if(!mn) continue;
-    const st=pigeState[dep];
-    st.captureGn=ctx.createGain(); st.captureGn.gain.value=1;
-    mn.connect(st.captureGn);
-    st.dest=ctx.createMediaStreamDestination();
-    st.captureGn.connect(st.dest);
-    st.analyser=ctx.createAnalyser(); st.analyser.fftSize=2048;
-    st.captureGn.connect(st.analyser);
-    st.chunks=[];
-    const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'audio/webm';
-    st.mediaRecorder=new MediaRecorder(st.dest.stream,{mimeType});
-    const capturedDep=dep;
-    st.mediaRecorder.ondataavailable=e=>{ if(e.data.size>0) st.chunks.push(e.data); };
-    st.mediaRecorder.onstop=()=>{ mn.disconnect(st.captureGn); st.captureGn=null; st.analyser=null; pigeSaveRecord(capturedDep,st.chunks.slice(),Date.now()-pigeStartTime); };
-    st.mediaRecorder.start(100); anyOk=true;
-    const dot=document.getElementById('pige-dot-'+dep); if(dot) dot.classList.add('active');
-  }
-  if(!anyOk){alert('Aucun départ actif. Lance au moins une source.');return;}
-  pigeRecording=true; pigeStartTime=Date.now();
-  const btn=document.getElementById('pige-rec-btn'); if(btn){btn.textContent='⏹ STOP';btn.classList.add('recording');}
-  const timer=document.getElementById('pige-timer'); if(timer) timer.classList.add('running');
-  pigeTimerInterval=setInterval(()=>{
-    const sec=Math.floor((Date.now()-pigeStartTime)/1000);
-    const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
-    const el=document.getElementById('pige-timer');
-    if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  },500);
-  pigeLiveLoop();
-}
-
-function pigeStop(){
-  pigeRecording=false; clearInterval(pigeTimerInterval);
-  PIGE_DEPS.forEach(dep=>{
-    const st=pigeState[dep];
-    if(st.mediaRecorder&&st.mediaRecorder.state!=='inactive') st.mediaRecorder.stop();
-    else if(st.captureGn){try{MON_GAINS[dep]&&MON_GAINS[dep].disconnect(st.captureGn);}catch(e){} st.captureGn=null;}
-    if(st.animFrame){cancelAnimationFrame(st.animFrame);st.animFrame=null;}
-    const dot=document.getElementById('pige-dot-'+dep); if(dot) dot.classList.remove('active');
-    const cv=document.getElementById('pige-live-'+dep); if(cv){const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);}
-    const lvl=document.getElementById('pige-level-'+dep); if(lvl) lvl.textContent='—∞ dB';
-  });
-  const btn=document.getElementById('pige-rec-btn'); if(btn){btn.textContent='⏺ ENREGISTRER';btn.classList.remove('recording');}
-  const timer=document.getElementById('pige-timer'); if(timer){timer.classList.remove('running');timer.textContent='00:00:00';}
-}
-
-function pigeLiveLoop(){
-  if(!pigeRecording) return;
-  requestAnimationFrame(pigeLiveLoop);
-  PIGE_DEPS.forEach(dep=>{
-    const st=pigeState[dep]; if(!st.analyser) return;
-    const cv=document.getElementById('pige-live-'+dep); if(!cv) return;
-    const W=cv.offsetWidth||800,H=70; cv.width=W; cv.height=H;
-    const c=cv.getContext('2d');
-    const data=new Float32Array(st.analyser.fftSize);
-    st.analyser.getFloatTimeDomainData(data);
-    c.fillStyle='#04060e'; c.fillRect(0,0,W,H);
-    c.strokeStyle='rgba(30,50,90,.4)'; c.lineWidth=1; c.beginPath(); c.moveTo(0,H/2+.5); c.lineTo(W,H/2+.5); c.stroke();
-    c.strokeStyle='#e03020'; c.lineWidth=1.5; c.beginPath();
-    const step=data.length/W;
-    for(let x=0;x<W;x++){const v=data[Math.floor(x*step)]||0;const y=H/2-v*(H/2)*.9;x===0?c.moveTo(x,y):c.lineTo(x,y);}
-    c.stroke();
-    let rms=0; for(const v of data) rms+=v*v; rms=Math.sqrt(rms/data.length);
-    const db=rms>0?Math.max(-60,20*Math.log10(rms)):-60;
-    const lvl=document.getElementById('pige-level-'+dep);
-    if(lvl){lvl.textContent=db>-60?db.toFixed(1)+' dB':'—∞ dB';lvl.style.color=db>-3?'#e03020':db>-10?'#f5c400':'#00d4f0';}
-  });
-}
-
-function pigeSaveRecord(dep,chunks,durMs){
-  if(!chunks.length) return;
-  const blob=new Blob(chunks,{type:'audio/webm'});
-  const url=URL.createObjectURL(blob);
-  const dur=Math.round(durMs/1000);
-  const now=new Date();
-  const name=dep.toUpperCase()+' – '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const rec={id:'rec_'+dep+'_'+Date.now(),name,url,blob,dur,dep,wvData:null,audio:null};
-  pigeRecords.unshift(rec);
-  const fr=new FileReader();
-  fr.onload=async e=>{
-    try{ const ab=e.target.result; const offCtx=new OfflineAudioContext(1,Math.min(44100*(dur+1),44100*3600),44100); const decoded=await offCtx.decodeAudioData(ab); rec.wvData=decoded.getChannelData(0).slice(); }catch(err){}
-    pigeRenderList();
-  };
-  fr.readAsArrayBuffer(blob);
-  pigeRenderList();
-}
-
-function pigeRenderList(){
-  const list=document.getElementById('pige-list'); if(!list) return;
-  if(!pigeRecords.length){ list.innerHTML='<div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);padding:.5rem 0">Aucun enregistrement.</div>'; return; }
-  list.innerHTML='';
-  pigeRecords.forEach(rec=>{
-    const durStr=`${String(Math.floor(rec.dur/60)).padStart(2,'0')}:${String(rec.dur%60).padStart(2,'0')}`;
-    const cvId='pige-wv-'+rec.id,phId='pige-ph-'+rec.id,pgId='pige-pg-'+rec.id;
-    const card=document.createElement('div'); card.className='pige-card';
-    card.innerHTML=`<div class="pige-card-header"><span class="pige-card-src">${rec.dep.toUpperCase()}</span><span class="pige-card-name">${rec.name}</span><span class="pige-card-dur">${durStr}</span><div class="pige-card-btns"><button class="pige-small-btn play" onclick="pigePlay('${rec.id}')">▶</button><button class="pige-small-btn" onclick="pigePause('${rec.id}')">⏸</button><button class="pige-small-btn" onclick="pigeSeekBack('${rec.id}')">−10s</button><button class="pige-small-btn" onclick="pigeSeekBegin('${rec.id}')">|◀</button><a class="pige-small-btn" href="${rec.url}" download="${rec.name}.webm" style="text-decoration:none">⬇</a><button class="pige-small-btn danger" onclick="pigeDelete('${rec.id}')">✕</button></div></div><div class="pige-wv-wrap" id="${cvId}-wrap" onclick="pigeSeekClick(event,'${rec.id}')"><canvas class="pige-wv-canvas" id="${cvId}"></canvas><div class="pige-wv-ph" id="${phId}" style="left:0;display:none"></div></div><div class="pige-progress" id="${pgId}-track" onclick="pigeSeekClick(event,'${rec.id}')"><div class="pige-progress-fill" id="${pgId}"></div></div>`;
-    list.appendChild(card);
-    if(rec.wvData){ requestAnimationFrame(()=>{ const cv=document.getElementById(cvId); if(cv){cv.width=cv.offsetWidth||800;cv.height=50;drawWaveformFromData(cv,rec.wvData,0,1);} }); }
-  });
-}
-
-function pigePlay(id){ const r=pigeRecords.find(r=>r.id===id);if(!r)return;if(!r.audio){r.audio=new Audio(r.url);r.audio.onended=()=>pigeRenderList();}r.audio.play().catch(e=>console.warn(e));pigeTrackPlayhead(id); }
-function pigePause(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio)r.audio.pause(); }
-function pigeSeekBack(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio)r.audio.currentTime=Math.max(0,r.audio.currentTime-10); }
-function pigeSeekBegin(id){ const r=pigeRecords.find(r=>r.id===id);if(r?.audio)r.audio.currentTime=0; }
-function pigeSeekClick(e,id){
-  const r=pigeRecords.find(r=>r.id===id); if(!r) return;
-  if(!r.audio){r.audio=new Audio(r.url);r.audio.onended=()=>pigeRenderList();}
-  const rect=e.currentTarget.getBoundingClientRect();
-  const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
-  const seek=()=>{r.audio.currentTime=pct*(r.audio.duration||r.dur||1);pigeTrackPlayhead(id);};
-  if(r.audio.readyState>=1) seek(); else r.audio.addEventListener('loadedmetadata',seek,{once:true});
-}
-function pigeDelete(id){ const r=pigeRecords.find(r=>r.id===id);if(!r)return;if(r.audio){r.audio.pause();r.audio=null;}URL.revokeObjectURL(r.url);pigeRecords=pigeRecords.filter(x=>x.id!==id);pigeRenderList(); }
-function pigeTrackPlayhead(id){
-  const r=pigeRecords.find(r=>r.id===id);if(!r?.audio)return;
-  const ph=document.getElementById('pige-ph-'+id),pg=document.getElementById('pige-pg-'+id);
-  const dur=r.audio.duration||r.dur||1;
-  const pct=Math.min(100,(r.audio.currentTime/dur)*100).toFixed(1);
-  if(ph){ph.style.display='block';ph.style.left=pct+'%';}
-  if(pg) pg.style.width=pct+'%';
-  if(!r.audio.paused) requestAnimationFrame(()=>pigeTrackPlayhead(id));
-}
-// DÉMARRAGE — après DOM ready
 function _onReady(){
   preloadMacros();
   D.forEach(d=>d.render());
@@ -5199,6 +3843,7 @@ if(document.readyState==='loading'){
 } else {
   _onReady();
 }
+
 
 </script>
 </body>
