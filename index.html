@@ -507,34 +507,28 @@ async function drawWaveform(canvas,file,startRatio=0,endRatio=1){
 function drawWaveformFromData(canvas,data,startRatio=0,endRatio=1){
   const W=canvas.width,H=canvas.height;
   const c=canvas.getContext('2d');
-  // Fond cyan plein — style broadcast pro
-  c.fillStyle='#00c8e8';
+  // Fond sombre neutre — lisible, pas de bleu électrique
+  c.fillStyle='#0a1520';
   c.fillRect(0,0,W,H);
+  // Ligne centrale discrète
+  c.fillStyle='rgba(255,255,255,0.06)';
+  c.fillRect(0,Math.floor(H/2),W,1);
   const start=Math.floor(startRatio*data.length),end=Math.floor(endRatio*data.length);
-  const len=Math.max(1,end-start);
-  // Résolution maximale : 1 colonne = 1 pixel (ou regroupement minimal)
-  const step=Math.max(1,Math.floor(len/W));
-  // Tracer les barres noires min/max — opacité progressive selon amplitude
+  const len=Math.max(1,end-start),step=Math.max(1,Math.floor(len/W));
   for(let x=0;x<W;x++){
     let mn=0,mx=0;
     const base=start+x*step;
-    for(let j=0;j<step;j++){
-      const v=data[base+j]||0;
-      if(v<mn)mn=v;if(v>mx)mx=v;
-    }
+    for(let j=0;j<step;j++){const v=data[base+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
     const amp=Math.max(Math.abs(mn),Math.abs(mx));
-    // Zone silencieuse : barre fine centrale uniquement
+    if(amp<0.003) continue; // silence absolu : ne rien dessiner
     const y1=Math.round((1+mn)*H/2);
     const y2=Math.round((1+mx)*H/2);
     const h=Math.max(1,y2-y1);
-    // Opacité variable selon amplitude (fort = plein noir, faible = gris)
-    const alpha=0.3+amp*0.7;
-    c.fillStyle=`rgba(0,18,28,${alpha.toFixed(2)})`;
+    // Couleur : vert pâle sur fond sombre — lisible et broadcast
+    const brightness=Math.round(120+amp*135); // 120..255
+    c.fillStyle=`rgb(${Math.round(brightness*0.55)},${brightness},${Math.round(brightness*0.7)})`;
     c.fillRect(x,y1,1,h);
   }
-  // Ligne centrale légère
-  c.fillStyle='rgba(0,60,80,0.25)';
-  c.fillRect(0,Math.floor(H/2),W,1);
 }
 function drawWaveformBg(canvas,data){
   const W=canvas.width||1200,H=canvas.height||96;
@@ -835,54 +829,50 @@ class Diffuser{
     if(this._removeTimer){clearTimeout(this._removeTimer);this._removeTimer=null;}
     const inCue=this._inOf(i),outCue=this._outOf(i),chainDelay=Math.max(0,outCue-inCue);
     audio.currentTime=inCue; this.ci=i;
-    const removeTrack=(tk)=>{
-      if(tk!==this._playToken)return;
-      audio.onended=null;audio.pause();
+
+    // Supprime la piste courante de la liste (elle ne jouera plus jamais)
+    const _removeCurrent=()=>{
+      audio.onended=null; audio.pause();
       const idx=this.tracks.indexOf(t);
-      if(idx!==-1){if(t.file?.startsWith('blob:'))URL.revokeObjectURL(t.file);this.tracks.splice(idx,1);this.durs.splice(idx,1);this.audios.splice(idx,1);}
-      this.ci=0;this._updateFdzCount();this.render();
+      if(idx!==-1){
+        if(t.file?.startsWith('blob:')) URL.revokeObjectURL(t.file);
+        this.tracks.splice(idx,1); this.durs.splice(idx,1); this.audios.splice(idx,1);
+      }
+      this.ci=0; this._updateFdzCount();
     };
+
+    // Au point OUT : supprimer d'abord, enchaîner ensuite
     this._outTimer=setTimeout(()=>{
-      if(token!==this._playToken||!this.playing)return;
-      this.ci=0;this.render();
+      if(token!==this._playToken||!this.playing) return;
+      _removeCurrent();
+      this.render();
       if(this.tracks.length) this._startNextAfterChain(token);
-      else this._removeTimer=setTimeout(()=>removeTrack(token),2000);
+      // sinon le diffuseur reste armé (playing=true) en attente d'un nouveau son
     },chainDelay*1000);
-    audio.onended=()=>{audio.onended=null;if(token!==this._playToken)return;removeTrack(token);};
+
+    // Sécurité : si le son finit avant outCue (fichier trop court)
+    audio.onended=()=>{
+      audio.onended=null;
+      if(token!==this._playToken) return;
+      if(this._outTimer){clearTimeout(this._outTimer);this._outTimer=null;}
+      _removeCurrent();
+      this.render();
+      if(this.tracks.length) this._startNextAfterChain(token);
+    };
+
     audio.play().then(()=>wireAudioToDiff(audio,this.idx)).catch(e=>{
-      audio.onended=null;if(this._outTimer){clearTimeout(this._outTimer);this._outTimer=null;}
+      audio.onended=null;
+      if(this._outTimer){clearTimeout(this._outTimer);this._outTimer=null;}
       console.warn('play() error:',e);
     });
   }
 
-  // Toujours depuis tracks[0] — après suppression de la piste précédente
+  // Démarre toujours tracks[0] — appelé après suppression de la piste précédente
   _startNextAfterChain(token){
     if(token!==this._playToken||!this.playing) return;
     if(!this.tracks.length) return;
-    const next=this.tracks[0]; if(!next) return;
-    if(next.isMacro){this._startTrack(0);return;}
-    const nextAudio=this.audios[0]; if(!nextAudio) return;
-    const nextToken=++this._playToken;
-    nextAudio.onended=null;
-    if(this._outTimer){clearTimeout(this._outTimer);this._outTimer=null;}
-    if(this._removeTimer){clearTimeout(this._removeTimer);this._removeTimer=null;}
-    const nextIn=this._inOf(0),nextOut=this._outOf(0),nextChain=Math.max(0,nextOut-nextIn);
-    nextAudio.currentTime=nextIn;
-    const removeNext=(tk)=>{
-      if(tk!==this._playToken)return;
-      nextAudio.onended=null;nextAudio.pause();
-      const idx=this.tracks.indexOf(next);
-      if(idx!==-1){if(next.file?.startsWith('blob:'))URL.revokeObjectURL(next.file);this.tracks.splice(idx,1);this.durs.splice(idx,1);this.audios.splice(idx,1);}
-      this.ci=0;this._updateFdzCount();this.render();
-    };
-    this._outTimer=setTimeout(()=>{
-      if(nextToken!==this._playToken||!this.playing)return;
-      this.ci=0;this.render();
-      if(this.tracks.length) this._startNextAfterChain(nextToken);
-      else this._removeTimer=setTimeout(()=>removeNext(nextToken),2000);
-    },nextChain*1000);
-    nextAudio.onended=()=>{nextAudio.onended=null;if(nextToken!==this._playToken)return;removeNext(nextToken);};
-    nextAudio.play().catch(e=>console.warn('play() next error:',e));
+    // Lancer directement via _startTrack (gère aussi les macros)
+    this._startTrack(0);
   }
 
   _updateFdzCount(){
