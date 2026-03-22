@@ -421,13 +421,27 @@ function sigHandleMessage(msg){
   }
 }
 
-// ── Macro START EXT : envoyer play à Diff2 ──
+// ── Macro START EXT : insère un pas dans la playlist ──
 function runMacroStartExt(){
-  sigSend({action:'play',source:'RC'});
-  _flashMacroBtn('macro-start-ext');
-  // Feedback visuel
-  const dot=document.getElementById('diffa-status-dot');
-  if(dot){const prev=dot.style.background;dot.style.background='#ffffff';setTimeout(()=>_diffASetStatus(_sigD2Online,'Cloudflare'),300);}
+  const macroStep={
+    isMacro:true,
+    title:'START EXT',
+    color:'#4a1a8a',
+    inCue:0, outCue:null,
+    action:()=>{
+      sigSend({action:'play',source:'RC'});
+      _flashMacroBtn('macro-start-ext');
+      const dot=document.getElementById('diffa-status-dot');
+      if(dot){dot.style.background='#ffffff';setTimeout(()=>_diffASetStatus(_sigD2Online,'Cloudflare'),300);}
+    }
+  };
+  D[0].tracks.push(macroStep);
+  D[0].durs.push(0);
+  D[0].audios.push(null);
+  D[0]._updateFdzCount();
+  D[0].render();
+  // Si le diffuseur est déjà en lecture et qu'on était en attente, démarrer la macro
+  if(D[0].playing && D[0].tracks.length===1) D[0]._startTrack(0);
 }
 
 function _flashMacroBtn(id){
@@ -484,24 +498,34 @@ async function drawWaveform(canvas,file,startRatio=0,endRatio=1){
 function drawWaveformFromData(canvas,data,startRatio=0,endRatio=1){
   const W=canvas.width,H=canvas.height;
   const c=canvas.getContext('2d');
-  c.fillStyle='#080e1c'; c.fillRect(0,0,W,H);
-  c.strokeStyle='rgba(30,50,90,.6)'; c.lineWidth=1;
-  [0.25,0.5,0.75].forEach(y=>{c.beginPath();c.moveTo(0,Math.round(H*y)+.5);c.lineTo(W,Math.round(H*y)+.5);c.stroke();});
+  // Fond cyan plein — style broadcast pro
+  c.fillStyle='#00c8e8';
+  c.fillRect(0,0,W,H);
   const start=Math.floor(startRatio*data.length),end=Math.floor(endRatio*data.length);
-  const len=Math.max(1,end-start),step=Math.max(1,Math.floor(len/W));
-  const grad=c.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,'rgba(0,180,220,0.08)'); grad.addColorStop(0.5,'rgba(0,200,240,0.18)'); grad.addColorStop(1,'rgba(0,180,220,0.08)');
-  c.fillStyle=grad; c.beginPath(); c.moveTo(0,H/2);
-  for(let x=0;x<W;x++){let mx=0;for(let j=0;j<step;j++){const v=Math.abs(data[start+x*step+j]||0);if(v>mx)mx=v;}c.lineTo(x,H/2-mx*(H/2)*.95);}
-  for(let x=W-1;x>=0;x--){let mx=0;for(let j=0;j<step;j++){const v=Math.abs(data[start+x*step+j]||0);if(v>mx)mx=v;}c.lineTo(x,H/2+mx*(H/2)*.95);}
-  c.closePath(); c.fill();
-  c.strokeStyle='rgba(0,212,240,0.8)'; c.lineWidth=1;
+  const len=Math.max(1,end-start);
+  // Résolution maximale : 1 colonne = 1 pixel (ou regroupement minimal)
+  const step=Math.max(1,Math.floor(len/W));
+  // Tracer les barres noires min/max — opacité progressive selon amplitude
   for(let x=0;x<W;x++){
     let mn=0,mx=0;
-    for(let j=0;j<step;j++){const v=data[start+x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
-    const y1=Math.round((1+mn)/2*H),y2=Math.round((1+mx)/2*H);
-    if(y2>y1){c.beginPath();c.moveTo(x+.5,y1);c.lineTo(x+.5,y2);c.stroke();}
+    const base=start+x*step;
+    for(let j=0;j<step;j++){
+      const v=data[base+j]||0;
+      if(v<mn)mn=v;if(v>mx)mx=v;
+    }
+    const amp=Math.max(Math.abs(mn),Math.abs(mx));
+    // Zone silencieuse : barre fine centrale uniquement
+    const y1=Math.round((1+mn)*H/2);
+    const y2=Math.round((1+mx)*H/2);
+    const h=Math.max(1,y2-y1);
+    // Opacité variable selon amplitude (fort = plein noir, faible = gris)
+    const alpha=0.3+amp*0.7;
+    c.fillStyle=`rgba(0,18,28,${alpha.toFixed(2)})`;
+    c.fillRect(x,y1,1,h);
   }
+  // Ligne centrale légère
+  c.fillStyle='rgba(0,60,80,0.25)';
+  c.fillRect(0,Math.floor(H/2),W,1);
 }
 function drawWaveformBg(canvas,data){
   const W=canvas.width||1200,H=canvas.height||96;
@@ -585,7 +609,8 @@ class Diffuser{
       const inPct=(this._inOf(i)/dur*100).toFixed(1);
       const outPct=Math.min(98,(this._outOf(i)/dur*100)).toFixed(1);
       const delBtn=t.pinned?'':`<button onclick="event.stopPropagation();diffRemoveTrack(${this.idx},${i})" style="background:transparent;border:none;color:#3a4050;cursor:pointer;font-size:11px;padding:0 4px;line-height:1;transition:color .1s" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#3a4050'" title="Supprimer">✕</button>`;
-      if(isActive){
+      const isMacro=!!t.isMacro;
+      if(isActive && !isMacro){
         tr.innerHTML=`
           <canvas class="row-active-wv-bg" id="${wvId}-bg" width="1200" height="96"></canvas>
           <div style="position:absolute;top:0;bottom:0;z-index:1;pointer-events:none;left:${inPct}%;width:2px;background:rgba(0,255,96,.5)"></div>
@@ -626,38 +651,76 @@ class Diffuser{
               drawWaveformBg(document.getElementById(wvId+'-bg'),WV_DATA_CACHE[t.file]);
           });
         }
-      } else {
+      } else if(isActive && isMacro){
+        // Macro en cours d'exécution
+        tr.style.background='linear-gradient(90deg,#2a1a00 0%,#1a1000 100%)';
+        tr.style.borderLeft='4px solid #f5c400';
         tr.innerHTML=`
-          <td class="cell-num">${i+1}</td>
-          <td class="cell-time"><span>${hhmm}</span><span class="cell-sub">${sub}</span></td>
-          <td class="cell-title" style="display:flex;align-items:center;gap:4px">${delBtn}
-            <span class="cell-simple" title="${t.title}">${t.title}</span>
-            ${this._introOf(i)!==null?'<span class="intro-badge" style="font-size:7px">INTRO</span>':''}
+          <td class="cell-num" style="color:#f5c400;font-size:18px">⚡</td>
+          <td class="cell-time" style="color:#f5c400;font-family:var(--mono);font-size:11px">ACTION</td>
+          <td colspan="4" style="padding:0 16px;vertical-align:middle">
+            <div style="font-family:var(--display);font-size:20px;font-weight:700;color:#f5c400;letter-spacing:3px">${t.title}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:#7a6000;letter-spacing:2px;margin-top:2px">EN COURS D'EXÉCUTION…</div>
           </td>
-          <td class="cell-wv" style="min-width:160px;padding:4px 8px!important;vertical-align:middle">
-            <div style="position:relative;height:40px;border-radius:3px;overflow:hidden">
-              <canvas id="${wvId}" width="400" height="40" style="display:block;width:100%;height:40px;border-radius:3px"></canvas>
-              <div id="${wvId}-pre" style="position:absolute;top:0;bottom:0;left:0;width:${inPct}%;background:rgba(0,0,0,.5);pointer-events:none"></div>
-              <div id="${wvId}-post" style="position:absolute;top:0;bottom:0;left:${outPct}%;right:0;background:rgba(0,0,0,.5);pointer-events:none"></div>
+          <td class="cell-bar"><span class="color-bar" style="background:#f5c400;height:56px"></span></td>`;
+        tbody.appendChild(tr);
+      } else if(isMacro){
+        // Macro en attente dans la playlist
+        tr.style.borderLeft='3px solid #3a2a00';
+        tr.innerHTML=`
+          <td class="cell-num" style="color:#6a5000;font-size:14px">⚡</td>
+          <td class="cell-time" style="font-family:var(--mono);font-size:10px;color:#4a3800">MACRO</td>
+          <td colspan="3" style="padding:0 16px;vertical-align:middle">
+            <div style="display:flex;align-items:center;gap:8px">
+              ${delBtn}
+              <span style="font-family:var(--display);font-size:14px;font-weight:700;color:#8a6a00;letter-spacing:2px">${t.title}</span>
+              <span style="font-family:var(--mono);font-size:8px;color:#4a3800;border:1px solid #4a3800;padding:1px 5px;border-radius:2px;letter-spacing:1px">→ SE DÉCLENCHE À LA LECTURE</span>
+            </div>
+          </td>
+          <td class="cell-cd" style="color:#6a5000;font-family:var(--mono);font-size:10px;text-align:right;padding-right:10px">ACTION</td>
+          <td class="cell-bar"><span class="color-bar" style="background:#3a2a00"></span></td>`;
+        tbody.appendChild(tr);
+      } else {
+        // ── LIGNE NORMALE — affichage grand et lisible ──
+        const isNext=i===this.ci+1&&this.playing;
+        tr.innerHTML=`
+          <td style="width:32px;text-align:center;vertical-align:middle;padding:0">
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${isNext?'var(--green)':'#3a5070'}">${i+1}</div>
+          </td>
+          <td style="width:88px;vertical-align:middle;padding:0 8px">
+            <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${isNext?'var(--green)':'var(--cyan)'};letter-spacing:1px">${hhmm}</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);margin-top:1px">${fmtFull(this._playDur(i))}</div>
+          </td>
+          <td style="padding:0 8px;vertical-align:middle;max-width:200px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:6px">
+              ${delBtn}
+              <div>
+                <div style="font-family:var(--display);font-size:16px;font-weight:700;color:${isNext?'var(--green)':'var(--txt)'};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px" title="${t.title}">${t.title}</div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);margin-top:1px;letter-spacing:1px">IN ${fmtMs(this._inOf(i))} · OUT ${fmtMs(this._outOf(i))}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:4px 8px;vertical-align:middle;min-width:220px">
+            <div style="position:relative;height:48px;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,200,230,0.2)">
+              <canvas id="${wvId}" width="600" height="48" style="display:block;width:100%;height:48px"></canvas>
+              <div id="${wvId}-pre" style="position:absolute;top:0;bottom:0;left:0;width:${inPct}%;background:rgba(0,0,0,.45);pointer-events:none"></div>
+              <div id="${wvId}-post" style="position:absolute;top:0;bottom:0;left:${outPct}%;right:0;background:rgba(0,0,0,.45);pointer-events:none"></div>
               <div id="${wvId}-in" class="wv-handle wv-handle-in" style="left:${inPct}%" data-label="IN" data-wv="${wvId}" data-diff="${this.idx}" data-track="${i}"></div>
               <div id="${wvId}-out" class="wv-handle wv-handle-out" style="left:${outPct}%" data-label="OUT" data-wv="${wvId}" data-diff="${this.idx}" data-track="${i}"></div>
               <button class="wv-edit-btn" onclick="wvModalOpen('${wvId}',${this.idx},${i})">✎</button>
             </div>
           </td>
-          <td class="cell-dur" style="position:relative;min-width:70px">
-            <span style="font-family:var(--mono);font-size:10px">${fmtFull(this.durs[i]||0)}</span>
+          <td style="width:70px;text-align:right;vertical-align:middle;padding:0 10px">
+            <div style="font-family:var(--mono);font-size:13px;color:${isNext?'var(--green)':'#4a6080'};letter-spacing:1px">${fmtFull(this._playDur(i))}</div>
           </td>
-          <td class="cell-cd">${fmtFull(this._playDur(i))}</td>
-          <td class="cell-bar"><span class="color-bar" style="background:${t.color}"></span></td>`;
+          <td class="cell-bar"><span style="width:4px;height:56px;display:block;background:${t.color};border-radius:2px;opacity:.8"></span></td>`;
         tbody.appendChild(tr);
-        // Dessiner la waveform immédiatement sur la ligne normale
         const cv=document.getElementById(wvId);
         if(cv){
-          cv.width=400;cv.height=40;
+          cv.width=600;cv.height=48;
           if(WV_DATA_CACHE[t.file]) drawWaveformFromData(cv,WV_DATA_CACHE[t.file],0,1);
           else drawWaveform(cv,t.file);
         }
-        // Brancher les poignées IN/OUT
         this._bindHandles(wvId,i);
       }
     });
@@ -737,6 +800,22 @@ class Diffuser{
 
   _startTrack(i){
     const t=this.tracks[i];if(!t)return;
+    // ── Pas MACRO : exécuter et supprimer après 1.5s ──
+    if(t.isMacro){
+      this.render(); // affiche "EN COURS D'EXÉCUTION"
+      if(typeof t.action==='function') t.action();
+      const token=this._playToken;
+      setTimeout(()=>{
+        if(token!==this._playToken||!this.playing)return;
+        const idx=this.tracks.indexOf(t);
+        if(idx!==-1){this.tracks.splice(idx,1);this.durs.splice(idx,1);this.audios.splice(idx,1);}
+        this.ci=0;this._updateFdzCount();
+        if(this.tracks.length) this._startTrack(0);
+        else{this.playing=false;}
+        this.render();
+      },1500);
+      return;
+    }
     const audio=this.audios[i];if(!audio)return;
     const token=++this._playToken;
     audio.onended=null;
