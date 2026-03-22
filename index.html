@@ -286,6 +286,7 @@
       <button class="button is-dark is-small" onclick="D[0].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[0].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-0" onclick="D[0].toggleAuto()">AUTO</button>
+      <button id="macro-start-ext" onclick="runMacroStartExt()" style="background:transparent;border:1px solid #6a3aaa;color:#9b5de5;font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:2px;cursor:pointer;letter-spacing:1px;transition:all .15s" onmouseover="this.style.background='#1a0a3a'" onmouseout="this.style.background='transparent'" title="Lance la lecture sur DIFF A Externe">⚡ START EXT</button>
       <span class="tag" style="background:#0c1428;color:#3a5070;border:1px solid #1e3060">PISTE <strong id="c1-counter" style="color:#5a7090;margin-left:4px">0/0</strong></span>
     </div>
   </div>
@@ -409,11 +410,31 @@ function sigHandleMessage(msg){
       sigSend({action:'d2-pong',source:'RC'});
       break;
     case 'status':
-      // Mise à jour optionnelle du libellé avec la piste en cours de DIFF A externe
       const lbl=document.getElementById('diffa-status-lbl');
       if(lbl) lbl.textContent='DIFF A '+(msg.playing?'▶ '+(msg.track||''):'● prêt');
       break;
+    // RACCRO EXT : Diff2 demande à RC de lancer sa lecture
+    case 'raccro-ext':
+      if(D[0]&&!D[0].playing) D[0].togglePlay();
+      _flashMacroBtn('macro-start-ext');
+      break;
   }
+}
+
+// ── Macro START EXT : envoyer play à Diff2 ──
+function runMacroStartExt(){
+  sigSend({action:'play',source:'RC'});
+  _flashMacroBtn('macro-start-ext');
+  // Feedback visuel
+  const dot=document.getElementById('diffa-status-dot');
+  if(dot){const prev=dot.style.background;dot.style.background='#ffffff';setTimeout(()=>_diffASetStatus(_sigD2Online,'Cloudflare'),300);}
+}
+
+function _flashMacroBtn(id){
+  const btn=document.getElementById(id);if(!btn)return;
+  const prev=btn.style.background;
+  btn.style.background='#3a1a6b';
+  setTimeout(()=>btn.style.background=prev||'transparent',600);
 }
 
 function diff2Connect(){
@@ -613,16 +634,31 @@ class Diffuser{
             <span class="cell-simple" title="${t.title}">${t.title}</span>
             ${this._introOf(i)!==null?'<span class="intro-badge" style="font-size:7px">INTRO</span>':''}
           </td>
-          <td class="cell-wv" style="width:50px;text-align:center"><button class="wv-edit-btn" onclick="wvModalOpen('${wvId}',${this.idx},${i})" style="position:static;opacity:1">✎</button></td>
-          <td class="cell-dur" style="position:relative;min-width:90px">
-            <span style="font-family:var(--mono);font-size:10px">${fmtFull(this.durs[i]||0)}</span>
-            <div style="position:absolute;bottom:2px;left:4px;right:4px;height:2px;background:#0a1020;border-radius:1px">
-              <div style="position:absolute;left:${inPct}%;width:${Math.max(1,outPct-parseFloat(inPct))}%;height:100%;background:${t.color||'#3a5080'};border-radius:1px;opacity:.7"></div>
+          <td class="cell-wv" style="min-width:160px;padding:4px 8px!important;vertical-align:middle">
+            <div style="position:relative;height:40px;border-radius:3px;overflow:hidden">
+              <canvas id="${wvId}" width="400" height="40" style="display:block;width:100%;height:40px;border-radius:3px"></canvas>
+              <div id="${wvId}-pre" style="position:absolute;top:0;bottom:0;left:0;width:${inPct}%;background:rgba(0,0,0,.5);pointer-events:none"></div>
+              <div id="${wvId}-post" style="position:absolute;top:0;bottom:0;left:${outPct}%;right:0;background:rgba(0,0,0,.5);pointer-events:none"></div>
+              <div id="${wvId}-in" class="wv-handle wv-handle-in" style="left:${inPct}%" data-label="IN" data-wv="${wvId}" data-diff="${this.idx}" data-track="${i}"></div>
+              <div id="${wvId}-out" class="wv-handle wv-handle-out" style="left:${outPct}%" data-label="OUT" data-wv="${wvId}" data-diff="${this.idx}" data-track="${i}"></div>
+              <button class="wv-edit-btn" onclick="wvModalOpen('${wvId}',${this.idx},${i})">✎</button>
             </div>
+          </td>
+          <td class="cell-dur" style="position:relative;min-width:70px">
+            <span style="font-family:var(--mono);font-size:10px">${fmtFull(this.durs[i]||0)}</span>
           </td>
           <td class="cell-cd">${fmtFull(this._playDur(i))}</td>
           <td class="cell-bar"><span class="color-bar" style="background:${t.color}"></span></td>`;
         tbody.appendChild(tr);
+        // Dessiner la waveform immédiatement sur la ligne normale
+        const cv=document.getElementById(wvId);
+        if(cv){
+          cv.width=400;cv.height=40;
+          if(WV_DATA_CACHE[t.file]) drawWaveformFromData(cv,WV_DATA_CACHE[t.file],0,1);
+          else drawWaveform(cv,t.file);
+        }
+        // Brancher les poignées IN/OUT
+        this._bindHandles(wvId,i);
       }
     });
     document.getElementById(this.ids.counter).textContent=this.tracks.length?`${this.ci+1}/${this.tracks.length}`:'0/0';
