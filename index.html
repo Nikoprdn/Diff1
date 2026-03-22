@@ -439,7 +439,10 @@ async function sigHeartbeat(){
       _sigD2Online=s.d2?.online||false;
       if(_sigD2Online!==wasOnline) _diffASetStatus(_sigD2Online,'Cloudflare');
     }
-  }catch(e){}
+  }catch(e){
+    // Retry immédiat en cas d'erreur réseau (mobile 4G instable)
+    setTimeout(()=>fetch(`${SIG_URL}/heartbeat?role=rc`,{method:'POST'}).catch(()=>{}), 2000);
+  }
 }
 
 function sigHandleMessage(msg){
@@ -523,8 +526,22 @@ function _updateOnAirBadges(){
 
 function diff2Connect(){
   sigHeartbeat();
-  setInterval(sigHeartbeat, 10000);
+  // Heartbeat toutes les 5s (tolérance mobile)
+  setInterval(sigHeartbeat, 5000);
+  // Poll toutes les 500ms
   setInterval(sigPoll, 500);
+  // Reprendre immédiatement après un retour en premier plan (mobile)
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'){
+      sigHeartbeat();
+      sigPoll();
+    }
+  });
+  // Reprendre après reconnexion réseau
+  window.addEventListener('online',()=>{
+    sigHeartbeat();
+    sigPoll();
+  });
 }
 
 // ═══════════════════════════════════════════════════════
