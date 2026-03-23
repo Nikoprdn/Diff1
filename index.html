@@ -77,7 +77,6 @@
   .row-active-time{font-family:var(--mono);font-size:11px;color:var(--cyan-dim);position:relative;z-index:3;}
   .row-active-cues{font-family:var(--mono);font-size:8px;color:rgba(0,212,240,.6);letter-spacing:1px;position:relative;z-index:3;margin-top:2px;}
   .table.is-radio tbody tr.row-next{background:#071408;border-left:3px solid var(--green-dk);}
-  /* Prochain pas avec un point INTRO défini → bordure jaune */
   .table.is-radio tbody tr.row-has-intro{background:#0e0e00;border-left:3px solid #8a7000!important;}
   .cell-num{width:36px;font-family:var(--mono);font-size:12px;text-align:center;}
   .cell-num.is-playing{color:var(--red)!important;}
@@ -246,16 +245,25 @@
         <button onclick="wvModalSetEnd()" style="background:transparent;border:1px solid #4a1010;color:#ef5350;font-family:var(--mono);font-size:7px;padding:1px 5px;border-radius:2px;cursor:pointer;margin-top:2px;letter-spacing:1px">← POSER</button>
       </div>
     </div>
-    
-    <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
+  </div>
+</div>
+
+<!-- ── DIFF A — Console principale ── -->
+<div class="card is-dark-card" id="diff-card-0" style="margin-bottom:.75rem">
+  <div class="card-header diff-card-header" id="diff-header-0" style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 1rem">
+    <div style="display:flex;align-items:center;gap:10px">
       <span class="tag diff-badge" style="background:#1a2a00;color:#00d4f0;border:1px solid #1e4a60">DIFF A</span>
+      <span style="font-family:var(--mono);font-size:9px;color:#3a5070;letter-spacing:1px">RADIO CONSOLE</span>
     </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 1rem;border-right:1px solid #1e3060">
-      <p style="font-family:var(--mono);font-size:9px;color:#3a5070;padding-left:0">RADIO CONSOLE</p>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:var(--mono);font-size:9px;color:#3a5070;letter-spacing:1px">Avant fenêtre</span>
+      <span class="val-txt" id="c1-avant" style="color:#00d96a;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</span>
+      <span style="font-family:var(--mono);font-size:9px;color:#3a5070;letter-spacing:1px;margin-left:8px">Avancé</span>
+      <span class="val-txt" id="c1-avance" style="color:#f5c400;font-family:var(--mono);font-size:15px;letter-spacing:2px">00:00:00</span>
     </div>
-    <div class="timer-group">
-      <div class="timer-box"><span class="label-txt">Avant fenêtre</span><span class="val-txt" id="c1-avant" style="color:#00d96a">00:00:00</span></div>
-      <div class="timer-box"><span class="label-txt">Avancé</span><span class="val-txt" id="c1-avance" style="color:#f5c400">00:00:00</span></div>
+  </div>
+    <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060;display:none">
+      <span class="tag diff-badge" style="background:#1a2a00;color:#00d4f0;border:1px solid #1e4a60">DIFF A</span>
     </div>
   </div>
   <div class="notification is-onair diff-onair-bar" id="diff-onair-0">
@@ -937,26 +945,24 @@ class Diffuser{
       // ── Couleur du pas selon la phase ──
       const inIntroPhase = introCue!=null && introCue>startCue && pos<introCue;
       const pastOut = pos>=outCue;
-      if(inIntroPhase){
+      if(inIntroPhase && tr._phase!=='intro'){
+        tr._phase='intro';
         tr.style.background='linear-gradient(90deg,#1a1400 0%,#0c0c00 100%)';
         tr.style.borderLeft='4px solid #f5c400';
         tr.style.borderTop='1px solid #6a5000';
         tr.style.borderBottom='1px solid #6a5000';
-        tr._phase='intro';
-      } else if(pastOut){
+      } else if(pastOut && tr._phase!=='post'){
+        tr._phase='post';
         tr.style.background='linear-gradient(90deg,#1a0800 0%,#0c0500 100%)';
         tr.style.borderLeft='4px solid #f07800';
         tr.style.borderTop='1px solid #5a2a00';
         tr.style.borderBottom='1px solid #5a2a00';
-        tr._phase='post';
-      } else {
-        if(tr._phase!=='normal'){
-          tr.style.background='linear-gradient(90deg,#180303 0%,#0c0303 100%)';
-          tr.style.borderLeft='4px solid #ff2020';
-          tr.style.borderTop='1px solid #6a1010';
-          tr.style.borderBottom='1px solid #6a1010';
-          tr._phase='normal';
-        }
+      } else if(!inIntroPhase && !pastOut && tr._phase!=='normal'){
+        tr._phase='normal';
+        tr.style.background='linear-gradient(90deg,#180303 0%,#0c0303 100%)';
+        tr.style.borderLeft='4px solid #ff2020';
+        tr.style.borderTop='1px solid #6a1010';
+        tr.style.borderBottom='1px solid #6a1010';
       }
     }
 
@@ -969,24 +975,20 @@ class Diffuser{
       const inIntroPhase2 = remIntro!=null && remIntro>0 && introCue>startCue;
       if(inIntroPhase2){
         cdEl.textContent='⚡ '+fmtFull(remIntro);
-        cdEl.style.color='#f5c400';
-        cdEl.style.fontWeight='700';
+        cdEl.style.color='#f5c400'; cdEl.style.fontWeight='700';
         if(subEl){subEl.textContent='INTRO';subEl.style.color='#a08000';}
       } else if(remOut>0){
         cdEl.textContent=fmtFull(remOut);
-        cdEl.style.color='#ff4040';
-        cdEl.style.fontWeight='700';
+        cdEl.style.color='#ff4040'; cdEl.style.fontWeight='700';
         if(subEl){subEl.textContent='OUT';subEl.style.color='#7a1010';}
       } else {
-        // Après OUT : queue restante en orange jusqu'à END
         cdEl.textContent='+ '+fmtFull(-remOut);
-        cdEl.style.color='#f07800';
-        cdEl.style.fontWeight='400';
+        cdEl.style.color='#f07800'; cdEl.style.fontWeight='400';
         if(subEl){subEl.textContent='END';subEl.style.color='#8a4000';}
       }
     }
 
-    // ── Zoom waveform à 20s du OUT : fenêtre -10s/+10s autour du point OUT ──
+    // ── Zoom waveform à 20s du OUT : fenêtre -10s/+10s ──
     const wvId='wv-'+this.idx+'-'+activeIdx;
     const cv=document.getElementById(wvId);
     const remToOut=outCue-pos;
@@ -1228,22 +1230,20 @@ class Diffuser{
     const cdEl=document.getElementById(this.ids.body+'-cd-'+activeIdx);
     if(cdEl){
       const introCue2=this._introOf(activeIdx);
+      const startCue2=this._startOf(activeIdx);
       const remIntro2=introCue2!=null?introCue2-pos:null;
       const rem=outCue-pos;
-      const startCue2=this._startOf(activeIdx);
-      const inIntroPhase = remIntro2!=null && remIntro2>0 && introCue2>startCue2;
+      const inIntroPhase=remIntro2!=null&&remIntro2>0&&introCue2>startCue2;
       const subEl2=document.getElementById(this.ids.body+'-cd-sub-'+activeIdx);
+      const tr2=document.getElementById(this.ids.body)?.querySelector('tr.row-active');
       if(inIntroPhase){
-        cdEl.textContent='⚡ '+fmtFull(remIntro2);
-        cdEl.style.color='#f5c400';cdEl.style.fontWeight='700';
+        cdEl.textContent='⚡ '+fmtFull(remIntro2);cdEl.style.color='#f5c400';cdEl.style.fontWeight='700';
         if(subEl2){subEl2.textContent='INTRO';subEl2.style.color='#a08000';}
-        const tr2=document.getElementById(this.ids.body)?.querySelector('tr.row-active');
-        if(tr2&&tr2._phase!=='intro'){tr2._phase='intro';tr2.style.borderLeft='4px solid #f5c400';tr2.style.borderTopColor='#6a5000';tr2.style.borderBottomColor='#6a5000';}
+        if(tr2&&tr2._phase!=='intro'){tr2._phase='intro';tr2.style.borderLeft='4px solid #f5c400';}
       } else if(rem>0){
         cdEl.textContent=fmtFull(rem);cdEl.style.color='#ff4040';cdEl.style.fontWeight='700';
         if(subEl2){subEl2.textContent='OUT';subEl2.style.color='#7a1010';}
-        const tr2=document.getElementById(this.ids.body)?.querySelector('tr.row-active');
-        if(tr2&&tr2._phase!=='normal'){tr2._phase='normal';tr2.style.borderLeft='4px solid #ff2020';tr2.style.borderTopColor='#6a1010';tr2.style.borderBottomColor='#6a1010';}
+        if(tr2&&tr2._phase!=='normal'){tr2._phase='normal';tr2.style.borderLeft='4px solid #ff2020';}
       } else {
         cdEl.textContent='+ '+fmtFull(-rem);cdEl.style.color='#f07800';cdEl.style.fontWeight='400';
         if(subEl2){subEl2.textContent='END';subEl2.style.color='#8a4000';}
@@ -1580,21 +1580,20 @@ function wvModalNudge(deltaSec){if(!_wvModal.audio)return;_wvModal.audio.current
 // ═══════════════════════════════════════════════════════
 
 // ── Pré-écoute isolée ──
-// AudioContext DÉDIÉ — aucun impact sur la lecture principale
+// AudioContext DÉDIÉ — zéro impact sur la lecture principale
 
 function previewPlay(diffIdx, trackIdx){
   const d=D[diffIdx];if(!d)return;
   const t=d.tracks[trackIdx];if(!t||!t.file)return;
   const dur=d.durs[trackIdx]||0;if(!dur)return;
 
-  // Stopper toute pré-écoute en cours
   previewStop();
 
   const a=new Audio();
   a.src=t.file;
   a.currentTime=d._startOf(trackIdx);
 
-  // AudioContext SÉPARÉ — jamais le ctx principal pour ne pas interférer
+  // AudioContext SÉPARÉ — jamais le ctx principal, zéro interférence
   if(!_previewCtx){
     try{_previewCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
   }
@@ -1617,14 +1616,12 @@ function previewPlay(diffIdx, trackIdx){
 
   a.play().catch(e=>console.warn('preview error:',e));
 
-  // Arrêter à endCue
   const endCue=d._endOf(trackIdx);
   _previewTimer=setInterval(()=>{
     if(!_previewAudio||_previewAudio.paused){previewStop();return;}
     if(_previewAudio.currentTime>=endCue) previewStop();
   }, 200);
 
-  // Mettre à jour le bouton
   _updatePreviewBtn(diffIdx, trackIdx, true);
 }
 
@@ -1651,7 +1648,7 @@ function _updatePreviewBtn(diffIdx, trackIdx, playing){
 }
 
 let _previewAudio=null;
-let _previewCtx=null;  // AudioContext DÉDIÉ pré-écoute — indépendant du ctx principal
+let _previewCtx=null;  // AudioContext DÉDIÉ — indépendant du ctx principal
 let _previewGn=null;
 let _previewTimer=null;
 let _previewTrack=null;
