@@ -1322,7 +1322,13 @@ function wvModalOpen(wvId,diffIdx,trackIdx){
   _wvModalBindDrag();_wvModalUpdateTC();_wvModalStartRAF();
 }
 function wvModalClose(){
-  if(_wvModal.audio){try{_wvModal.audio.pause();}catch(e){}}_wvModal.playing=false;wvModalStop();if(_wvModal.rafId){cancelAnimationFrame(_wvModal.rafId);_wvModal.rafId=null;}document.getElementById('wv-modal').classList.remove('open');}
+  // Fermer IMMÉDIATEMENT en premier — avant tout autre code qui pourrait planter
+  document.getElementById('wv-modal').classList.remove('open');
+  try{if(_wvModal.audio)_wvModal.audio.pause();}catch(e){}
+  _wvModal.playing=false;
+  try{wvModalStop();}catch(e){}
+  if(_wvModal.rafId){cancelAnimationFrame(_wvModal.rafId);_wvModal.rafId=null;}
+}
 function wvModalApply(){
   const d=D[_wvModal.diffIdx];if(!d)return;const t=d.tracks[_wvModal.trackIdx];if(!t)return;
   const inVal=parseFloat(document.getElementById('wv-modal-in-input').value)||0;
@@ -1491,13 +1497,13 @@ function wvModalOverviewSeek(e){
 }
 function wvModalPlayPause(){
   const audio=_wvModal.audio;if(!audio)return;
-  if(audio.paused){audio.play().catch(e=>console.warn(e));document.getElementById('wvm-play-btn').textContent='⏸';_wvModal.playing=true;}
-  else{audio.pause();document.getElementById('wvm-play-btn').textContent='▶';_wvModal.playing=false;}
+  if(audio.paused){audio.play().catch(e=>console.warn(e));(document.getElementById('wvm-play-btn')||{}).textContent='⏸';_wvModal.playing=true;}
+  else{audio.pause();(document.getElementById('wvm-play-btn')||{}).textContent='▶';_wvModal.playing=false;}
 }
 function wvModalStop(){
   const audio=_wvModal.audio;if(!audio)return;
   audio.pause();audio.currentTime=_wvModal.diffIdx!==null?(D[_wvModal.diffIdx]?.tracks[_wvModal.trackIdx]?.inCue||0):0;
-  document.getElementById('wvm-play-btn').textContent='▶';_wvModal.playing=false;
+  (document.getElementById('wvm-play-btn')||{}).textContent='▶';_wvModal.playing=false;
 }
 function wvModalGoIn(){const d=D[_wvModal.diffIdx];if(!d)return;const t=d.tracks[_wvModal.trackIdx];if(!t)return;if(_wvModal.audio)_wvModal.audio.currentTime=t.inCue||0;}
 function wvModalGoOut(){const d=D[_wvModal.diffIdx];if(!d)return;const t=d.tracks[_wvModal.trackIdx];if(!t)return;if(_wvModal.audio)_wvModal.audio.currentTime=Math.max(0,(t.outCue||_wvModal.dur)-2);}
