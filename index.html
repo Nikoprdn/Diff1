@@ -755,6 +755,7 @@ class Diffuser{
         const _introPct=_hasIntro?((this._introOf(i)/( this.durs[i]||1))*100).toFixed(1)+'%':'0%';
         tr.innerHTML=`
           <canvas class="row-active-wv-bg" id="${wvId}-bg" width="1200" height="130"></canvas>
+          <div id="${wvId}-playhead" style="position:absolute;top:0;bottom:0;z-index:5;pointer-events:none;left:0%;width:2px;background:rgba(255,255,255,0.9);box-shadow:0 0 6px #fff"></div>
           <div style="position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;left:${inPct}%;width:3px;background:#00ff60;box-shadow:0 0 8px #00ff60"></div>
           <div style="position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;left:${outPct}%;width:3px;background:rgba(255,40,40,.8);box-shadow:0 0 8px rgba(255,40,40,.6)"></div>
           ${_hasIntro?`<div style="position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;left:${_introPct};width:3px;background:#f5c400;box-shadow:0 0 8px #f5c400"></div>`:''}
@@ -783,11 +784,22 @@ class Diffuser{
         const bgCv=document.getElementById(wvId+'-bg');
         if(bgCv&&this.durs[i]>0){
           bgCv.width=1200;bgCv.height=130;
-          if(WV_DATA_CACHE[t.file])drawWaveformBg(bgCv,WV_DATA_CACHE[t.file]);
-          else drawWaveform(document.createElement('canvas'),t.file).then(()=>{
-            if(WV_DATA_CACHE[t.file]&&document.getElementById(wvId+'-bg'))
-              drawWaveformBg(document.getElementById(wvId+'-bg'),WV_DATA_CACHE[t.file]);
-          });
+          // Dessin initial : vue complète — tick() prendra le relais pour le zoom live
+          if(WV_DATA_CACHE[t.file]){
+            const _d=D[this.idx],_i=activeIdx!==-1?activeIdx:i;
+            const _s=this._startOf(i)/( this.durs[i]||1);
+            const _e=this._endOf(i)/(this.durs[i]||1);
+            drawWaveformFromData(bgCv,WV_DATA_CACHE[t.file],_s,_e);
+          } else {
+            drawWaveform(document.createElement('canvas'),t.file).then(()=>{
+              const bgEl=document.getElementById(wvId+'-bg');
+              if(WV_DATA_CACHE[t.file]&&bgEl){
+                const _s2=this._startOf(i)/(this.durs[i]||1);
+                const _e2=this._endOf(i)/(this.durs[i]||1);
+                drawWaveformFromData(bgEl,WV_DATA_CACHE[t.file],_s2,_e2);
+              }
+            });
+          }
         }
       } else if(isActive && isMacro){
         // Macro en cours d'exécution
@@ -994,17 +1006,61 @@ class Diffuser{
       }
     }
 
+    // ── Waveform live : zoom + playhead temps réel ──
     const wvId='wv-'+this.idx+'-'+activeIdx;
-    const cv=document.getElementById(wvId);
+    const bgCvLive=document.getElementById(wvId+'-bg');
+    const playheadEl=document.getElementById(wvId+'-playhead');
     const remToOut=outCue-pos;
-    if(cv&&WV_DATA_CACHE[t.file]){
-      if(remToOut>=0&&remToOut<=20){
-        const zStart=Math.max(0,(outCue-10)/fileDur),zEnd=Math.min(1,(outCue+10)/fileDur);
-        if(!t._zoomed){t._zoomed=true;drawWaveformFromData(cv,WV_DATA_CACHE[t.file],zStart,zEnd);}
-      } else if(t._zoomed&&remToOut>20){
-        t._zoomed=false;drawWaveformFromData(cv,WV_DATA_CACHE[t.file],0,1);
+    const data=WV_DATA_CACHE[t.file];
+
+    if(bgCvLive&&data){
+      const inIntroZoom=introCue!=null&&introCue>startCue&&pos<introCue;
+      const inOutZoom=remToOut>=0&&remToOut<=20;
+
+      let zStart,zEnd,zoneLabel;
+      if(inIntroZoom){
+        // Zoom sur la fenêtre START→INTRO (+5% de marge de chaque côté)
+        const margin=(introCue-startCue)*0.05/fileDur;
+        zStart=Math.max(0,startCue/fileDur-margin);
+        zEnd=Math.min(1,introCue/fileDur+margin);
+        zoneLabel='intro';
+      } else if(inOutZoom){
+        // Zoom sur OUT ±10s
+        zStart=Math.max(0,(outCue-10)/fileDur);
+        zEnd=Math.min(1,(outCue+10)/fileDur);
+        zoneLabel='out';
+      } else {
+        // Vue complète START→END
+        zStart=startCue/fileDur;
+        zEnd=endCue/fileDur;
+        zoneLabel='full';
       }
+
+      // Ne redessiner que si la zone change (évite le clignotement)
+      if(t._wvZone!==zoneLabel){
+        t._wvZone=zoneLabel;
+        drawWaveformFromData(bgCvLive,data,zStart,zEnd);
+        // Redessiner les marqueurs sur le bg canvas
+        const W=bgCvLive.width,H=bgCvLive.height;
+        const ctx2=bgCvLive.getContext('2d');
+        const toX=(s)=>Math.round((s/fileDur-zStart)/(zEnd-zStart)*W);
+        // START
+        ctx2.fillStyle='rgba(0,255,96,.7)';ctx2.fillRect(toX(startCue)-1,0,3,H);
+        // INTRO
+        if(introCue!=null){ctx2.fillStyle='rgba(245,196,0,.7)';ctx2.fillRect(toX(introCue)-1,0,3,H);}
+        // OUT
+        ctx2.fillStyle='rgba(168,85,247,.7)';ctx2.fillRect(toX(outCue)-1,0,3,H);
+        // END
+        ctx2.fillStyle='rgba(239,83,80,.7)';ctx2.fillRect(toX(endCue)-1,0,3,H);
+      }
+
+      // Playhead : position exacte dans la fenêtre courante
+      const zRange=zEnd-zStart||0.001;
+      const playRatio=Math.max(0,Math.min(1,(pos/fileDur-zStart)/zRange));
+      if(playheadEl)playheadEl.style.left=(playRatio*100).toFixed(2)+'%';
     }
+
+    const pb=document.getElementById('c1-progress-fill');
 
     const pb=document.getElementById('c1-progress-fill');
     if(pb)pb.style.width=(progFull*100).toFixed(2)+'%';
@@ -1050,6 +1106,7 @@ class Diffuser{
     audio.currentTime=startCue;
     this.ci=i;
     t._zoomed=false;
+    t._wvZone=null;  // Force redraw de la waveform au démarrage
     t._launching=true;
 
     let _chained=false;
