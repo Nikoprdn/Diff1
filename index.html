@@ -111,6 +111,15 @@
   .button.is-danger:hover{background:#200808!important;}
   .button.is-auto{background:transparent!important;border-color:var(--border)!important;color:var(--txt-dim)!important;transition:all .15s!important;}
   .button.is-auto.active{background:#0a2a00!important;border-color:var(--green)!important;color:var(--green)!important;}
+  /* Encart flèche enchaînement */
+  .chain-cell{width:36px;text-align:center;padding:0 2px!important;}
+  .chain-box{display:inline-flex;flex-direction:column;align-items:center;gap:1px;background:#060b14;border:1px solid #1a2538;border-radius:3px;width:28px;padding:3px 0;cursor:pointer;transition:all .15s;user-select:none;}
+  .chain-box:hover{border-color:#2a4060;}
+  .chain-box.on{background:rgba(0,200,255,0.1);border-color:#00a8cc;box-shadow:0 0 5px rgba(0,200,255,0.2);}
+  .chain-box .ch-arrow{font-size:14px;line-height:1;color:#1e2a40;transition:color .15s;}
+  .chain-box.on .ch-arrow{color:#00e8ff;}
+  .chain-box .ch-lbl{font-family:var(--mono);font-size:6px;letter-spacing:1px;color:#1e2a40;transition:color .15s;}
+  .chain-box.on .ch-lbl{color:#00a8cc;}
   .tag{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:1px!important;border-radius:2px!important;}
 
   /* Drop zone */
@@ -187,73 +196,7 @@
   .cd-sublabel{font-family:var(--mono);font-size:8px;letter-spacing:2px;}
   @keyframes silence-blink{0%,100%{background:#e03020;opacity:1;}50%{background:#8c1010;opacity:.5;}}
 
-  /* ══ NOUVELLE UI STYLE BROADCAST ══ */
-  .pl-table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  .pl-table thead th{
-    background:#050a14;color:#2a3a50;font-family:var(--mono);font-size:9px;
-    letter-spacing:2px;text-transform:uppercase;padding:4px 8px;
-    border-bottom:1px solid #0d1828;font-weight:400;white-space:nowrap;
-  }
-  .pl-table tbody tr{
-    border-bottom:1px solid #0d1420;cursor:pointer;
-    transition:background .1s;
-  }
-  .pl-table tbody tr:hover td{background:rgba(0,180,255,0.04);}
-  .pl-table tbody td{
-    padding:0 8px;height:44px;vertical-align:middle;
-    font-family:var(--mono);color:#4a6080;overflow:hidden;white-space:nowrap;
-  }
-  /* Ligne active */
-  .pl-row-active{background:#001a00!important;border-left:3px solid #00ff60!important;}
-  .pl-row-active td{background:transparent!important;}
-  .pl-row-active.is-intro{background:#1a1400!important;border-left-color:#f5c400!important;}
-  .pl-row-active.is-post{border-left-color:#f07800!important;}
-  /* Ligne suivante */
-  .pl-row-next{background:#00080d!important;border-left:2px solid #006688!important;}
-  .pl-row-next td{color:#5a8898!important;}
-  /* Numéro */
-  .pl-num{width:32px;text-align:center;font-size:12px;font-weight:700;}
-  /* Horaire */
-  .pl-time{width:72px;font-size:11px;}
-  .pl-time-main{color:#00c8ff;font-size:12px;font-weight:700;letter-spacing:1px;}
-  .pl-time-sub{color:#2a3a50;font-size:9px;margin-top:1px;}
-  .pl-row-active .pl-time-main{color:#00ff60;}
-  /* Titre */
-  .pl-title{font-family:var(--display)!important;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--txt);}
-  .pl-sub{font-family:var(--mono)!important;font-size:9px;color:#3a5070;margin-top:1px;letter-spacing:1px;}
-  .pl-row-active .pl-title{color:#ffffff;font-size:18px;}
-  .pl-row-active.is-intro .pl-title{color:#ffe060;}
-  .pl-row-next .pl-title{color:#80c0d0;}
-  /* Durée */
-  .pl-dur{width:68px;text-align:right;font-size:11px;color:#3a5070;}
-  .pl-row-next .pl-dur{color:#4a7080;}
-  /* Countdown */
-  .pl-cd{width:90px;text-align:right;font-size:13px;font-weight:700;letter-spacing:1px;padding-right:6px!important;}
-  .pl-cd-active{color:#00ff60;font-size:20px;}
-  .pl-cd-intro{color:#f5c400!important;font-size:20px;}
-  .pl-cd-post{color:#f07800!important;font-size:16px;}
-  /* Encart flèche */
-  .pl-chain{width:36px;text-align:center;padding:0 2px!important;}
-  .chain-box{
-    display:inline-flex;flex-direction:column;align-items:center;gap:1px;
-    background:#060b14;border:1px solid #1a2538;border-radius:3px;
-    width:28px;padding:3px 0;cursor:pointer;transition:all .15s;
-  }
-  .chain-box.on{background:rgba(0,200,255,0.1);border-color:#00a8cc;box-shadow:0 0 6px rgba(0,200,255,0.2);}
-  .chain-box .ch-arrow{font-size:13px;line-height:1;color:#1e2a40;transition:color .15s;}
-  .chain-box.on .ch-arrow{color:#00e8ff;}
-  .chain-box .ch-lbl{font-family:var(--mono);font-size:6px;letter-spacing:1px;color:#1e2a40;transition:color .15s;}
-  .chain-box.on .ch-lbl{color:#00a8cc;}
-  /* Barre couleur */
-  .pl-bar{width:5px;padding:0!important;}
-
-  /* ══ WAVEFORM ACTIVE — pleine ligne ══ */
-  .pl-wv-row td{height:110px!important;padding:0!important;}
-  .pl-wv-wrap{position:relative;width:100%;height:110px;overflow:hidden;}
-
   /* Row active */
-  .row-active{background:transparent;position:relative;}
-    /* Row active */
   .row-active{background:transparent;position:relative;}
   .row-active::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(220,48,32,.35) 0%,rgba(220,48,32,.05) 100%);pointer-events:none;z-index:0;transform-origin:left;transform:scaleX(var(--prog,0));transition:transform .08s linear;}
   .row-active td{position:relative;z-index:1;}
@@ -372,24 +315,16 @@
     </div>
   </div>
   <div class="card-content" ondragover="event.preventDefault();document.getElementById('fdz1').classList.add('drag-over')" ondragleave="document.getElementById('fdz1').classList.remove('drag-over')" ondrop="handleDrop(event,0)">
-    <table class="pl-table" id="pl-table-0">
-      <colgroup>
-        <col style="width:32px">
-        <col style="width:72px">
-        <col>
-        <col style="width:68px">
-        <col style="width:90px">
-        <col style="width:36px">
-        <col style="width:5px">
-      </colgroup>
+    <table class="table is-radio is-fullwidth is-narrow">
       <thead><tr>
-        <th class="pl-num">#</th>
-        <th>HORAIRE</th>
-        <th>TITRE</th>
-        <th style="text-align:right">DURÉE</th>
-        <th style="text-align:right;padding-right:6px">DÉCOMPTE</th>
-        <th style="text-align:center">↓</th>
-        <th></th>
+        <th style="width:36px">#</th>
+        <th style="width:80px">Horaire</th>
+        <th style="width:140px">Titre</th>
+        <th>Waveform · IN / OUT</th>
+        <th style="width:64px;text-align:right">Durée</th>
+        <th style="width:84px;text-align:right;padding-right:10px">Décompte</th>
+        <th class="chain-cell" style="color:#1e2a40;font-size:10px">↓</th>
+        <th style="width:5px"></th>
       </tr></thead>
       <tbody id="c1-body"></tbody>
     </table>
@@ -713,7 +648,7 @@ function drawWaveformFromData(canvas,data,startRatio=0,endRatio=1){
     const h=Math.max(1,y2-y1);
     // Couleur : vert pâle sur fond sombre — lisible et broadcast
     const brightness=Math.round(120+amp*135); // 120..255
-    c.fillStyle=`rgb(${Math.round(brightness*0.6)},${Math.round(brightness*0.85)},${brightness})`; // bleu-blanc glacé
+    c.fillStyle=`rgb(${Math.round(brightness*0.6)},${Math.round(brightness*0.85)},${brightness})`; // bleu-blanc
     c.fillRect(x,y1,1,h);
   }
 }
@@ -747,8 +682,9 @@ class Diffuser{
     this._chainDone=new Set(); this._playToken=0;
     this._outTimer=null; this._removeTimer=null;
     this._tailAudio=null;   // audio en queue (après le point OUT)
-    this._stopAfterMacro=false; // bloque l'enchaînement après START EXT
-    this._pendingChain=false;      // flèche enchaînement — posée par _doRemove
+    this._stopAfterMacro=false;
+    this._pendingChain=false;
+    this._rafId=null;
     this._lastSentState=''; // pour éviter de spammer sigSend
   }
   addTracks(newTracks){
@@ -799,159 +735,164 @@ class Diffuser{
     const nextIdx=this.playing?this.tracks.findIndex((tt,ii)=>!tt.isMacro&&this.audios[ii]?.paused):-1;
     this.tracks.forEach((t,i)=>{
       const audio_i=this.audios[i];
+      // isActive = audio joue OU vient d'être lancé (play() async pas encore démarré)
       const isActive=this.playing && !t.isMacro && !!audio_i && (!audio_i.paused || !!t._launching);
       const isMacroActive=this.playing && t.isMacro && i===this.ci;
       const isNext=i===nextIdx;
       const tr=document.createElement('tr');
+      if(isActive||isMacroActive){
+        const _pos2=this.audios[i]?this.audios[i].currentTime:0;
+        const _intro2=this._introOf(i);const _start2=this._startOf(i);
+        const _out2=this._outOf(i);
+        const _isIntro=_intro2!=null&&_intro2>_start2&&_pos2<_intro2;
+        const _isPost=_pos2>=_out2;
+        tr.className='row-active'+(_isIntro?' is-intro':_isPost?' is-post':'');
+      } else if(isNext)tr.className='row-next'+(this._introOf(i)!=null&&this._introOf(i)>this._startOf(i)?' row-has-intro':'');
+      tr.onclick=()=>this.jumpTo(i);
       const st=starts[i];
       const hhmm=fmt2(st.getHours())+':'+fmt2(st.getMinutes())+':'+fmt2(st.getSeconds());
-      const hmEnd=new Date(st.getTime()+this._playDur(i)*1000);
-      const hEnd=fmt2(hmEnd.getHours())+':'+fmt2(hmEnd.getMinutes());
+      const sub='('+fmt2(st.getHours())+':'+fmt2(st.getMinutes()+Math.floor(this._playDur(i)/60))+')';
       const audio=this.audios[i];
       const pos=audio?audio.currentTime:0;
+      const rem=isActive?Math.max(0,this._outOf(i)-pos):this._playDur(i);
       const wvId=`wv-${this.idx}-${i}`;
       const dur=this.durs[i]||1;
       const inPct=(this._inOf(i)/dur*100).toFixed(1);
       const outPct=Math.min(98,(this._outOf(i)/dur*100)).toFixed(1);
-      const delBtn=t.pinned?'':`<button onclick="event.stopPropagation();diffRemoveTrack(${this.idx},${i})" style="background:transparent;border:none;color:#2a3040;cursor:pointer;font-size:10px;padding:0 3px;line-height:1;transition:color .1s;vertical-align:middle" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'" title="Supprimer">✕</button>`;
+      const delBtn=t.pinned?'':`<button onclick="event.stopPropagation();diffRemoveTrack(${this.idx},${i})" style="background:transparent;border:none;color:#3a4050;cursor:pointer;font-size:11px;padding:0 4px;line-height:1;transition:color .1s" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#3a4050'" title="Supprimer">✕</button>`;
       const isMacro=!!t.isMacro;
-      const chainOn=!!t.chain||this.auto;
-      const chainBox=`<div class="chain-box${chainOn?' on':''}" onclick="event.stopPropagation();toggleChain(${this.idx},${i})" id="chain-btn-${this.idx}-${i}" title="${chainOn?'Désactiver':'Activer'} enchaînement"><span class="ch-arrow">↓</span><span class="ch-lbl">${chainOn?'ON':'–'}</span></div>`;
-
       if(isActive && !isMacro){
+        // Pré-calculs intro
         const _hasIntro=this._introOf(i)!=null&&this._introOf(i)>this._startOf(i);
-        const _isIntro=_hasIntro&&pos<this._introOf(i);
-        const _isPost=pos>=this._outOf(i);
-        tr.className='pl-row-active pl-wv-row'+(_isIntro?' is-intro':_isPost?' is-post':'');
-        const rem=_isIntro?(this._introOf(i)-pos):Math.max(0,this._outOf(i)-pos);
-        const cdCls=_isIntro?'pl-cd-intro':_isPost?'pl-cd-post':'pl-cd-active';
-        const cdSub=_isIntro?'INTRO':_isPost?'END':'OUT';
-        const _introPct=_hasIntro?((this._introOf(i)/(this.durs[i]||1))*100).toFixed(1)+'%':'0%';
+        const _introPct=_hasIntro?((this._introOf(i)/( this.durs[i]||1))*100).toFixed(1)+'%':'0%';
         tr.innerHTML=`
-          <td colspan="7" class="pl-wv-wrap" style="position:relative">
-            <canvas id="${wvId}-bg" width="1400" height="110" style="position:absolute;inset:0;width:100%;height:110px;display:block"></canvas>
-            <div id="${wvId}-playhead" style="position:absolute;top:0;bottom:0;z-index:5;pointer-events:none;left:0%;width:2px;background:rgba(255,255,255,0.85);box-shadow:0 0 5px #fff"></div>
-            <div style="position:absolute;top:0;bottom:0;z-index:3;left:${inPct}%;width:2px;background:#00c8ff;opacity:.9"></div>
-            ${_hasIntro?`<div style="position:absolute;top:0;bottom:0;z-index:3;left:${_introPct};width:2px;background:#f5c400;opacity:.9"></div>`:''}
-            <div style="position:absolute;top:0;bottom:0;z-index:3;left:${outPct}%;width:2px;background:#ff3030;opacity:.9"></div>
-            <!-- Overlay infos -->
-            <div style="position:absolute;inset:0;z-index:6;display:flex;align-items:stretch;pointer-events:none">
-              <!-- N° + horaire -->
-              <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;width:32px;background:rgba(0,10,0,.7);border-right:1px solid rgba(0,255,60,.3);flex-shrink:0">
-                <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:#00ff60;line-height:1">▶</div>
-                <div style="font-family:var(--mono);font-size:8px;color:rgba(0,255,96,.5);margin-top:2px">${hhmm.slice(0,5)}</div>
-              </div>
-              <!-- Titre + cues -->
-              <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 12px;min-width:0">
-                <div style="font-family:var(--display);font-size:${_isIntro?'26px':'30px'};font-weight:700;color:${_isIntro?'#ffe060':'#ffffff'};letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 10px rgba(0,0,0,.95);line-height:1.1">${t.title}</div>
-                <div style="display:flex;align-items:center;gap:10px;margin-top:4px;pointer-events:all;flex-wrap:wrap">
-                  ${delBtn}
-                  <button class="wv-edit-btn" onclick="wvModalOpen('${wvId}',${this.idx},${i})" style="position:static;opacity:1;font-size:9px;padding:1px 7px;pointer-events:all">✎ EDIT</button>
-                  <span style="font-family:var(--mono);font-size:9px;color:rgba(0,200,255,.7)">▶ ${fmtMs(this._startOf(i))}</span>
-                  ${_hasIntro?`<span style="font-family:var(--mono);font-size:9px;color:rgba(245,196,0,.8)">⚡ ${fmtMs(this._introOf(i))}</span>`:''}
-                  <span style="font-family:var(--mono);font-size:9px;color:rgba(168,85,247,.8)">⊗ ${fmtMs(this._outOf(i))}</span>
-                  <span style="font-family:var(--mono);font-size:9px;color:rgba(239,83,80,.7)">■ ${fmtMs(this._endOf(i))}</span>
-                </div>
-              </div>
-              <!-- Countdown -->
-              <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;width:110px;padding:0 10px 0 0;background:rgba(0,5,0,.6);border-left:1px solid rgba(0,255,60,.15);flex-shrink:0">
-                <div id="${this.ids.body}-cd-${i}" style="font-family:var(--mono);font-size:32px;font-weight:700;letter-spacing:1px;line-height:1" class="${cdCls}">${fmtMs(rem)}</div>
-                <div id="${this.ids.body}-cd-sub-${i}" style="font-family:var(--mono);font-size:8px;letter-spacing:3px;margin-top:2px;color:${_isIntro?'#8a7000':'#6a1010'}">${cdSub}</div>
-              </div>
-              <!-- Encart flèche -->
-              <div style="width:36px;display:flex;align-items:center;justify-content:center;background:rgba(0,5,0,.6);border-left:1px solid rgba(0,255,60,.1);pointer-events:all;flex-shrink:0">
-                ${chainBox}
-              </div>
-              <!-- Barre couleur -->
-              <div style="width:5px;background:${t.color};opacity:.9;flex-shrink:0"></div>
+          <canvas class="row-active-wv-bg" id="${wvId}-bg" width="1200" height="130"></canvas>
+          <div id="${wvId}-playhead" style="position:absolute;top:0;bottom:0;z-index:5;pointer-events:none;left:0%;width:2px;background:rgba(255,255,255,0.9);box-shadow:0 0 6px #fff"></div>
+          <div style="position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;left:${inPct}%;width:3px;background:#00c8ff;box-shadow:0 0 8px #00c8ff"></div>
+          <div style="position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;left:${outPct}%;width:3px;background:rgba(255,40,40,.8);box-shadow:0 0 8px rgba(255,40,40,.6)"></div>
+          ${_hasIntro?`<div style="position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;left:${_introPct};width:3px;background:#f5c400;box-shadow:0 0 8px #f5c400"></div>`:''}
+          <td style="width:44px;text-align:center;vertical-align:middle;position:relative;z-index:3;padding:0 4px">
+            <div style="font-family:var(--mono);font-size:22px;color:#ff4040;line-height:1">▶</div>
+            <div style="font-family:var(--mono);font-size:9px;color:rgba(0,212,240,.5);letter-spacing:1px;margin-top:2px">${hhmm.slice(0,5)}</div>
+          </td>
+          <td style="padding:0 10px 0 4px;vertical-align:middle;position:relative;z-index:3;min-width:0;flex:1">
+            <div style="font-family:var(--display);font-size:28px;font-weight:700;color:#ffffff;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:600px;text-shadow:0 2px 12px rgba(0,0,0,.9);line-height:1.1">${t.title}</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:5px;flex-wrap:wrap">
+              ${delBtn}
+              <button class="wv-edit-btn" onclick="wvModalOpen('${wvId}',${this.idx},${i})" style="position:static;opacity:1;font-size:10px;padding:2px 8px">✎ EDIT</button>
+              <span style="font-family:var(--mono);font-size:10px;color:#66bb6a;letter-spacing:1px">▶ ${fmtMs(this._startOf(i))}</span>
+              ${_hasIntro?`<span style="font-family:var(--mono);font-size:10px;color:#f5c400;letter-spacing:1px">⚡ ${fmtMs(this._introOf(i))}</span>`:''}
+              <span style="font-family:var(--mono);font-size:10px;color:#a855f7;letter-spacing:1px">⊗ ${fmtMs(this._outOf(i))}</span>
+              <span style="font-family:var(--mono);font-size:10px;color:#ef5350;letter-spacing:1px">■ ${fmtMs(this._endOf(i))}</span>
+              <span style="font-family:var(--mono);font-size:10px;color:#4a6080;letter-spacing:1px">${fmtFull(this.durs[i]||0)}</span>
             </div>
-          </td>`;
+          </td>
+          <td style="width:180px;text-align:right;vertical-align:middle;position:relative;z-index:3;padding:0 16px 0 0">
+            <div id="${this.ids.body}-cd-${i}" style="font-family:var(--mono);font-size:48px;font-weight:700;color:#ff4040;letter-spacing:2px;line-height:1;text-shadow:0 0 20px rgba(255,64,64,.4)">${fmtFull(rem)}</div>
+            <div id="${this.ids.body}-cd-sub-${i}" style="font-family:var(--mono);font-size:11px;color:#7a1010;text-align:right;letter-spacing:3px;margin-top:4px">OUT</div>
+          </td>
+          <td class="chain-cell" style="vertical-align:middle;position:relative;z-index:3"><div class="chain-box${t.chain||this.auto?' on':''}" onclick="event.stopPropagation();toggleChain(${this.idx},${i})" title="Enchaîner avec le suivant"><span class="ch-arrow">↓</span><span class="ch-lbl">${t.chain||this.auto?'ON':'-'}</span></div></td>
+          <td style="width:6px;padding:0"><span style="width:6px;height:130px;display:block;background:${t.color};border-radius:0 2px 2px 0;opacity:.9"></span></td>`;
         tbody.appendChild(tr);
-        // Canvas waveform
         const bgCv=document.getElementById(wvId+'-bg');
         if(bgCv&&this.durs[i]>0){
-          bgCv.width=1400;bgCv.height=110;
+          bgCv.width=1200;bgCv.height=130;
+          // Dessin initial : vue complète START→END — tick() prend le relais pour le zoom live
           const _s=this._startOf(i)/(this.durs[i]||1);
           const _e=Math.min(1,this._endOf(i)/(this.durs[i]||1));
-          if(WV_DATA_CACHE[t.file]) drawWaveformFromData(bgCv,WV_DATA_CACHE[t.file],_s,_e);
-          else drawWaveform(document.createElement('canvas'),t.file).then(()=>{
-            const el=document.getElementById(wvId+'-bg');
-            if(WV_DATA_CACHE[t.file]&&el) drawWaveformFromData(el,WV_DATA_CACHE[t.file],this._startOf(i)/(this.durs[i]||1),Math.min(1,this._endOf(i)/(this.durs[i]||1)));
-          });
+          if(WV_DATA_CACHE[t.file]){
+            drawWaveformFromData(bgCv,WV_DATA_CACHE[t.file],_s,_e);
+          } else {
+            drawWaveform(document.createElement('canvas'),t.file).then(()=>{
+              const bgEl=document.getElementById(wvId+'-bg');
+              if(WV_DATA_CACHE[t.file]&&bgEl){
+                const _s2=this._startOf(i)/(this.durs[i]||1);
+                const _e2=Math.min(1,this._endOf(i)/(this.durs[i]||1));
+                drawWaveformFromData(bgEl,WV_DATA_CACHE[t.file],_s2,_e2);
+              }
+            });
+          }
         }
-
-      } else if(isMacroActive){
-        tr.style.cssText='background:linear-gradient(90deg,#1a1200,#0a0800);border-left:3px solid #f5c400;';
+      } else if(isActive && isMacro){
+        // Macro en cours d'exécution
+        tr.style.background='linear-gradient(90deg,#2a1a00 0%,#1a1000 100%)';
+        tr.style.borderLeft='4px solid #f5c400';
         tr.innerHTML=`
-          <td class="pl-num" style="color:#f5c400;font-size:16px">⚡</td>
-          <td style="font-family:var(--mono);font-size:9px;color:#6a5000;letter-spacing:1px">ACTION</td>
-          <td style="padding:0 8px">
-            <div style="font-family:var(--display);font-size:16px;font-weight:700;color:#f5c400;letter-spacing:2px">${t.title}</div>
-            <div style="font-family:var(--mono);font-size:8px;color:#5a4000;letter-spacing:2px;margin-top:1px">EN COURS…</div>
+          <td class="cell-num" style="color:#f5c400;font-size:18px">⚡</td>
+          <td class="cell-time" style="color:#f5c400;font-family:var(--mono);font-size:11px">ACTION</td>
+          <td colspan="4" style="padding:0 16px;vertical-align:middle">
+            <div style="font-family:var(--display);font-size:20px;font-weight:700;color:#f5c400;letter-spacing:3px">${t.title}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:#7a6000;letter-spacing:2px;margin-top:2px">EN COURS D'EXÉCUTION…</div>
           </td>
-          <td colspan="2" style="color:#6a5000;font-family:var(--mono);font-size:9px;text-align:right;padding-right:6px">MACRO</td>
-          <td class="pl-chain">${chainBox}</td>
-          <td class="pl-bar"><span style="width:5px;height:44px;display:block;background:#f5c400;opacity:.8"></span></td>`;
+          <td class="chain-cell"></td>
+          <td class="cell-bar"><span class="color-bar" style="background:#f5c400;height:56px"></span></td>`;
         tbody.appendChild(tr);
-
       } else if(isMacro){
-        tr.style.cssText='border-left:2px solid #3a2a00;';
+        // Macro en attente dans la playlist
+        tr.style.borderLeft='3px solid #3a2a00';
         tr.innerHTML=`
-          <td class="pl-num" style="color:#4a3800;font-size:12px">⚡</td>
-          <td style="font-family:var(--mono);font-size:9px;color:#3a2800">MACRO</td>
-          <td style="padding:0 8px">
-            <div style="display:flex;align-items:center;gap:6px">
+          <td class="cell-num" style="color:#6a5000;font-size:14px">⚡</td>
+          <td class="cell-time" style="font-family:var(--mono);font-size:10px;color:#4a3800">MACRO</td>
+          <td colspan="3" style="padding:0 16px;vertical-align:middle">
+            <div style="display:flex;align-items:center;gap:8px">
               ${delBtn}
-              <span style="font-family:var(--display);font-size:13px;font-weight:700;color:#6a5000;letter-spacing:1px">${t.title}</span>
-              <span style="font-family:var(--mono);font-size:7px;color:#3a2800;border:1px solid #3a2800;padding:1px 4px;border-radius:2px">→ AUTO</span>
+              <span style="font-family:var(--display);font-size:14px;font-weight:700;color:#8a6a00;letter-spacing:2px">${t.title}</span>
+              <span style="font-family:var(--mono);font-size:8px;color:#4a3800;border:1px solid #4a3800;padding:1px 5px;border-radius:2px;letter-spacing:1px">→ SE DÉCLENCHE À LA LECTURE</span>
             </div>
           </td>
-          <td colspan="2" style="color:#4a3800;font-family:var(--mono);font-size:9px;text-align:right;padding-right:6px">ACTION</td>
-          <td class="pl-chain">${chainBox}</td>
-          <td class="pl-bar"><span style="width:5px;height:44px;display:block;background:#3a2a00;opacity:.8"></span></td>`;
+          <td class="cell-cd" style="color:#6a5000;font-family:var(--mono);font-size:10px;text-align:right;padding-right:10px">ACTION</td>
+          <td class="chain-cell"></td>
+          <td class="cell-bar"><span class="color-bar" style="background:#3a2a00"></span></td>`;
         tbody.appendChild(tr);
-
       } else {
-        // ── LIGNE NORMALE style broadcast ──
-        const numColor=isNext?'#00d96a':'#2a4060';
-        const timeColor=isNext?'#00d96a':'#1a6080';
-        const titleColor=isNext?'#80d4e8':'#8090a0';
-        const durColor=isNext?'#40a060':'#2a3a4a';
-        const cdColor=isNext?'#40c080':'#2a3a4a';
-        // Durée de lecture formatée MM:SS
-        const playDurSec=this._playDur(i);
-        const pdMM=Math.floor(playDurSec/60),pdSS=Math.floor(playDurSec%60);
-        const pdStr=fmt2(pdMM)+':'+fmt2(pdSS);
+        // ── LIGNE NORMALE — affichage grand et lisible ──
+        const isNext=i===this.ci+1&&this.playing;
         tr.innerHTML=`
-          <td class="pl-num" style="color:${numColor}">${i+1}</td>
-          <td class="pl-time">
-            <div class="pl-time-main" style="color:${timeColor}">${hhmm.slice(0,5)}</div>
-            <div class="pl-time-sub">(${hEnd})</div>
+          <td style="width:32px;text-align:center;vertical-align:middle;padding:0">
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${isNext?'var(--green)':'#3a5070'}">${i+1}</div>
           </td>
-          <td style="padding:0 8px;overflow:hidden">
-            <div style="display:flex;align-items:center;gap:4px;min-width:0">
+          <td style="width:88px;vertical-align:middle;padding:0 8px">
+            <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${isNext?'var(--green)':'var(--cyan)'};letter-spacing:1px">${hhmm}</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);margin-top:1px">${fmtFull(this._playDur(i))}</div>
+          </td>
+          <td style="padding:0 8px;vertical-align:middle;max-width:200px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:6px">
               ${delBtn}
-              <div style="min-width:0;flex:1">
-                <div class="pl-title" style="color:${titleColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div>
-                <div class="pl-sub">
-                  <span style="color:#1e5040">▶ ${fmtMs(this._startOf(i))}</span>
-                  ${this._introOf(i)!=null?`<span style="color:#4a4000;margin-left:4px">⚡ ${fmtMs(this._introOf(i))}</span>`:''}
-                  <span style="color:#3a1a50;margin-left:4px">⊗ ${fmtMs(this._outOf(i))}</span>
-                  <button onclick="event.stopPropagation();previewPlay(${this.idx},${i})" id="prev-btn-${this.idx}-${i}" style="background:transparent;border:1px solid #1a2030;color:#2a3a50;font-family:var(--mono);font-size:8px;padding:0 5px;border-radius:2px;cursor:pointer;margin-left:6px;transition:all .1s;line-height:14px">▷</button>
-                  <button onclick="event.stopPropagation();wvModalOpen('${wvId}',${this.idx},${i})" style="background:transparent;border:1px solid #1a2030;color:#2a3a50;font-family:var(--mono);font-size:8px;padding:0 5px;border-radius:2px;cursor:pointer;transition:all .1s;line-height:14px">✎</button>
+              <div>
+                <div style="font-family:var(--display);font-size:16px;font-weight:700;color:${isNext?'var(--green)':'var(--txt)'};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px" title="${t.title}">${t.title}</div>
+                <div style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);margin-top:2px;letter-spacing:1px;display:flex;gap:6px;flex-wrap:wrap">
+                  <span style="color:#66bb6a">▶ ${fmtMs(this._startOf(i))}</span>
+                  <span style="color:#ef5350">■ ${fmtMs(this._endOf(i))}</span>
+                  ${this._introOf(i)!=null?`<span style="color:#f5c400">⚡ ${fmtMs(this._introOf(i))}</span>`:''}
+                  <span style="color:#a855f7">⊗ ${fmtMs(this._outOf(i))}</span>
                 </div>
               </div>
             </div>
           </td>
-          <td class="pl-dur" style="color:${durColor}">${pdStr}</td>
-          <td class="pl-cd" style="color:${cdColor}">${pdStr}</td>
-          <td class="pl-chain">${chainBox}</td>
-          <td class="pl-bar"><span style="width:5px;height:44px;display:block;background:${t.color};border-radius:1px;opacity:.8"></span></td>`;
+          <td style="padding:4px 8px;vertical-align:middle;min-width:220px">
+            <div style="position:relative;height:48px;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,200,230,0.2)">
+              <canvas id="${wvId}" width="600" height="48" style="display:block;width:100%;height:48px"></canvas>
+              <div id="${wvId}-pre" style="position:absolute;top:0;bottom:0;left:0;width:${inPct}%;background:rgba(0,0,0,.45);pointer-events:none"></div>
+              <div id="${wvId}-post" style="position:absolute;top:0;bottom:0;left:${outPct}%;right:0;background:rgba(0,0,0,.45);pointer-events:none"></div>
+              <div id="${wvId}-in" class="wv-handle wv-handle-in" style="left:${inPct}%" data-label="IN" data-wv="${wvId}" data-diff="${this.idx}" data-track="${i}"></div>
+              <div id="${wvId}-out" class="wv-handle wv-handle-out" style="left:${outPct}%" data-label="OUT" data-wv="${wvId}" data-diff="${this.idx}" data-track="${i}"></div>
+              <button class="wv-edit-btn" onclick="wvModalOpen('${wvId}',${this.idx},${i})">✎</button>
+            </div>
+          </td>
+          <td style="width:80px;text-align:right;vertical-align:middle;padding:0 6px">
+            <div style="font-family:var(--mono);font-size:12px;color:${isNext?'var(--green)':'#4a6080'};letter-spacing:1px">${fmtFull(this._playDur(i))}</div>
+            <button id="prev-btn-${this.idx}-${i}" onclick="event.stopPropagation();previewPlay(${this.idx},${i})" style="background:transparent;border:1px solid #2e3238;color:#455a64;font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:2px;cursor:pointer;margin-top:2px;width:100%;transition:all .15s" title="Pré-écoute">▷</button>
+          </td>
+          <td class="chain-cell"><div class="chain-box${t.chain||this.auto?' on':''}" onclick="event.stopPropagation();toggleChain(${this.idx},${i})" title="Enchaîner avec le suivant"><span class="ch-arrow">↓</span><span class="ch-lbl">${t.chain||this.auto?'ON':'-'}</span></div></td>
+          <td class="cell-bar"><span style="width:4px;height:56px;display:block;background:${t.color};border-radius:2px;opacity:.8"></span></td>`;
         tbody.appendChild(tr);
-        tr.onclick=()=>this.jumpTo(i);
-        // Waveform mini invisible (cache uniquement, pas affichée)
         const cv=document.getElementById(wvId);
-        if(!cv&&WV_DATA_CACHE[t.file]===undefined) drawWaveform(document.createElement('canvas'),t.file);
+        if(cv){
+          cv.width=600;cv.height=48;
+          if(WV_DATA_CACHE[t.file]) drawWaveformFromData(cv,WV_DATA_CACHE[t.file],0,1);
+          else drawWaveform(cv,t.file);
+        }
+        this._bindHandles(wvId,i);
       }
     });
     document.getElementById(this.ids.counter).textContent=this.tracks.length?`${this.ci+1}/${this.tracks.length}`:'0/0';
@@ -1063,17 +1004,20 @@ class Diffuser{
       const remOut=outCue-pos;
       if(inIntroPhase2){
         const remIntro=introCue-pos;
-        cdEl.textContent=fmtMs(remIntro);
-        cdEl.className='pl-cd-intro';
-        if(subEl){subEl.textContent='INTRO';subEl.style.color='#8a7000';}
+        cdEl.textContent='⚡ '+fmtFull(remIntro);
+        cdEl.style.color='#f5c400';cdEl.style.fontWeight='700';cdEl.style.fontSize='48px';
+        cdEl.style.textShadow='0 0 20px rgba(245,196,0,.5)';
+        if(subEl){subEl.textContent='INTRO';subEl.style.color='#a08000';}
       } else if(remOut>0){
-        cdEl.textContent=fmtMs(remOut);
-        cdEl.className='pl-cd-active';
-        if(subEl){subEl.textContent='OUT';subEl.style.color='#6a1010';}
+        cdEl.textContent=fmtFull(remOut);
+        cdEl.style.color='#ff4040';cdEl.style.fontWeight='700';cdEl.style.fontSize='48px';
+        cdEl.style.textShadow='0 0 20px rgba(255,64,64,.4)';
+        if(subEl){subEl.textContent='OUT';subEl.style.color='#7a1010';}
       } else {
-        cdEl.textContent=fmtMs(-remOut);
-        cdEl.className='pl-cd-post';
-        if(subEl){subEl.textContent='END';subEl.style.color='#7a3000';}
+        cdEl.textContent='+ '+fmtFull(-remOut);
+        cdEl.style.color='#f07800';cdEl.style.fontWeight='400';cdEl.style.fontSize='32px';
+        cdEl.style.textShadow='0 0 16px rgba(240,120,0,.3)';
+        if(subEl){subEl.textContent='END';subEl.style.color='#8a4000';}
       }
     }
 
@@ -1086,11 +1030,10 @@ class Diffuser{
 
     if(bgCvLive&&data){
       const inIntroZoom=introCue!=null&&introCue>startCue&&pos<introCue;
-      const inOutZoom=remToOut>=-20&&remToOut<=20; // ±20s autour du OUT
+      const inOutZoom=remToOut>=-20&&remToOut<=20;
 
       let zStart,zEnd,zoneLabel;
       if(inIntroZoom){
-        // Zoom sur la fenêtre START→INTRO (+5% de marge de chaque côté)
         const margin=Math.max((introCue-startCue)*0.05,0.5)/fileDur;
         zStart=Math.max(0,startCue/fileDur-margin);
         zEnd=Math.min(1,introCue/fileDur+margin);
@@ -1110,7 +1053,6 @@ class Diffuser{
       // Ne redessiner que si la zone change (évite le clignotement)
       if(t._wvZone!==zoneLabel){
         t._wvZone=zoneLabel;
-        if(bgCvLive.width!==1400){bgCvLive.width=1400;bgCvLive.height=110;}
         drawWaveformFromData(bgCvLive,data,zStart,zEnd);
         // Redessiner les marqueurs sur le bg canvas
         const W=bgCvLive.width,H=bgCvLive.height;
@@ -1173,52 +1115,50 @@ class Diffuser{
     const audio=this.audios[i]; if(!audio) return;
     const myToken=++this._playToken;
     audio.onended=null;
+    if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}
     if(this._outTimer){cancelAnimationFrame(this._outTimer);clearTimeout(this._outTimer);this._outTimer=null;}
     if(this._removeTimer){clearTimeout(this._removeTimer);this._removeTimer=null;}
     audio.currentTime=this._startOf(i);
     this.ci=i;
     t._zoomed=false; t._wvZone=null; t._launching=true;
 
-    // ── UNIQUE RAF LOOP : gère OUT et END ──
+    // ── UNIQUE RAF LOOP ──
     let _outPassed=false;
-    let _rafId=null;
     const _loop=()=>{
-      if(myToken!==this._playToken) return; // invalidé par stopAll/togglePlay
+      if(myToken!==this._playToken) return; // annulé par stopAll/togglePlay
       const pos=audio.currentTime;
-      const curOut=this._outOf(i);
-      const curEnd=this._endOf(i);
+      const curOut=this._outOf(i);  // relu live
+      const curEnd=this._endOf(i);  // relu live
 
+      // Point OUT atteint : enchaîner (si chain|auto) et programmer la fin
       if(!_outPassed && pos>=curOut){
         _outPassed=true;
-        // Enchaîner maintenant si chain actif : on pose d'abord le flag AVANT _doRemove
-        const willChain=!this._stopAfterMacro&&(t.chain||this.auto)&&this.tracks.length>1;
-        // Programmer la fin à END (le son continue encore)
+        const willChain=!this._stopAfterMacro && (t.chain||this.auto) && this.tracks.length>1;
         const msToEnd=Math.max(0,(curEnd-pos)*1000);
         this._removeTimer=setTimeout(()=>{
           if(myToken!==this._playToken) return;
           _doRemove(willChain);
         }, msToEnd+80);
-        // Ne pas continuer la boucle (le setTimeout prend le relais)
-        return;
+        return; // on arrête la boucle RAF — le setTimeout prend le relais
       }
 
+      // END atteint avant OUT (rare : END < OUT mal configuré)
       if(pos>=curEnd){
-        // END atteint avant OUT (cas limite)
         if(!audio.paused) audio.pause();
-        _doRemove(!this._stopAfterMacro&&(t.chain||this.auto)&&this.tracks.length>1);
+        _doRemove(!this._stopAfterMacro && (t.chain||this.auto) && this.tracks.length>1);
         return;
       }
 
-      _rafId=requestAnimationFrame(_loop);
+      this._rafId=requestAnimationFrame(_loop);
     };
 
     const _doRemove=(shouldChain)=>{
-      if(_rafId){cancelAnimationFrame(_rafId);_rafId=null;}
+      if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}
       if(this._outTimer){cancelAnimationFrame(this._outTimer);this._outTimer=null;}
       if(this._removeTimer){clearTimeout(this._removeTimer);this._removeTimer=null;}
       audio.onended=null;
       if(!audio.paused) audio.pause();
-      // Supprimer la piste
+      // Supprimer la piste courante
       const idx=this.tracks.indexOf(t);
       if(idx!==-1){
         if(t.file?.startsWith('blob:')) URL.revokeObjectURL(t.file);
@@ -1228,7 +1168,7 @@ class Diffuser{
       if(!this.tracks.length){
         this.playing=false;
       } else if(shouldChain){
-        // tracks[0] EST MAINTENANT la piste suivante
+        // tracks[0] est maintenant la piste suivante
         const nx=this.tracks[0];
         if(nx.isMacro){ this._startTrack(0); }
         else { const a=this.audios[0]; if(a&&a.paused) this._startTrack(0); }
@@ -1236,36 +1176,32 @@ class Diffuser{
       this.render();
     };
 
-    // Filet de sécurité : fin naturelle HTML avant endCue
+    // Filet de sécurité : fin naturelle HTML5 avant curEnd
     audio.onended=()=>{
       if(myToken!==this._playToken) return;
       audio.onended=null;
-      _doRemove(!this._stopAfterMacro&&(t.chain||this.auto)&&this.tracks.length>1);
+      _doRemove(!this._stopAfterMacro && (t.chain||this.auto) && this.tracks.length>1);
     };
 
-    this._outTimer=null; // utilisé pour stocker _rafId via cancelAnimationFrame
-    _rafId=requestAnimationFrame(_loop);
-    this._outTimer=_rafId; // stocker pour annulation dans stopAll/togglePlay
+    this._rafId=requestAnimationFrame(_loop);
 
     audio.play().then(()=>{
       t._launching=false;
       wireAudioToDiff(audio,this.idx);
     }).catch(e=>{
-      t._launching=false;
-      audio.onended=null;
-      if(_rafId){cancelAnimationFrame(_rafId);_rafId=null;}
+      t._launching=false; audio.onended=null;
+      if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}
       console.warn('play() error:',e);
     });
   }
 
-  _launchNext(){
+  _startNextInQueue(){
     if(!this.playing||!this.tracks.length) return;
     const t=this.tracks[0];
-    if(t.isMacro){ this._startTrack(0); return; }
+    if(t.isMacro){this._startTrack(0);return;}
     const a=this.audios[0];
     if(a&&a.paused) this._startTrack(0);
   }
-  _startNextInQueue(){ this._launchNext(); }
 
   _updateFdzCount(){
     const cfg=CONFIGS[this.idx];if(!cfg)return;
@@ -1284,6 +1220,7 @@ class Diffuser{
       this.playing=true;this.ci=0;this._chainDone.clear();this._startTrack(0);this.render();
     }else{
       this._playToken++;
+      if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}
       if(this._outTimer){cancelAnimationFrame(this._outTimer);clearTimeout(this._outTimer);this._outTimer=null;}
       if(this._removeTimer){clearTimeout(this._removeTimer);this._removeTimer=null;}
       this.audios.forEach(a=>{if(a){a.onended=null;if(!a.paused)a.pause();}});
@@ -1294,6 +1231,7 @@ class Diffuser{
 
   stopAll(){
     this._playToken++;
+    if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}
     if(this._outTimer){cancelAnimationFrame(this._outTimer);clearTimeout(this._outTimer);this._outTimer=null;}
     if(this._removeTimer){clearTimeout(this._removeTimer);this._removeTimer=null;}
     this.audios.forEach(a=>{if(a){a.onended=null;if(!a.paused)a.pause();a.currentTime=0;}});
@@ -1307,8 +1245,7 @@ class Diffuser{
     this.auto=!this.auto;
     const btn=document.getElementById(this.cfg.autoBtn);
     if(btn)btn.classList.toggle('active',this.auto);
-    // AUTO active/désactive la flèche sur toutes les pistes
-    this.tracks.forEach(t=>{ if(!t.isMacro) t.chain=this.auto; });
+    this.tracks.forEach(t=>{if(!t.isMacro)t.chain=this.auto;});
     this.render();
   }
   nextTrack(){}
@@ -1411,11 +1348,11 @@ function handleFiles(files,diffIdx){
     file:URL.createObjectURL(f),
     title:f.name.replace(/\.[^/.]+$/,''),
     color:DIFF_COLORS[i%DIFF_COLORS.length],
-    startCue:0,    // vert  — début de lecture
-    endCue:null,   // rouge — fin de lecture (=durée si null)
-    introCue:null, // jaune — point intro (décompte)
-    outCue:null,   // violet — point d'enchaînement
-    chain:false,   // flèche enchaînement — activée manuellement ou via AUTO
+    startCue:0,
+    endCue:null,
+    introCue:null,
+    outCue:null,
+    chain:false,   // enchaînement avec la piste suivante
   }));
   D[diffIdx].addTracks(newTracks);
 }
@@ -1424,7 +1361,6 @@ function handleDrop(e,diffIdx){
   e.stopPropagation();
   document.getElementById('fdz'+(diffIdx+1))?.classList.remove('drag-over');
   document.getElementById('fdz1')?.classList.remove('drag-over');
-  // Snapshot immediat des fichiers (Chrome invalide dataTransfer hors event synchrone)
   const files=Array.from((e.dataTransfer&&e.dataTransfer.files)||[]);
   handleFiles(files,diffIdx);
 }
