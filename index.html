@@ -113,24 +113,24 @@
   .button.is-auto{background:transparent!important;border-color:var(--border)!important;color:var(--txt-dim)!important;transition:all .15s!important;}
   .button.is-auto.active{background:#0a2a00!important;border-color:var(--green)!important;color:var(--green)!important;}
   /* Encart flèche enchaînement */
-  /* Bouton NEXT rectangulaire — rail droit */
-  .chain-rail{position:absolute;right:0;top:0;bottom:0;width:54px;display:flex;flex-direction:column;align-items:stretch;z-index:10;}
+  /* Bouton NEXT — intégré dans la table comme une cellule */
+  .chain-rail{position:absolute;right:0;top:0;bottom:0;width:52px;display:flex;flex-direction:column;align-items:stretch;z-index:10;}
   .chain-btn-wrap{flex:1;display:flex;flex-direction:column;align-items:stretch;}
   .chain-btn{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-    background:#09080a;border-left:2px solid #1a1208;cursor:pointer;
-    transition:all .15s;user-select:none;padding:4px 2px;
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    background:#070810;border-left:1px solid #0d1424;cursor:pointer;
+    transition:background .15s,border-color .15s,box-shadow .15s;user-select:none;
   }
-  .chain-btn:hover{background:#141008;border-left-color:#3a2a00;}
+  .chain-btn:hover{background:#0e1020;border-left-color:#1e2a40;}
   .chain-btn.on{
-    background:linear-gradient(180deg,#1a0e00,#120900);
-    border-left:2px solid #f07800;
-    box-shadow:inset 0 0 16px rgba(240,120,0,0.18),inset -1px 0 0 #2a1800;
+    background:linear-gradient(180deg,#180e00,#0e0800);
+    border-left:1px solid #f07800;
+    box-shadow:inset 2px 0 8px rgba(240,120,0,0.12);
   }
-  .chain-btn .cb-arrow{font-size:16px;line-height:1;color:#2a1a00;transition:all .15s;}
-  .chain-btn.on .cb-arrow{color:#ff9020;text-shadow:0 0 8px rgba(255,140,0,0.7);}
-  .chain-btn .cb-lbl{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#2a1a00;transition:color .15s;text-transform:uppercase;font-weight:700;}
-  .chain-btn.on .cb-lbl{color:#f07800;text-shadow:0 0 6px rgba(240,120,0,0.5);}
+  .chain-btn .cb-arrow{font-size:18px;line-height:1;color:#1a2030;transition:all .15s;}
+  .chain-btn.on .cb-arrow{color:#ff8800;text-shadow:0 0 10px rgba(255,140,0,0.6);}
+  .chain-btn .cb-lbl{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#1a2030;transition:color .15s;text-transform:uppercase;font-weight:700;}
+  .chain-btn.on .cb-lbl{color:#f07800;}
   /* Compat — vieille classe chain-cell masquée */
   .chain-cell{display:none!important;}
   .tag{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:1px!important;border-radius:2px!important;}
@@ -187,18 +187,29 @@
 
   /* ── Voyants ON AIR ── */
   .onair-badge-wrap{display:flex;gap:12px;padding:8px 14px;background:#06080f;border-top:1px solid #0d1828;}
-  /* ─── Blocs départs ─── */
-  .depart-block{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 10px;border-radius:6px;border:1px solid #1e2a40;background:#08090f;transition:all .2s;min-width:60px;}
-  .depart-block.on-air{border-color:#cc0000;background:#130000;box-shadow:0 0 12px rgba(200,0,0,0.2);}
-  .dep-header{display:flex;align-items:center;gap:5px;}
-  .dep-dot{width:8px;height:8px;border-radius:50%;background:#1e2a40;flex-shrink:0;transition:all .2s;}
-  .depart-block.on-air .dep-dot{background:#ff0000;box-shadow:0 0 6px #ff0000;animation:live-pulse .8s ease-in-out infinite;}
-  .dep-name{font-family:var(--mono);font-size:10px;letter-spacing:2px;font-weight:700;color:#2a3a50;}
-  .depart-block.on-air .dep-name{color:#ff2020;}
-  .dep-state{font-family:var(--mono);font-size:8px;letter-spacing:1px;color:#1e2a40;}
-  .depart-block.on-air .dep-state{color:#cc0000;}
-  /* VU canvas vertical */
-  .dep-vu{width:18px;height:60px;display:block;border-radius:3px;background:#04060e;border:1px solid #0d1828;}
+  /* ─── Grille départs ─── */
+  .depart-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:10px 14px;background:#050810;border-top:1px solid #0d1828;}
+  .dep-card{border-radius:6px;border:1px solid #1a2438;background:#070910;overflow:hidden;transition:all .2s;}
+  .dep-card.on-air{border-color:#8a0000;background:#0f0000;}
+  .dep-card-head{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #0d1828;}
+  .dep-dot{width:9px;height:9px;border-radius:50%;background:#1a2438;flex-shrink:0;transition:all .2s;}
+  .dep-card.on-air .dep-dot{background:#ff0000;box-shadow:0 0 8px #ff0000;animation:live-pulse .8s ease-in-out infinite;}
+  .dep-name{font-family:var(--mono);font-size:11px;letter-spacing:2px;font-weight:700;color:#2a3a50;flex:1;}
+  .dep-card.on-air .dep-name{color:#ff3030;}
+  .dep-badge{font-family:var(--mono);font-size:7px;letter-spacing:1px;padding:2px 5px;border-radius:2px;background:#0d1424;color:#1e2a40;border:1px solid #0d1824;}
+  .dep-card.on-air .dep-badge{background:#300000;color:#ff2020;border-color:#6a0000;}
+  .dep-body{padding:8px 10px;display:flex;flex-direction:column;gap:6px;}
+  /* VU canvas horizontal */
+  .dep-vu-h{width:100%;height:14px;display:block;border-radius:2px;background:#04060e;}
+  /* DIFF A card — plus grande */
+  .dep-card.diffa .dep-body{gap:8px;}
+  /* Curseur volume */
+  .vol-row{display:flex;align-items:center;gap:6px;}
+  .vol-icon{font-family:var(--mono);font-size:9px;color:#2a3a50;}
+  .vol-track{flex:1;position:relative;height:4px;background:#0d1828;border-radius:2px;cursor:pointer;}
+  .vol-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#1a6a30,#00d96a);border-radius:2px;}
+  .vol-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#00d96a;border:2px solid #00ff80;border-radius:50%;cursor:grab;box-shadow:0 0 6px rgba(0,220,100,0.4);}
+  .vol-val{font-family:var(--mono);font-size:9px;color:#00d96a;min-width:32px;text-align:right;}
   .onair-badge{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:6px;border:1px solid #1e2a40;background:#0a0e18;transition:all .2s;}
   .onair-badge.on-air{border-color:#cc0000;background:#1a0000;}
   .onair-badge.off-air{border-color:#1e2a40;background:#0a0e18;}
@@ -224,27 +235,35 @@
   /* Row active */
   .row-active{background:transparent;position:relative;}
 
-  /* ═══ FENÊTRE MIXAGE ═══ */
-  .mix-panel{background:#05080f;border:1px solid #1a2a40;border-radius:8px;margin-top:.75rem;overflow:hidden;}
-  .mix-header{display:flex;align-items:center;gap:10px;padding:6px 14px;background:#07090f;border-bottom:1px solid #0d1828;}
-  .mix-header-title{font-family:var(--display);font-size:13px;font-weight:700;color:#4a6080;letter-spacing:3px;}
+  /* ═══ FENÊTRE MIXAGE TIMELINE ═══ */
+  .mix-panel{background:#040710;border:1px solid #131e30;border-radius:8px;margin-top:.75rem;overflow:hidden;}
+  .mix-header{display:flex;align-items:center;gap:10px;padding:6px 14px;background:#060810;border-bottom:1px solid #0d1828;}
+  .mix-header-title{font-family:var(--display);font-size:12px;font-weight:700;color:#2a4060;letter-spacing:3px;}
   .mix-header-title.active{color:var(--cyan);}
-  .mix-body{position:relative;padding:10px 14px 14px;}
-  .mix-tracks{display:flex;flex-direction:column;gap:4px;}
-  .mix-row{position:relative;height:52px;border-radius:4px;overflow:hidden;background:#04060e;}
-  .mix-row canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
-  .mix-row-label{position:absolute;top:3px;left:8px;z-index:4;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:2px;text-shadow:0 1px 4px rgba(0,0,0,.9);}
-  .mix-row-label.a{color:#ff4040;}
-  .mix-row-label.b{color:#00d0ff;}
-  .mix-cursor-wrap{position:relative;height:28px;display:flex;align-items:center;gap:10px;margin-top:6px;}
-  .mix-cursor-label{font-family:var(--mono);font-size:9px;color:#3a5070;letter-spacing:1px;white-space:nowrap;}
-  .mix-cursor-bar{flex:1;position:relative;height:4px;background:#0d1828;border-radius:2px;cursor:pointer;}
-  .mix-cursor-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#f07800,#ff4040);border-radius:2px;transition:width .05s;}
-  .mix-cursor-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;background:#f07800;border:2px solid #ff9020;border-radius:50%;cursor:grab;box-shadow:0 0 8px rgba(240,120,0,0.5);transition:background .1s;}
-  .mix-cursor-thumb:active{cursor:grabbing;background:#ff9020;}
-  .mix-time{font-family:var(--mono);font-size:9px;color:#f07800;min-width:48px;text-align:right;letter-spacing:1px;}
-  .mix-status{font-family:var(--mono);font-size:9px;color:#2a4060;letter-spacing:1px;margin-top:4px;text-align:center;}
-  .mix-status.active{color:#f07800;}
+  .mix-body{position:relative;padding:10px 14px 14px;user-select:none;}
+  /* Timeline container */
+  .mix-timeline{position:relative;background:#030509;border:1px solid #0d1828;border-radius:4px;overflow:hidden;height:120px;cursor:default;}
+  /* Axe temporel (règle) */
+  .mix-ruler{position:absolute;top:0;left:0;right:0;height:18px;background:#050810;border-bottom:1px solid #0d1828;z-index:2;pointer-events:none;}
+  /* Blocs waveform draggables */
+  .mix-block{position:absolute;top:22px;height:44px;border-radius:3px;overflow:hidden;cursor:grab;z-index:3;touch-action:none;}
+  .mix-block:active{cursor:grabbing;}
+  .mix-block canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .mix-block-label{position:absolute;top:2px;left:6px;z-index:4;font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:1px;text-shadow:0 1px 3px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;max-width:90%;text-overflow:ellipsis;}
+  .mix-block-out{position:absolute;top:0;bottom:0;width:2px;z-index:5;pointer-events:none;}
+  .mix-block.a{border:1px solid rgba(220,40,40,.5);}
+  .mix-block.b{border:1px solid rgba(0,180,230,.5);}
+  .mix-block.a .mix-block-label{color:#ff5050;}
+  .mix-block.b .mix-block-label{color:#30d0f0;}
+  /* Ligne de jonction OUT→START */
+  .mix-join{position:absolute;top:22px;height:44px;border-left:2px dashed rgba(240,120,0,.6);z-index:2;pointer-events:none;}
+  /* Status bas */
+  .mix-status{font-family:var(--mono);font-size:9px;color:#2a4060;letter-spacing:1px;margin-top:6px;text-align:center;}
+  .mix-status.active{color:#00c8a0;}
+  .mix-status.warn{color:#f07800;}
+  .mix-info-row{display:flex;align-items:center;justify-content:space-between;margin-top:4px;}
+  .mix-info{font-family:var(--mono);font-size:9px;color:#2a4060;letter-spacing:1px;}
+  .mix-info.active{color:#f07800;}
   .row-active::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(220,48,32,.35) 0%,rgba(220,48,32,.05) 100%);pointer-events:none;z-index:0;transform-origin:left;transform:scaleX(var(--prog,0));transition:transform .08s linear;}
   .row-active td{position:relative;z-index:1;}
 </style>
@@ -361,7 +380,7 @@
       <span class="fdz-count" id="fdz1-count">Aucun fichier</span>
     </div>
   </div>
-  <div class="card-content" style="position:relative;padding-right:54px" ondragover="event.preventDefault();document.getElementById('fdz1').classList.add('drag-over')" ondragleave="document.getElementById('fdz1').classList.remove('drag-over')" ondrop="handleDrop(event,0)">
+  <div class="card-content" style="position:relative;padding-right:52px" ondragover="event.preventDefault();document.getElementById('fdz1').classList.add('drag-over')" ondragleave="document.getElementById('fdz1').classList.remove('drag-over')" ondrop="handleDrop(event,0)">
     <table class="table is-radio is-fullwidth is-narrow">
       <thead><tr>
         <th style="width:36px">#</th>
@@ -388,48 +407,58 @@
     <div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div>
     <div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div>
   </div>
-  <!-- Voyants ON AIR + Départs -->
-  <div class="onair-badge-wrap" style="flex-wrap:wrap;gap:8px;padding:10px 14px">
-    <!-- Badge DIFF A global -->
-    <div class="onair-badge off-air" id="badge-diffa" style="flex-shrink:0">
-      <div class="onair-dot"></div>
-      <span class="onair-label">DIFF A</span>
-      <span class="onair-state" id="badge-diffa-state">OFF AIR</span>
-    </div>
-    <div class="onair-badge off-air" id="badge-diffa-ext" style="display:none">
-      <div class="onair-dot"></div>
-      <span class="onair-label">DIFF A EXT</span>
-      <span class="onair-state" id="badge-diffa-ext-state">OFF AIR</span>
-    </div>
-    <div style="flex:1"></div>
-    <!-- ═══ 3 DÉPARTS ═══ -->
-    <div style="display:flex;gap:8px;align-items:stretch">
-      <!-- SAT -->
-      <div class="depart-block off-air" id="dep-sat">
-        <div class="dep-header">
-          <div class="dep-dot" id="dep-sat-dot"></div>
-          <span class="dep-name">SAT</span>
-          <span class="dep-state" id="dep-sat-state">OFF AIR</span>
-        </div>
-        <canvas class="dep-vu" id="vu-sat" width="6" height="60" title="VU SAT"></canvas>
+  <!-- ═══ GRILLE DÉPARTS ═══ -->
+  <div class="depart-grid" id="depart-grid">
+    <!-- DIFF A -->
+    <div class="dep-card diffa off-air" id="badge-diffa">
+      <div class="dep-card-head">
+        <div class="dep-dot" id="diffa-dot"></div>
+        <span class="dep-name">DIFF A</span>
+        <span class="dep-badge" id="badge-diffa-state">OFF AIR</span>
       </div>
-      <!-- IDF -->
-      <div class="depart-block off-air" id="dep-idf">
-        <div class="dep-header">
-          <div class="dep-dot" id="dep-idf-dot"></div>
-          <span class="dep-name">IDF</span>
-          <span class="dep-state" id="dep-idf-state">OFF AIR</span>
+      <div class="dep-body">
+        <canvas class="dep-vu-h" id="vu-diffa-h" width="200" height="14"></canvas>
+        <div class="vol-row">
+          <span class="vol-icon">🔊</span>
+          <div class="vol-track" id="vol-track-a">
+            <div class="vol-fill" id="vol-fill-a" style="width:80%"></div>
+            <div class="vol-thumb" id="vol-thumb-a" style="left:80%"></div>
+          </div>
+          <span class="vol-val" id="vol-val-a">80%</span>
         </div>
-        <canvas class="dep-vu" id="vu-idf" width="6" height="60" title="VU IDF"></canvas>
       </div>
-      <!-- DAB+ -->
-      <div class="depart-block off-air" id="dep-dab">
-        <div class="dep-header">
-          <div class="dep-dot" id="dep-dab-dot"></div>
-          <span class="dep-name">DAB+</span>
-          <span class="dep-state" id="dep-dab-state">OFF AIR</span>
-        </div>
-        <canvas class="dep-vu" id="vu-dab" width="6" height="60" title="VU DAB+"></canvas>
+    </div>
+    <!-- SAT -->
+    <div class="dep-card off-air" id="dep-sat">
+      <div class="dep-card-head">
+        <div class="dep-dot" id="dep-sat-dot"></div>
+        <span class="dep-name">SAT</span>
+        <span class="dep-badge" id="dep-sat-state">OFF AIR</span>
+      </div>
+      <div class="dep-body">
+        <canvas class="dep-vu-h" id="vu-sat" width="200" height="14"></canvas>
+      </div>
+    </div>
+    <!-- IDF -->
+    <div class="dep-card off-air" id="dep-idf">
+      <div class="dep-card-head">
+        <div class="dep-dot" id="dep-idf-dot"></div>
+        <span class="dep-name">IDF</span>
+        <span class="dep-badge" id="dep-idf-state">OFF AIR</span>
+      </div>
+      <div class="dep-body">
+        <canvas class="dep-vu-h" id="vu-idf" width="200" height="14"></canvas>
+      </div>
+    </div>
+    <!-- DAB+ -->
+    <div class="dep-card off-air" id="dep-dab">
+      <div class="dep-card-head">
+        <div class="dep-dot" id="dep-dab-dot"></div>
+        <span class="dep-name">DAB+</span>
+        <span class="dep-badge" id="dep-dab-state">OFF AIR</span>
+      </div>
+      <div class="dep-body">
+        <canvas class="dep-vu-h" id="vu-dab" width="200" height="14"></canvas>
       </div>
     </div>
   </div>
@@ -439,38 +468,36 @@
 </div>
 </section>
 
-<!-- ═══ FENÊTRE MIXAGE ═══ -->
+<!-- ═══ FENÊTRE MIXAGE TIMELINE ═══ -->
 <section class="section is-console" style="padding-top:0">
   <div class="mix-panel" id="mix-panel">
     <div class="mix-header">
-      <div class="mix-header-title" id="mix-title">MIXAGE</div>
+      <div class="mix-header-title" id="mix-title">MIXAGE — TIMELINE</div>
       <span style="font-family:var(--mono);font-size:9px;color:#2a3a50;letter-spacing:1px" id="mix-subtitle">En attente de 2 pistes…</span>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <span style="font-family:var(--mono);font-size:8px;color:#2a3a50" id="mix-overlap-label">CHEVAUCHEMENT : 0s</span>
+      <div style="margin-left:auto;display:flex;gap:12px;align-items:center">
+        <span style="font-family:var(--mono);font-size:8px;color:#2a3a50">A→B :</span>
+        <span style="font-family:var(--mono);font-size:9px;color:#f07800;letter-spacing:1px" id="mix-overlap-label">0s</span>
       </div>
     </div>
     <div class="mix-body">
-      <div class="mix-tracks">
-        <div class="mix-row" id="mix-row-a">
+      <div class="mix-timeline" id="mix-timeline">
+        <canvas id="mix-ruler-cv" class="mix-ruler" style="position:absolute;inset:0 0 auto 0;height:18px;width:100%"></canvas>
+        <div id="mix-join" class="mix-join" style="display:none"></div>
+        <div class="mix-block a" id="mix-block-a" style="left:0;width:45%">
           <canvas id="mix-cv-a"></canvas>
-          <span class="mix-row-label a" id="mix-lbl-a">—</span>
+          <span class="mix-block-label" id="mix-lbl-a">—</span>
+          <div class="mix-block-out" style="background:rgba(255,60,60,.8)"></div>
         </div>
-        <div class="mix-row" id="mix-row-b">
+        <div class="mix-block b" id="mix-block-b" style="left:47%;width:45%">
           <canvas id="mix-cv-b"></canvas>
-          <span class="mix-row-label b" id="mix-lbl-b">—</span>
+          <span class="mix-block-label" id="mix-lbl-b">—</span>
         </div>
       </div>
-      <!-- Curseur chevauchement -->
-      <div class="mix-cursor-wrap">
-        <span class="mix-cursor-label">← ÉLOIGNER</span>
-        <div class="mix-cursor-bar" id="mix-bar">
-          <div class="mix-cursor-fill" id="mix-fill" style="width:50%"></div>
-          <div class="mix-cursor-thumb" id="mix-thumb" style="left:50%"></div>
-        </div>
-        <span class="mix-cursor-label">SUPERPOSER →</span>
-        <span class="mix-time" id="mix-time">0s</span>
+      <div class="mix-info-row">
+        <span class="mix-info" id="mix-info-a">A : —</span>
+        <div class="mix-status" id="mix-status">Déposez des pistes dans DIFF A pour activer le mixage</div>
+        <span class="mix-info" id="mix-info-b">B : —</span>
       </div>
-      <div class="mix-status" id="mix-status">Déposez des pistes dans DIFF A pour activer le mixage</div>
     </div>
   </div>
 </section>
@@ -1602,6 +1629,7 @@ function paintStripFromVU(){
     }
   }
   // VU canvas par départ (SAT / IDF / DAB+) — même signal, DIFF A est sur les 3
+  _paintDepVU('vu-diffa-h');
   _paintDepVU('vu-sat');
   _paintDepVU('vu-idf');
   _paintDepVU('vu-dab');
@@ -1609,50 +1637,50 @@ function paintStripFromVU(){
   const isPlaying=D[0]&&D[0].playing;
   ['sat','idf','dab'].forEach(dep=>{
     const blk=document.getElementById('dep-'+dep);
-    const dot=document.getElementById('dep-'+dep+'-dot');
     const st=document.getElementById('dep-'+dep+'-state');
-    if(blk) blk.className='depart-block '+(isPlaying?'on-air':'off-air');
+    if(blk) blk.className='dep-card '+(isPlaying?'on-air':'off-air');
     if(st) st.textContent=isPlaying?'ON AIR':'OFF AIR';
   });
+  // DIFF A card
+  const diffaCard=document.getElementById('badge-diffa');
+  const diffaDot=document.getElementById('diffa-dot');
+  const diffaSt=document.getElementById('badge-diffa-state');
+  if(diffaCard)diffaCard.className='dep-card diffa '+(isPlaying?'on-air':'off-air');
+  if(diffaSt)diffaSt.textContent=isPlaying?'ON AIR':'OFF AIR';
 }
 
 function _paintDepVU(canvasId){
   if(!vu0)return;
   const cv=document.getElementById(canvasId);if(!cv)return;
-  const W=cv.width,H=cv.height;
+  const W=cv.offsetWidth||200;cv.width=W;const H=14;cv.height=H;
   const ctx=cv.getContext('2d');
-  // Récupérer RMS gauche + droite
   const dL=new Float32Array(vu0.aL.fftSize);vu0.aL.getFloatTimeDomainData(dL);
   const dR=new Float32Array(vu0.aR.fftSize);vu0.aR.getFloatTimeDomainData(dR);
   const rmsOf=(d)=>{let s=0;for(const v of d)s+=v*v;return Math.sqrt(s/d.length);};
-  const dbL=Math.max(-60,vu0.aL?20*Math.log10(Math.max(rmsOf(dL),1e-6)):-60);
-  const dbR=Math.max(-60,vu0.aR?20*Math.log10(Math.max(rmsOf(dR),1e-6)):-60);
-  const pctL=Math.max(0,Math.min(1,(dbL+60)/60));
-  const pctR=Math.max(0,Math.min(1,(dbR+60)/60));
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#04060e';ctx.fillRect(0,0,W,H);
-  // Barre Gauche (demi-gauche)
-  const hw=Math.floor(W/2)-1;
-  _drawVuBar(ctx,0,H,hw,pctL);
-  _drawVuBar(ctx,hw+2,H,hw,pctR);
+  const dbL=Math.max(-60,20*Math.log10(Math.max(rmsOf(dL),1e-6)));
+  const dbR=Math.max(-60,20*Math.log10(Math.max(rmsOf(dR),1e-6)));
+  const pL=Math.max(0,Math.min(1,(dbL+60)/60));
+  const pR=Math.max(0,Math.min(1,(dbR+60)/60));
+  ctx.fillStyle='#04060a';ctx.fillRect(0,0,W,H);
+  _drawVuBarH(ctx,0,0,W,Math.floor(H/2)-1,pL);
+  _drawVuBarH(ctx,0,Math.floor(H/2)+1,W,Math.floor(H/2)-1,pR);
 }
+function _drawVuBarH(ctx,x,y,W,h,pct){
+  ctx.fillStyle='#06090e';ctx.fillRect(x,y,W,h);
+  if(pct<=0)return;
+  const bW=Math.round(W*pct);
+  const grd=ctx.createLinearGradient(x,0,x+W,0);
+  grd.addColorStop(0,'#00d96a');grd.addColorStop(0.65,'#00d96a');
+  grd.addColorStop(0.85,'#f5c400');grd.addColorStop(1,'#e03020');
+  ctx.fillStyle=grd;ctx.fillRect(x,y,bW,h);
+}
+// Compat — ancien appel vertical
 function _drawVuBar(ctx,x,H,w,pct){
-  const barH=Math.round(H*pct);
-  const y0=H-barH;
-  // Zone verte
-  const greenH=Math.round(H*0.6),yellowH=Math.round(H*0.25),redH=H-greenH-yellowH;
-  // fond sombre
-  ctx.fillStyle='#08100a';ctx.fillRect(x,0,w,H);
-  if(barH<=0)return;
-  // Couleur par zone
-  if(y0<H-redH){// touche la zone rouge
-    ctx.fillStyle='#cc2020';ctx.fillRect(x,Math.max(y0,0),w,Math.min(barH,redH-(H-barH<0?0:0)));
-  }
+  ctx.fillStyle='#08100a';ctx.fillRect(x,0,w,H);if(pct<=0)return;
   const grd=ctx.createLinearGradient(0,H,0,0);
   grd.addColorStop(0,'#00d96a');grd.addColorStop(0.6,'#00d96a');
   grd.addColorStop(0.85,'#f5c400');grd.addColorStop(1,'#e03020');
-  ctx.fillStyle=grd;
-  ctx.fillRect(x,H-barH,w,barH);
+  ctx.fillStyle=grd;ctx.fillRect(x,H-Math.round(H*pct),w,Math.round(H*pct));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1998,111 +2026,216 @@ let _previewGn=null;
 let _previewTimer=null;
 let _previewTrack=null;
 // ═══════════════════════════════════════════════════════
-// FENÊTRE MIXAGE
+// FENÊTRE MIXAGE — TIMELINE DRAGGABLE
+// Les 2 blocs représentent piste A et piste B.
+// On déplace B pour régler le décalage par rapport au point OUT de A.
+// L'enchaînement se fait au point OUT de A → START de B.
 // ═══════════════════════════════════════════════════════
-let _mixOverlap=0; // secondes de chevauchement (0 = bout-à-bout, >0 = superposition)
-let _mixDragging=false;
+let _mixDragB=false;
+let _mixDragStartX=0;
+let _mixBlockBLeft=0; // left% du bloc B
 
 function mixInit(){
-  const bar=document.getElementById('mix-bar');
-  const thumb=document.getElementById('mix-thumb');
-  if(!bar||!thumb)return;
+  const blockB=document.getElementById('mix-block-b');
+  if(!blockB)return;
 
-  const setFromX=(clientX)=>{
-    const rect=bar.getBoundingClientRect();
-    let pct=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
-    // pct 0 = -30s (éloigné), 0.5 = 0s, 1 = +30s (superposé)
-    _mixOverlap=(pct-0.5)*60; // -30s … +30s
+  const onDown=(e)=>{
+    _mixDragB=true;
+    _mixDragStartX=e.touches?e.touches[0].clientX:e.clientX;
+    const tl=document.getElementById('mix-timeline');
+    const rect=tl?tl.getBoundingClientRect():{width:1};
+    _mixBlockBLeft=parseFloat(blockB.style.left)||50;
+    e.preventDefault();
+  };
+  const onMove=(e)=>{
+    if(!_mixDragB)return;
+    const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    const tl=document.getElementById('mix-timeline');
+    const rect=tl?tl.getBoundingClientRect():{width:600};
+    const delta=(clientX-_mixDragStartX)/rect.width*100;
+    const newLeft=Math.max(0,Math.min(95,_mixBlockBLeft+delta));
+    blockB.style.left=newLeft+'%';
     _mixRender();
   };
+  const onUp=()=>{_mixDragB=false;};
 
-  thumb.addEventListener('mousedown',(e)=>{e.preventDefault();_mixDragging=true;});
-  document.addEventListener('mousemove',(e)=>{if(_mixDragging)setFromX(e.clientX);});
-  document.addEventListener('mouseup',()=>{_mixDragging=false;});
-  thumb.addEventListener('touchstart',(e)=>{_mixDragging=true;},{passive:true});
-  document.addEventListener('touchmove',(e)=>{if(_mixDragging&&e.touches[0])setFromX(e.touches[0].clientX);},{passive:true});
-  document.addEventListener('touchend',()=>{_mixDragging=false;});
+  blockB.addEventListener('mousedown',onDown,{passive:false});
+  blockB.addEventListener('touchstart',onDown,{passive:false});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchend',onUp);
+
+  // Volume DIFF A
+  volumeInit();
   _mixRender();
+}
+
+function volumeInit(){
+  const track=document.getElementById('vol-track-a');
+  const thumb=document.getElementById('vol-thumb-a');
+  if(!track||!thumb)return;
+  let dragging=false;
+  const set=(clientX)=>{
+    const rect=track.getBoundingClientRect();
+    const pct=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
+    document.getElementById('vol-fill-a').style.width=(pct*100)+'%';
+    thumb.style.left=(pct*100)+'%';
+    document.getElementById('vol-val-a').textContent=Math.round(pct*100)+'%';
+    if(_masterGn0) _masterGn0.gain.value=pct;
+  };
+  thumb.addEventListener('mousedown',(e)=>{dragging=true;e.preventDefault();});
+  track.addEventListener('mousedown',(e)=>{set(e.clientX);dragging=true;});
+  document.addEventListener('mousemove',(e)=>{if(dragging)set(e.clientX);});
+  document.addEventListener('mouseup',()=>{dragging=false;});
+  thumb.addEventListener('touchstart',(e)=>{dragging=true;},{passive:true});
+  document.addEventListener('touchmove',(e)=>{if(dragging&&e.touches[0])set(e.touches[0].clientX);},{passive:true});
+  document.addEventListener('touchend',()=>{dragging=false;});
 }
 
 function _mixRender(){
   const d=D[0];
-  const fill=document.getElementById('mix-fill');
-  const thumb=document.getElementById('mix-thumb');
-  const timeEl=document.getElementById('mix-time');
-  const olLabel=document.getElementById('mix-overlap-label');
-  const status=document.getElementById('mix-status');
-  const subtitle=document.getElementById('mix-subtitle');
-  const title=document.getElementById('mix-title');
-
-  const pct=(_mixOverlap/60+0.5)*100;
-  if(fill)fill.style.width=pct+'%';
-  if(thumb)thumb.style.left=pct+'%';
-  const overlapSec=Math.round(_mixOverlap);
-  if(timeEl)timeEl.textContent=(overlapSec>0?'+':'')+overlapSec+'s';
-  if(olLabel)olLabel.textContent='CHEVAUCHEMENT : '+(overlapSec>0?'+':'')+overlapSec+'s';
-
-  // Trouver les 2 pistes (active + suivante, ou pistes 0 et 1)
   const tracks=d?d.tracks.filter(t=>!t.isMacro):[];
   const hasTwo=tracks.length>=2;
+  const tA=tracks[0],tB=tracks[1];
+
+  const title=document.getElementById('mix-title');
+  const subtitle=document.getElementById('mix-subtitle');
+  const status=document.getElementById('mix-status');
+  const olLabel=document.getElementById('mix-overlap-label');
+  const infoA=document.getElementById('mix-info-a');
+  const infoB=document.getElementById('mix-info-b');
+  const join=document.getElementById('mix-join');
+  const blockA=document.getElementById('mix-block-a');
+  const blockB=document.getElementById('mix-block-b');
 
   if(title)title.className='mix-header-title'+(hasTwo?' active':'');
-  if(status)status.className='mix-status'+(hasTwo?' active':'');
-  if(status)status.textContent=hasTwo
-    ? (overlapSec>0?'Les 2 sons joueront en simultané pendant '+overlapSec+'s'
-      :overlapSec<0?'Silence de '+(-overlapSec)+'s entre les 2 sons'
-      :'Enchaînement direct — bout à bout')
-    : 'Déposez au moins 2 pistes dans DIFF A pour activer le mixage';
-  if(subtitle)subtitle.textContent=hasTwo?tracks[0].title+' → '+tracks[1].title:'En attente de 2 pistes…';
 
-  // Dessiner les 2 waveforms avec décalage visuel
-  _mixDrawTrack('mix-cv-a','mix-lbl-a',d,tracks[0],0,overlapSec,true);
-  _mixDrawTrack('mix-cv-b','mix-lbl-b',d,tracks[1],overlapSec,0,false);
+  if(!hasTwo){
+    if(status){status.className='mix-status';status.textContent='Déposez au moins 2 pistes dans DIFF A pour activer le mixage';}
+    if(subtitle)subtitle.textContent='En attente de 2 pistes…';
+    if(olLabel)olLabel.textContent='—';
+    if(join)join.style.display='none';
+    return;
+  }
+
+  if(subtitle)subtitle.textContent=(tA?tA.title:'?')+' → '+(tB?tB.title:'?');
+
+  // Dimensions du bloc A (fixe, occupe 50% de la timeline)
+  const tl=document.getElementById('mix-timeline');
+  const tlW=tl?tl.offsetWidth:600;
+  const durA=d.durs[d.tracks.indexOf(tA)]||1;
+  const durB=d.durs[d.tracks.indexOf(tB)]||1;
+  const durMax=Math.max(durA,durB,1);
+
+  // Largeur des blocs proportionnelle à la durée (sur 90% de la timeline)
+  const scale=tlW*0.9/((durA+durB)*1.1);
+  const wA=Math.round(durA*scale);
+  const wB=Math.round(durB*scale);
+
+  // Bloc A : toujours à gauche, sa largeur est fixe
+  if(blockA){blockA.style.left='2%';blockA.style.width=wA+'px';}
+
+  // Bloc B : déplaçable, sa position détermine le décalage
+  if(!blockB)return;
+  const leftB=parseFloat(blockB.style.left)||50;
+  const xB=tlW*leftB/100;
+  if(blockB)blockB.style.width=wB+'px';
+
+  // Point OUT de A sur la timeline (en px)
+  const outCueA=d._outOf(d.tracks.indexOf(tA));
+  const outPctA=outCueA/durA;
+  const xOutA=Math.round(2/100*tlW + wA*outPctA);
+
+  // Calcul du décalage temporel entre OUT de A et début de B
+  const xStartB=xB;
+  const overlapPx=xOutA-xStartB; // positif = B commence avant OUT de A (superposition)
+  const overlapSec=overlapPx/scale;
+
+  if(olLabel)olLabel.textContent=(overlapSec>0.5?'+':(overlapSec<-0.5?'':''))+Math.round(overlapSec)+'s';
+  if(olLabel)olLabel.style.color=Math.abs(overlapSec)<1?'#00c8a0':overlapSec>0?'#f07800':'#5a8090';
+
+  // Ligne de jonction OUT A → START B
+  if(join){
+    if(Math.abs(overlapPx)>4){
+      join.style.display='block';
+      const joinX=Math.min(xOutA,xStartB);
+      join.style.left=joinX+'px';
+      join.style.borderLeft='2px dashed rgba(240,120,0,.5)';
+    } else {
+      join.style.display='none';
+    }
+  }
+
+  // Marquer le point OUT sur le bloc A
+  const outMarker=blockA?blockA.querySelector('.mix-block-out'):null;
+  if(outMarker)outMarker.style.left=(outPctA*100).toFixed(1)+'%';
+
+  if(infoA)infoA.textContent='A OUT: '+fmtMs(outCueA);
+  if(infoB)infoB.textContent='B START: '+fmtMs(d._startOf(d.tracks.indexOf(tB)));
+
+  const snapMsg=Math.abs(overlapSec)<0.5?'✓ Enchaînement direct au point OUT':
+    overlapSec>0?'⚠ Superposition de '+Math.round(overlapSec)+'s':
+    'Silence de '+Math.round(-overlapSec)+'s';
+  if(status){status.className='mix-status'+(Math.abs(overlapSec)<0.5?' active':' warn');status.textContent=snapMsg;}
+
+  // Dessiner les waveforms dans les blocs
+  _mixDrawBlock('mix-cv-a',tA,d,true);
+  _mixDrawBlock('mix-cv-b',tB,d,false);
+
+  // Mise à jour labels
+  const lblA=document.getElementById('mix-lbl-a');
+  const lblB=document.getElementById('mix-lbl-b');
+  if(lblA)lblA.textContent=tA?tA.title:'—';
+  if(lblB)lblB.textContent=tB?tB.title:'—';
+
+  // Ruler
+  _mixDrawRuler(durA+durB+10);
 }
 
-function _mixDrawTrack(cvId,lblId,d,t,offsetSec,_unused,isA){
-  const cv=document.getElementById(cvId);
-  const lbl=document.getElementById(lblId);
-  if(!cv)return;
-  const W=cv.offsetWidth||600,H=cv.offsetHeight||52;
+function _mixDrawBlock(cvId,t,d,isA){
+  const cv=document.getElementById(cvId);if(!cv)return;
+  const W=cv.parentElement?cv.parentElement.offsetWidth||200:200;
+  const H=cv.parentElement?cv.parentElement.offsetHeight||44:44;
   cv.width=W;cv.height=H;
   const ctx=cv.getContext('2d');
-  ctx.fillStyle='#04060e';ctx.fillRect(0,0,W,H);
-  if(lbl)lbl.textContent=t?t.title:'—';
+  ctx.fillStyle=isA?'rgba(160,20,20,0.15)':'rgba(0,120,180,0.15)';
+  ctx.fillRect(0,0,W,H);
   if(!t||!t.file)return;
   const data=WV_DATA_CACHE[t.file];
   if(!data){drawWaveform(document.createElement('canvas'),t.file).then(()=>_mixRender());return;}
-  const dur=d&&d.durs[d.tracks.indexOf(t)]||1;
-  const startR=(t.startCue||0)/dur;
-  const endR=Math.min(1,(t.endCue??dur)/dur);
-  // Décalage visuel : overlapping = les 2 waveforms se chevauchent à droite/gauche
-  const totalSec=Math.max(dur,1);
-  const shiftPct=Math.max(0,Math.min(0.4,Math.abs(offsetSec)/totalSec));
-  const x0=isA?0:Math.round(shiftPct*W);
-  const drawW=W-x0;
-  // Fond coloré semi-transparent
-  ctx.fillStyle=isA?'rgba(200,20,20,0.06)':'rgba(0,180,255,0.06)';
-  ctx.fillRect(x0,0,drawW,H);
-  // Waveform
-  const step=Math.max(1,Math.floor((data.length*(endR-startR))/drawW));
-  const segStart=Math.floor(startR*data.length);
-  const segEnd=Math.floor(endR*data.length);
-  const segLen=Math.max(1,segEnd-segStart);
-  for(let px=0;px<drawW;px++){
-    const base=segStart+Math.floor(px/drawW*segLen);
+  const dur=d.durs[d.tracks.indexOf(t)]||1;
+  const s0=Math.floor((t.startCue||0)/dur*data.length);
+  const s1=Math.floor(Math.min(1,(t.endCue??dur)/dur)*data.length);
+  const seg=Math.max(1,s1-s0);
+  const step=Math.max(1,Math.floor(seg/W));
+  for(let x=0;x<W;x++){
+    const base=s0+Math.floor(x/W*seg);
     let mn=0,mx=0;
     for(let j=0;j<step;j++){const v=data[base+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
-    const amp=Math.max(Math.abs(mn),Math.abs(mx));
-    if(amp<0.003)continue;
-    const br=Math.round(100+amp*155);
-    ctx.fillStyle=isA?`rgb(${br},${Math.round(br*0.4)},${Math.round(br*0.4)})`:`rgb(${Math.round(br*0.4)},${Math.round(br*0.85)},${br})`;
-    const y1=Math.round((1+mn)*H/2),y2=Math.round((1+mx)*H/2);
-    ctx.fillRect(x0+px,y1,1,Math.max(1,y2-y1));
+    const amp=Math.max(Math.abs(mn),Math.abs(mx));if(amp<0.003)continue;
+    const br=Math.round(110+amp*145);
+    ctx.fillStyle=isA?`rgb(${br},${Math.round(br*.35)},${Math.round(br*.35)})`:`rgb(${Math.round(br*.35)},${Math.round(br*.8)},${br})`;
+    ctx.fillRect(x,Math.round((1+mn)*H/2),1,Math.max(1,Math.round((1+mx)*H/2)-Math.round((1+mn)*H/2)));
   }
-  // Ligne de jonction si chevauchement
-  if(!isA&&offsetSec>0&&x0>0){
-    ctx.fillStyle='rgba(240,120,0,0.6)';ctx.fillRect(x0-1,0,2,H);
-    ctx.fillStyle='rgba(240,120,0,0.15)';ctx.fillRect(0,0,x0,H);
+  // Point OUT sur A
+  if(isA){
+    const outPct=d._outOf(d.tracks.indexOf(t))/dur;
+    ctx.fillStyle='rgba(255,60,60,.9)';ctx.fillRect(Math.round(outPct*W)-1,0,2,H);
+  }
+}
+
+function _mixDrawRuler(totalSec){
+  const cv=document.getElementById('mix-ruler-cv');if(!cv)return;
+  const W=cv.offsetWidth||600;cv.width=W;cv.height=18;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#05080e';ctx.fillRect(0,0,W,18);
+  const step=totalSec<120?10:30;
+  ctx.fillStyle='#1e2a40';ctx.font='8px monospace';ctx.textAlign='center';
+  for(let s=0;s<=totalSec;s+=step){
+    const x=Math.round(s/totalSec*W);
+    ctx.fillStyle='#1e2a40';ctx.fillRect(x,12,1,6);
+    ctx.fillStyle='#2a4060';ctx.fillText(fmtMs(s),x,10);
   }
 }
 
