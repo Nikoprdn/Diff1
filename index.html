@@ -297,7 +297,7 @@
     <div class="diff-progress-fill" id="c1-progress-fill" style="width:0%"></div>
   </div>
   <div class="file-drop-zone" id="fdz1" onclick="document.getElementById('fi1').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,0)">
-    <input type="file" id="fi1" multiple accept="audio/*" onchange="handleFiles(this.files,0)">
+    <input type="file" id="fi1" multiple accept="audio/*" onchange="handleFiles(this.files,0);this.value=''">
     <div class="fdz-row">
       <span class="fdz-icon">⊕</span>
       <span class="fdz-text">Glisser des fichiers audio · ou cliquer</span>
@@ -305,7 +305,7 @@
       <span class="fdz-count" id="fdz1-count">Aucun fichier</span>
     </div>
   </div>
-  <div class="card-content">
+  <div class="card-content" ondragover="event.preventDefault();document.getElementById('fdz1').classList.add('drag-over')" ondragleave="document.getElementById('fdz1').classList.remove('drag-over')" ondrop="handleDrop(event,0)">
     <table class="table is-radio is-fullwidth is-narrow">
       <thead><tr>
         <th style="width:36px">#</th>
@@ -1060,8 +1060,6 @@ class Diffuser{
     }
 
     const pb=document.getElementById('c1-progress-fill');
-
-    const pb=document.getElementById('c1-progress-fill');
     if(pb)pb.style.width=(progFull*100).toFixed(2)+'%';
     const micros=document.getElementById(this.ids.micros);
     if(micros)micros.textContent=fmtMs(pos-startCue);
@@ -1339,8 +1337,11 @@ function handleFiles(files,diffIdx){
 }
 function handleDrop(e,diffIdx){
   e.preventDefault();
+  e.stopPropagation();
   document.getElementById('fdz'+(diffIdx+1))?.classList.remove('drag-over');
-  const files=(e.dataTransfer&&e.dataTransfer.files)||[];
+  document.getElementById('fdz1')?.classList.remove('drag-over');
+  // Snapshot immediat des fichiers (Chrome invalide dataTransfer hors event synchrone)
+  const files=Array.from((e.dataTransfer&&e.dataTransfer.files)||[]);
   handleFiles(files,diffIdx);
 }
 function diffRemoveTrack(diffIdx,trackIdx){
