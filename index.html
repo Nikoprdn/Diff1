@@ -26,7 +26,7 @@
   .card.is-dark-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;box-shadow:none;}
   .card.is-dark-card .card-header{background:var(--s2);border-bottom:1px solid var(--border);box-shadow:none;border-radius:8px 8px 0 0;}
   .card.is-dark-card .card-header-title{color:var(--txt);font-family:var(--display);font-size:15px;letter-spacing:1px;padding:.6rem 1rem;}
-  .card.is-dark-card .card-content{padding:0;}
+  .card.is-dark-card .card-content{padding:0;flex:1;overflow-y:auto;}
   .card.is-dark-card .card-footer{background:var(--s3);border-top:1px solid var(--border);border-radius:0 0 8px 8px;padding:.6rem 1rem;gap:1rem;}
   .card.is-dark-card .card-footer-item{color:var(--txt-dim);font-family:var(--mono);font-size:11px;border:none;padding:0;justify-content:flex-start;}
   .diff-badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2px;padding:2px 10px;border-radius:4px;}
@@ -57,8 +57,8 @@
     0%,100%{opacity:1;box-shadow:0 0 6px #ff3030,0 0 14px rgba(255,30,30,.5);}
     50%{opacity:.6;box-shadow:0 0 3px #ff3030;}
   }
-  .onair-title{font-family:var(--display);font-size:22px;font-weight:700;color:var(--txt);letter-spacing:3px;}
-  .onair-track-name{font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:2px;color:var(--yellow);margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;transition:opacity .3s;}
+  .onair-title{font-family:var(--display);font-size:28px;font-weight:700;color:var(--txt);letter-spacing:3px;}
+  .onair-track-name{font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:2px;color:var(--yellow);margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:600px;transition:opacity .3s;}
   .dot-live{display:inline-block;width:8px;height:8px;background:var(--red);border-radius:50%;animation:blink 1s step-start infinite;vertical-align:middle;margin-right:6px;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
   .timer-group{display:flex;gap:1rem;align-items:center;margin-left:auto;padding-right:1rem;}
@@ -66,10 +66,10 @@
   .timer-box .label-txt{font-family:var(--mono);font-size:8px;color:var(--txt-dim);letter-spacing:1px;text-transform:uppercase;display:block;}
   .timer-box .val-txt{font-family:var(--mono);font-size:15px;letter-spacing:1px;line-height:1;display:block;}
   .table.is-radio{background:transparent;width:100%;}
-  .table.is-radio thead th{background:var(--s3);color:var(--txt-mute);font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;border-color:var(--border)!important;padding:6px 10px;font-weight:400;}
+  .table.is-radio thead th{background:var(--s3);color:var(--txt-mute);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-color:var(--border)!important;padding:8px 14px;font-weight:400;}
   .table.is-radio tbody tr{border-bottom:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;}
   .table.is-radio tbody tr:hover td{background:#0e1830;}
-  .table.is-radio tbody td{border-color:var(--border)!important;color:var(--txt-dim);padding:0 10px;height:56px;vertical-align:middle;white-space:nowrap;}
+  .table.is-radio tbody td{border-color:var(--border)!important;color:var(--txt-dim);padding:0 14px;height:64px;vertical-align:middle;white-space:nowrap;font-size:13px;}
 
   /* ── Ligne active : grande, waveform en fond ── */
   .table.is-radio tbody tr.row-active{
@@ -80,7 +80,7 @@
   }
   .table.is-radio tbody tr.row-active td{
     position:relative;z-index:2;
-    height:96px; /* plus haute */
+    height:110px; /* plus haute */
     vertical-align:middle;
   }
   /* Fond de progression rouge */
@@ -100,7 +100,7 @@
   /* Titre en gros sur la ligne active */
   .row-active-title{
     font-family:var(--display);
-    font-size:22px;font-weight:700;
+    font-size:28px;font-weight:700;
     color:#ffffff;letter-spacing:2px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     text-shadow:0 1px 8px rgba(0,0,0,.8);
@@ -180,12 +180,12 @@
   .wv-outer{padding:4px 6px 0;}
   .wv-wrap{
     position:relative;
-    height:80px;
+    height:96px;
     cursor:crosshair;
     user-select:none;
     border-radius:3px;
   }
-  .wv-canvas{display:block;width:100%;height:80px;border-radius:3px;}
+  .wv-canvas{display:block;width:100%;height:96px;border-radius:3px;}
   .wv-pre{position:absolute;top:0;bottom:0;left:0;background:rgba(0,0,0,.55);pointer-events:none;border-radius:3px 0 0 3px;}
   .wv-post{position:absolute;top:0;bottom:0;right:0;background:rgba(0,0,0,.55);pointer-events:none;border-radius:0 3px 3px 0;}
   .wv-playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(0,212,240,.9);pointer-events:none;display:none;z-index:2;}
@@ -1178,16 +1178,13 @@
 </nav>
 
 <!-- Barre d'onglets principale -->
-<div class="tab-bar">
+<div class="tab-bar" style="display:none">
   <button class="tab-btn active" onclick="switchTab('diffusion')">▶ Diffusion</button>
 </div>
 
 <!-- Panneau Diffusion -->
 <div id="tab-diffusion" class="tab-panel active">
 <section class="section is-console">
-<div style="display:flex;flex-direction:column;gap:1rem;">
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
 <div class="card is-dark-card">
   <div class="card-header diff-card-header" id="diff-header-0" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
@@ -1206,11 +1203,11 @@
       <span class="dot-live"></span><span class="onair-title">DIFF A</span><span id="onair-track-0" class="onair-track-name"></span>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
-      <button class="button is-success is-small is-outlined" onclick="D[0].togglePlay()">▶ PLAY</button>
-      <button class="button is-danger is-small is-outlined"  onclick="D[0].stopAll()">■ STOP</button>
-      <button class="button is-dark is-small" onclick="D[0].prevTrack()">|◀</button>
-      <button class="button is-dark is-small" onclick="D[0].nextTrack()">▶|</button>
-      <button class="button is-auto is-small" id="auto-btn-0" onclick="D[0].toggleAuto()">AUTO</button>
+      <button class="button is-success is-outlined" onclick="D[0].togglePlay()" style="font-size:13px!important;padding:6px 16px!important;">▶ PLAY</button>
+      <button class="button is-danger is-outlined"  onclick="D[0].stopAll()" style="font-size:13px!important;padding:6px 16px!important;">■ STOP</button>
+      <button class="button is-dark" onclick="D[0].prevTrack()" style="font-size:13px!important">|◀</button>
+      <button class="button is-dark" onclick="D[0].nextTrack()" style="font-size:13px!important">▶|</button>
+      <button class="button is-auto" id="auto-btn-0" onclick="D[0].toggleAuto()" style="font-size:13px!important">AUTO</button>
       <div class="macro-dropdown-wrap">
         <button class="macro-dropdown-btn" id="mdrop-btn-0" onclick="toggleMacroMenu(0)">⚡ MACRO ▾</button>
         <div class="macro-dropdown-menu" id="mdrop-menu-0">
@@ -1241,15 +1238,15 @@
       <span class="fdz-count" id="fdz1-count">Aucun fichier</span>
     </div>
   </div>
-  <div class="card-content">
+  <div class="card-content" style="flex:1;overflow-y:auto;">
     <table class="table is-radio is-fullwidth is-narrow">
       <thead><tr>
-        <th style="width:36px">#</th>
-        <th style="width:80px">Horaire</th>
-        <th style="width:140px">Titre</th>
+        <th style="width:40px">#</th>
+        <th style="width:88px">Horaire</th>
+        <th style="width:200px">Titre</th>
         <th>Waveform · IN / OUT</th>
-        <th style="width:64px;text-align:right">Durée</th>
-        <th style="width:84px;text-align:right;padding-right:10px">Décompte</th>
+        <th style="width:72px;text-align:right">Durée</th>
+        <th style="width:96px;text-align:right;padding-right:14px">Décompte</th>
         <th style="width:5px"></th>
       </tr></thead>
       <tbody id="c1-body"></tbody>
@@ -1257,7 +1254,7 @@
   </div>
   <div class="card-footer">
     <span class="card-footer-item">Durée écoulée&nbsp;<strong id="c1-micros" style="color:#f07800;font-family:var(--mono)">00:00</strong></span>
-    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="c1-total" style="color:#ddeeff;font-family:var(--mono);font-size:18px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="c1-suffix" style="color:#00d4f0;font-family:var(--display);font-size:16px;font-weight:700">A</span></span>
+    <span class="card-footer-item" style="margin-left:auto;justify-content:flex-end">Total&nbsp;<strong id="c1-total" style="color:#ddeeff;font-family:var(--mono);font-size:24px;letter-spacing:2px">00:00:00</strong>&nbsp;<span id="c1-suffix" style="color:#00d4f0;font-family:var(--display);font-size:16px;font-weight:700">A</span></span>
   </div>
   <div class="vu-strip" id="vu-strip-d0"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
   <!-- Popup rendez-vous DIFF A -->
@@ -1273,11 +1270,7 @@
   </div>
 </div>
 
-</div><!-- /grid DIFF1+2 -->
 
-
-
-</div><!-- /flex layout -->
 </section>
 </div><!-- /tab-diffusion -->
 
@@ -1285,11 +1278,8 @@
 <!-- VU MÈTRES STICKY — toujours visible -->
 <div class="vu-section">
 
-  <!-- Ligne 1 : VU de chaque diffuseur -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem">
-    <div class="vu-group-label">Diffuseurs</div>
-  </div>
-  <div class="vu-row-wrap" style="margin-bottom:.6rem">
+  <!-- Ligne 1 : VU de chaque diffuseur (masqué) -->
+  <div style="display:none">
         <div class="vu-wrap">
           <div class="vu-label-block">
             <div class="vu-main-title">DIFF A</div>
@@ -2376,104 +2366,13 @@ D[0].togglePlay=function(){
   _t0_orig();
 };
 
-// ── DIFF 2 — même architecture ──
-const _t1_orig=D[1].togglePlay.bind(D[1]);
-D[1].togglePlay=function(){
-  const el=D[1].audios[D[1].ci]; if(!el){getCtx().resume();return _t1_orig();}
-  getCtx().resume();
-  if(!SRCS.d1){
-    const ctx=getCtx();
-    const src=ctx.createMediaElementSource(el);
-    SRCS.d1=src;
-    const sp=ctx.createChannelSplitter(2);
-    const aL=ctx.createAnalyser(),aR=ctx.createAnalyser();
-    aL.fftSize=1024;aR.fftSize=1024;aL.smoothingTimeConstant=0.8;aR.smoothingTimeConstant=0.8;
-    const masterGn=ctx.createGain(); masterGn.gain.value=1;
-    src.connect(masterGn);
-    masterGn.connect(sp);
-    sp.connect(aL,0); sp.connect(aR,1);
-    vuD2={aL,aR,gn:masterGn};
-    buildBars('vu-d2-L');buildBars('vu-d2-R');
-    ['sat','dab','hz'].forEach(dep=>{
-      const rkey='d1_'+dep;
-      if(ROUTE_DONE.has(rkey)) return;
-      const mn=ensureMonGn(dep);
-      const gnDep=ctx.createGain(); gnDep.gain.value=0.7;
-      const dAL=ctx.createAnalyser(),dAR=ctx.createAnalyser();
-      dAL.fftSize=1024;dAR.fftSize=1024;dAL.smoothingTimeConstant=0.8;dAR.smoothingTimeConstant=0.8;
-      const sp2=ctx.createChannelSplitter(2),mg2=ctx.createChannelMerger(2);
-      masterGn.connect(gnDep); gnDep.connect(sp2);
-      sp2.connect(dAL,0); sp2.connect(dAR,1);
-      dAL.connect(mg2,0,0); dAR.connect(mg2,0,1);
-      mg2.connect(mn);
-      ROUTE_DONE.add(rkey);
-    });
-  }
-  wireStrip('d1',el);
-  _t1_orig();
-};
-
-// PUB SAT
-const _t2_orig=D[2].togglePlay.bind(D[2]);
-D[2].togglePlay=function(){
-  const el=D[2].audios[D[2].ci]; if(!el){getCtx().resume();return _t2_orig();}
-  getCtx().resume();
-  if(!SRCS.sat){
-    const r=routeSrcToDepart('sat','sat',el);
-    if(r) vuSat=r;
-  }
-  wireStrip('sat',el);
-  _t2_orig();
-};
-
-// PUB DAB+
-const _t3_orig=D[3].togglePlay.bind(D[3]);
-D[3].togglePlay=function(){
-  const el=D[3].audios[D[3].ci]; if(!el){getCtx().resume();return _t3_orig();}
-  getCtx().resume();
-  if(!SRCS.dab){
-    const r=routeSrcToDepart('dab','dab',el);
-    if(r) vuDab=r;
-  }
-  wireStrip('dab',el);
-  _t3_orig();
-};
-
-// PUB Hz
-const _t4_orig=D[4].togglePlay.bind(D[4]);
-D[4].togglePlay=function(){
-  const el=D[4].audios[D[4].ci]; if(!el){getCtx().resume();return _t4_orig();}
-  getCtx().resume();
-  if(!SRCS.hz){
-    const r=routeSrcToDepart('hz','hz',el);
-    if(r) vuHz=r;
-  }
-  wireStrip('hz',el);
-  _t4_orig();
-};
-
-// NATIONAL
-const _t5_orig=D[5].togglePlay.bind(D[5]);
-D[5].togglePlay=function(){
-  const el=D[5].audios[D[5].ci]; if(!el){getCtx().resume();return _t5_orig();}
-  getCtx().resume();
-  if(!SRCS.nat){
-    const r1=routeSrcToDepart('nat','sat',el);
-    const r2=routeSrcToDepart('nat','dab',el);
-    const r3=routeSrcToDepart('nat','hz',el);
-    vuNatSat=r1; vuNatDab=r2; vuNatHz=r3;
-    vuNat=r1;
-  }
-  wireStrip('nat',el);
-  _t5_orig();
-};
+// DIFF A uniquement — wirings D[1]-D[5] supprimés
 
 // ── Initialiser les barres SAT/DAB+/Hz ──
 
 // Barres VU départs (grands)
 ['sat','dab','hz','nat'].forEach(id=>{buildBars('vu-'+id+'-L');buildBars('vu-'+id+'-R');});
-// Barres VU diffuseurs (petits — dans la grille gauche)
-['sat-sm','dab-sm','hz-sm'].forEach(id=>{buildBars('vu-'+id+'-L');buildBars('vu-'+id+'-R');});
+
 
 // ── Mix flux de diffusion ──
 function paintMix(id, sources){
@@ -2920,15 +2819,13 @@ const MACROS={
   nat:{
     label:'START NAT',
     run(diffIdx){
-      // Lance le diffuseur PUB NATIONAL (D[5])
-      if(D[5]&&!D[5].playing) D[5].togglePlay();
+      // NATIONAL supprimé — macro désactivée
     }
   },
   loc:{
     label:'START LOC',
     run(diffIdx){
-      // Lance PUB SAT (D[2]), PUB DAB+ (D[3]), PUB Hz (D[4])
-      [2,3,4].forEach(i=>{ if(D[i]&&!D[i].playing) D[i].togglePlay(); });
+      // PUB SAT/DAB+/Hz supprimés — macro désactivée
     }
   },
   raccro:{
@@ -3165,17 +3062,7 @@ function stripLoop(){
 stripLoop();
 
 
-// ── Wiring DIFF TEST (D[6]) ──
-let vuTx=null;
-const _tx_orig=D[6].togglePlay.bind(D[6]);
-D[6].togglePlay=function(){
-  const el=D[6].audios[D[6].ci];
-  if(el && !vuTx){
-    getCtx().resume();
-    vuTx=wireVU(el,'vu-strip-tx','vu-strip-tx'); // analyseur uniquement (pas de VU sticky)
-  }
-  getCtx().resume(); _tx_orig();
-};
+
 
 // ══════════════════════════════════════════════════════════════
 // MODAL ÉDITEUR WAVEFORM
