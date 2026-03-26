@@ -1017,58 +1017,27 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
   .mod-journal-line.reprise  .mod-journal-txt{color:#00d96a;}
   .mod-journal-line .mod-journal-time{color:#3a5070;font-size:9px;flex-shrink:0;}
 
-  /* ══ PAZ styles ══ */
-  .paz-elapsed-idle { color: var(--cyan); }
-  .paz-elapsed-live { color: #ff3030; }
-  .paz-title-idle   { color: var(--txt-dim); font-size: 20px !important; font-family: var(--mono) !important; letter-spacing: 3px !important; }
-  .paz-title-live   { color: #ffffff; }
-  .paz-title-intro  { color: var(--yellow) !important; }
-  .paz-cd-idle      { color: var(--cyan); }
-  .paz-cd-live      { color: #ff3030; }
-  .paz-cd-intro     { color: var(--yellow) !important; }
-  .paz-cd-warn      { color: var(--yellow) !important; }
-  .paz-cd-urgent    { color: var(--red) !important; animation: blink .4s step-start infinite; }
 
   /* ══ LISTE playlist rows ══ */
-  .pr {
-    display: flex;
-    align-items: center;
-    height: 54px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background .08s;
-    position: relative;
-    overflow: hidden;
-  }
-  .pr:hover { background: #0e1830; }
-  .pr.is-next { background: #071408; border-left: 3px solid var(--green-dk); }
-  .pr.is-macro { border-left: 3px solid var(--yellow); background: #080a00; }
-  /* Surlignage progression rouge sur la piste active (quand elle redescend en liste) */
-  .pr.is-active { background: #140608; border-left: 3px solid var(--red); }
-  .pr.is-active::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(60,5,5,.8), rgba(20,2,2,.5));
-    transform-origin: left;
-    transform: scaleX(var(--prog, 0));
-    transition: transform .1s linear;
-    z-index: 0;
-  }
-  .pr > * { position: relative; z-index: 1; }
-
-  .pr-num  { width:44px; flex-shrink:0; font-family:var(--mono); font-size:13px; color:var(--txt-mute); text-align:center; }
-  .pr-time { width:88px; flex-shrink:0; font-family:var(--mono); font-size:11px; color:var(--cyan-dim); letter-spacing:1px; }
-  .pr-title{ flex:1; font-family:var(--display); font-size:17px; font-weight:700; color:var(--txt); letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-  .pr-dur  { width:70px; flex-shrink:0; font-family:var(--mono); font-size:11px; color:#7a9ab8; text-align:right; }
-  .pr-cd   { width:90px; flex-shrink:0; font-family:var(--mono); font-size:13px; color:#7a9ab8; text-align:right; padding-right:14px; }
-  .pr-bar  { width:5px; flex-shrink:0; align-self:stretch; }
-  .pr-del  { width:32px; flex-shrink:0; background:none; border:none; color:#2a3040; cursor:pointer; font-size:12px; padding:0; text-align:center; transition:color .1s; }
-  .pr-del:hover { color:var(--red); }
-  .pr.is-next .pr-num   { color:var(--green); }
-  .pr.is-next .pr-title { color:#40d870; }
-  .pr.is-next .pr-cd    { color:#40d870; }
-  .pr.is-macro .pr-title { color:var(--yellow); font-size:14px; }
+  .pr{display:flex;align-items:center;height:52px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .08s;position:relative;overflow:hidden;}
+  .pr:hover{background:#0e1830;}
+  .pr.is-next{background:#071408;border-left:3px solid var(--green-dk);}
+  .pr.is-macro{border-left:3px solid var(--yellow);background:#080a00;}
+  .pr.is-active{background:#0e0408;border-left:3px solid var(--red);}
+  .pr.is-active::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(160,8,8,.7),rgba(80,3,3,.5));transform-origin:left;transform:scaleX(var(--prog,0));transition:transform .1s linear;z-index:0;}
+  .pr>*{position:relative;z-index:1;}
+  .pr-num{width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;color:var(--txt-mute);text-align:center;}
+  .pr-time{width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);letter-spacing:1px;}
+  .pr-title{flex:1;font-family:var(--display);font-size:17px;font-weight:700;color:var(--txt);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .pr-dur{width:70px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;}
+  .pr-cd{width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;color:#7a9ab8;text-align:right;padding-right:14px;}
+  .pr-bar{width:5px;flex-shrink:0;align-self:stretch;}
+  .pr-del{width:32px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;transition:color .1s;}
+  .pr-del:hover{color:var(--red);}
+  .pr.is-next .pr-num{color:var(--green);}
+  .pr.is-next .pr-title{color:#40d870;}
+  .pr.is-next .pr-cd{color:#40d870;}
+  .pr.is-macro .pr-title{color:var(--yellow);font-size:14px;}
 
 </style>
 </head>
@@ -1293,41 +1262,57 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 
   <div class="card-content">
     <!-- ══ PLAYER ZONE ══ -->
-    <div id="paz" style="display:flex;align-items:stretch;min-height:130px;position:relative;overflow:hidden;flex-shrink:0;border-bottom:2px solid var(--border);background:#06080e;">
-      <!-- Waveform fond -->
-      <canvas id="paz-bg" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.4;pointer-events:none;z-index:0;"></canvas>
-      <!-- Progression rouge -->
-      <div id="paz-prog" style="position:absolute;inset:0;z-index:0;background:linear-gradient(90deg,rgba(55,4,4,.9),rgba(30,3,3,.6));transform-origin:left;transform:scaleX(0);transition:transform .1s linear;"></div>
-      <!-- Marqueur NEXT (ligne verte) -->
-      <div id="paz-next-marker" style="position:absolute;top:0;bottom:0;width:2px;background:#00d96a;z-index:2;display:none;pointer-events:none;">
-        <span style="position:absolute;top:2px;left:4px;font-family:var(--mono);font-size:8px;color:#00d96a;letter-spacing:1px;background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px;white-space:nowrap;">NEXT</span>
-      </div>
-      <!-- Marqueur INTRO (ligne jaune) -->
-      <div id="paz-intro-marker" style="position:absolute;top:0;bottom:0;width:2px;background:#f5c400;z-index:2;display:none;pointer-events:none;">
-        <span style="position:absolute;top:2px;left:4px;font-family:var(--mono);font-size:8px;color:#f5c400;letter-spacing:1px;background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px;white-space:nowrap;">INTRO</span>
-      </div>
-      <!-- Playhead rouge -->
-      <div id="paz-playhead" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,60,60,.9);z-index:3;display:none;pointer-events:none;"></div>
+    <div id="paz" style="display:flex;align-items:stretch;height:160px;position:relative;overflow:hidden;flex-shrink:0;border-bottom:2px solid var(--border);background:#04060c;">
 
-      <!-- COL GAUCHE : horaire + elapsed -->
-      <div style="width:110px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-right:1px solid #2a1010;padding:0 10px;position:relative;z-index:4;">
-        <span style="font-family:var(--mono);font-size:11px;color:var(--cyan-dim);letter-spacing:1px;" id="paz-horaire">--:--:--</span>
-        <span style="font-family:var(--mono);font-size:24px;font-weight:700;letter-spacing:2px;line-height:1;" id="paz-elapsed" class="paz-elapsed-idle">--:--:--</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;" id="paz-elapsed-lbl">ÉCOULÉ</span>
+      <!-- ── COUCHES DE FOND (z-index 0→3) ── -->
+
+      <!-- Waveform HD (canvas plein fond) -->
+      <canvas id="paz-bg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+
+      <!-- Surlignage ROUGE : progression de START → END -->
+      <div id="paz-red" style="position:absolute;top:0;bottom:0;left:0;width:0;z-index:1;background:linear-gradient(90deg,rgba(180,10,10,.72) 0%,rgba(100,5,5,.55) 100%);pointer-events:none;transition:width .08s linear,left .08s linear;"></div>
+
+      <!-- Surlignage JAUNE : zone INTRO (de START jusqu'à INTRO) — par-dessus le rouge -->
+      <div id="paz-yellow" style="position:absolute;top:0;bottom:0;z-index:2;background:linear-gradient(90deg,rgba(200,160,0,.65) 0%,rgba(140,110,0,.45) 100%);pointer-events:none;display:none;left:0;width:0;"></div>
+
+      <!-- Playhead blanc fin -->
+      <div id="paz-playhead" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.7);z-index:3;display:none;pointer-events:none;box-shadow:0 0 6px rgba(255,255,255,.4);"></div>
+
+      <!-- Marqueur NEXT (trait vert + label) -->
+      <div id="paz-next-marker" style="position:absolute;top:0;bottom:0;width:2px;background:#00d96a;z-index:4;display:none;pointer-events:none;">
+        <span style="position:absolute;bottom:4px;left:4px;font-family:var(--mono);font-size:8px;color:#00d96a;background:rgba(0,0,0,.8);padding:1px 4px;border-radius:2px;white-space:nowrap;">NEXT</span>
       </div>
 
-      <!-- COL CENTRE : titre + waveform -->
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 16px;gap:8px;position:relative;z-index:4;min-width:0;overflow:hidden;">
-        <div id="paz-title" style="font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 16px rgba(0,0,0,.9);transition:color .2s;" class="paz-title-idle">AUCUNE PISTE</div>
-        <div id="paz-cues" style="font-family:var(--mono);font-size:9px;color:rgba(0,212,240,.6);letter-spacing:1px;"></div>
+      <!-- Marqueur INTRO (trait jaune + label) -->
+      <div id="paz-intro-marker" style="position:absolute;top:0;bottom:0;width:2px;background:#f5c400;z-index:4;display:none;pointer-events:none;">
+        <span style="position:absolute;bottom:4px;left:4px;font-family:var(--mono);font-size:8px;color:#f5c400;background:rgba(0,0,0,.8);padding:1px 4px;border-radius:2px;white-space:nowrap;">INTRO</span>
       </div>
 
-      <!-- COL DROITE : décompte + bouton NEXT -->
-      <div style="width:160px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-left:1px solid #2a1010;padding:0 14px;position:relative;z-index:4;">
-        <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;" id="paz-cd-lbl">RESTANT</span>
-        <span style="font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:2px;line-height:1;" id="paz-cd" class="paz-cd-idle">--:--:--</span>
-        <button onclick="D[0].nextTrackForced()" title="Piste suivante" style="background:transparent;border:1px solid #3a2000;border-radius:3px;color:var(--orange);font-size:18px;width:36px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;margin-top:4px;" onmouseover="this.style.borderColor='#f07800'" onmouseout="this.style.borderColor='#3a2000'">↓</button>
+      <!-- ── COLONNES (z-index 5) ── -->
+
+      <!-- COL GAUCHE : heure de lancement -->
+      <div style="width:120px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid rgba(255,255,255,.08);padding:0 10px;position:relative;z-index:5;">
+        <span style="font-family:var(--mono);font-size:10px;color:rgba(0,212,240,.5);letter-spacing:2px;text-transform:uppercase;">LANCÉ À</span>
+        <span id="paz-launch-time" style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--cyan);letter-spacing:3px;line-height:1;text-shadow:0 0 20px rgba(0,212,240,.4);">--:--:--</span>
       </div>
+
+      <!-- COL CENTRE : titre en grand -->
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 20px;gap:6px;position:relative;z-index:5;min-width:0;overflow:hidden;">
+        <div id="paz-title" style="font-family:var(--display);font-size:36px;font-weight:700;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 20px rgba(0,0,0,.95);transition:color .15s;color:var(--txt-dim);">AUCUNE PISTE</div>
+        <div id="paz-cues" style="font-family:var(--mono);font-size:9px;color:rgba(0,212,240,.5);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      </div>
+
+      <!-- COL DROITE : décompte NEXT séparé du bouton -->
+      <div style="width:150px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-left:1px solid rgba(255,255,255,.08);padding:0 14px;position:relative;z-index:5;">
+        <span id="paz-cd-lbl" style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;">NEXT</span>
+        <span id="paz-cd" style="font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:2px;line-height:1;color:var(--cyan);text-shadow:0 0 16px rgba(0,212,240,.3);">--:--</span>
+      </div>
+
+      <!-- Bouton NEXT séparé en bas à droite -->
+      <button onclick="D[0].nextTrackForced()" title="Piste suivante"
+        style="position:absolute;bottom:10px;right:12px;z-index:6;background:rgba(0,0,0,.5);border:1px solid rgba(240,120,0,.4);border-radius:3px;color:var(--orange);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .12s;"
+        onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(60,20,0,.6)'"
+        onmouseout="this.style.borderColor='rgba(240,120,0,.4)';this.style.background='rgba(0,0,0,.5)'">↓ NEXT</button>
     </div>
 
     <!-- ══ ÉDITEUR DE POINTS ══ -->
@@ -2300,109 +2285,258 @@ class Diffuser{
 }
 
 const D=CONFIGS.map((cfg,i)=>new Diffuser(cfg,i));
+
 // ══════════════════════════════════════════════════════════════
-// PAZ — Player Active Zone  (moteur simplifié DIFF A)
+// PAZ — Player Active Zone v3
+// Logique : surlignage JAUNE (START→INTRO) + ROUGE (START→END)
+// Titre affiché, heure de lancement fixe, waveform HD en fond
 // ══════════════════════════════════════════════════════════════
 
-// ── Helpers accès track ──
-function pazTrack(){ return D[0].tracks[D[0].ci] || null; }
+let _pazWvFile    = null;  // fichier waveform chargé
+let _pazLaunchTime = null; // heure HH:MM:SS au lancement
+let _cueEditorOpen = false;
+
+// ── Accesseurs cues ──
+function pazT()    { return D[0].tracks[D[0].ci] || null; }
 function pazAudio(){ return D[0].audios[D[0].ci] || null; }
-function pazDur()  { return D[0].durs[D[0].ci] || 0; }
-function pazPos()  {
-  const a = pazAudio();
-  return (a && !isNaN(a.currentTime)) ? a.currentTime : 0;
+function pazDur()  { return D[0].durs[D[0].ci]   || 0; }
+function pazPos()  { const a=pazAudio(); return (a&&!isNaN(a.currentTime))?a.currentTime:0; }
+
+function cueStart(t){ return t ? (t.inCue   || 0) : 0; }
+function cueEnd(t)  { return t ? (t.outCue  != null ? t.outCue  : pazDur()) : 0; }
+function cueNext(t) { return t ? (t.nextCue != null ? t.nextCue : cueEnd(t)) : 0; }
+function cueIntro(t){ return t ? (t.introCue!= null ? t.introCue : null) : null; }
+
+// ── Waveform HD plein fond ──
+function pazLoadWaveform(){
+  const t = pazT(); if(!t || !t.file) return;
+  if(t.file === _pazWvFile) return;
+  _pazWvFile = t.file;
+
+  const bg = document.getElementById('paz-bg'); if(!bg) return;
+  const W = bg.parentElement.offsetWidth  || 1200;
+  const H = bg.parentElement.offsetHeight || 160;
+  bg.width = W; bg.height = H;
+
+  if(WV_DATA_CACHE[t.file]){
+    _drawPazWv(bg, WV_DATA_CACHE[t.file]);
+  } else {
+    // Déclencher le décodage
+    drawWaveform(document.createElement('canvas'), t.file).then(()=>{
+      const el = document.getElementById('paz-bg'); if(!el) return;
+      el.width  = el.parentElement.offsetWidth  || 1200;
+      el.height = el.parentElement.offsetHeight || 160;
+      if(WV_DATA_CACHE[t.file]) _drawPazWv(el, WV_DATA_CACHE[t.file]);
+    });
+  }
 }
 
-// ── Cue accessors (utilise inCue/outCue + nextCue + introCue) ──
-function pazIn(t)    { return t ? (t.inCue   || 0) : 0; }
-function pazEnd(t)   { return t ? (t.outCue  !== null && t.outCue !== undefined ? t.outCue : (D[0].durs[D[0].ci]||0)) : 0; }
-function pazNext(t)  { return t ? (t.nextCue !== null && t.nextCue !== undefined ? t.nextCue : pazEnd(t)) : 0; }
-function pazIntro(t) { return t ? (t.introCue!== null && t.introCue!== undefined ? t.introCue : null) : null; }
+function _drawPazWv(canvas, data){
+  const W=canvas.width, H=canvas.height;
+  const ctx=canvas.getContext('2d');
+  // fond transparent
+  ctx.clearRect(0,0,W,H);
+  const step=Math.max(1,Math.floor(data.length/W));
 
-// ── État courant ──
-let _pazWvLoaded = null; // file URL pour lequel la waveform est chargée
+  // Zone remplie (silhouette)
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(0,180,230,0.10)');
+  grad.addColorStop(0.5,'rgba(0,210,250,0.22)');
+  grad.addColorStop(1,'rgba(0,180,230,0.10)');
+  ctx.fillStyle=grad;
+  ctx.beginPath(); ctx.moveTo(0,H/2);
+  for(let x=0;x<W;x++){
+    let mx=0;
+    for(let j=0;j<step;j++){const v=Math.abs(data[x*step+j]||0);if(v>mx)mx=v;}
+    ctx.lineTo(x,H/2-mx*(H/2)*.9);
+  }
+  for(let x=W-1;x>=0;x--){
+    let mx=0;
+    for(let j=0;j<step;j++){const v=Math.abs(data[x*step+j]||0);if(v>mx)mx=v;}
+    ctx.lineTo(x,H/2+mx*(H/2)*.9);
+  }
+  ctx.closePath(); ctx.fill();
 
-// ── Rendu complet ──
+  // Traits — blanc pour ressortir
+  ctx.strokeStyle='rgba(255,255,255,0.55)';
+  ctx.lineWidth=1;
+  for(let x=0;x<W;x++){
+    let mn=0,mx=0;
+    for(let j=0;j<step;j++){
+      const v=data[x*step+j]||0;
+      if(v<mn)mn=v; if(v>mx)mx=v;
+    }
+    const y1=Math.round((1-mx)/2*H);
+    const y2=Math.round((1-mn)/2*H);
+    if(y2>y1){ ctx.beginPath();ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);ctx.stroke(); }
+  }
+}
+
+// ── pazRender : appelé à chaque changement d'état ──
 function pazRender(){
-  const d    = D[0];
-  const t    = pazTrack();
-  const play = d.playing;
+  const d     = D[0];
+  const t     = pazT();
+  const play  = d.playing;
+  const dur   = pazDur();
 
-  // Titre
+  // ── Titre ──
   const titleEl = document.getElementById('paz-title');
   if(titleEl){
-    if(t && !t.isMacro){
-      titleEl.textContent = t.title;
-      titleEl.className   = play ? 'paz-title-live' : 'paz-title-idle';
-    } else {
-      titleEl.textContent = 'AUCUNE PISTE';
-      titleEl.className   = 'paz-title-idle';
-    }
+    titleEl.textContent = (t && !t.isMacro) ? t.title : 'AUCUNE PISTE';
+    titleEl.style.color = play ? '#ffffff' : 'var(--txt-dim)';
   }
 
-  // Horaire
-  const hrEl = document.getElementById('paz-horaire');
-  if(hrEl) hrEl.textContent = play ? nowClock() : '--:--:--';
+  // ── Heure de lancement (fixe dès le play) ──
+  const ltEl = document.getElementById('paz-launch-time');
+  if(ltEl) ltEl.textContent = _pazLaunchTime || '--:--:--';
 
-  // Cues label
+  // ── Cues label ──
   const cuesEl = document.getElementById('paz-cues');
   if(cuesEl && t){
-    const parts = [];
-    parts.push('START ' + fmtMs(pazIn(t)));
-    if(t.introCue != null) parts.push('INTRO ' + fmtMs(t.introCue));
-    parts.push('NEXT '  + fmtMs(pazNext(t)));
-    parts.push('END '   + fmtMs(pazEnd(t)));
+    const parts = ['START '+fmtMs(cueStart(t))];
+    if(t.introCue != null) parts.push('INTRO '+fmtMs(t.introCue));
+    parts.push('NEXT '+fmtMs(cueNext(t)));
+    parts.push('END ' +fmtMs(cueEnd(t)));
     cuesEl.textContent = parts.join('  ·  ');
-  } else if(cuesEl){ cuesEl.textContent = ''; }
+  } else if(cuesEl){ cuesEl.textContent=''; }
 
-  // Waveform fond
-  if(t && t.file && t.file !== _pazWvLoaded){
-    _pazWvLoaded = t.file;
-    const bg = document.getElementById('paz-bg');
-    if(bg){
-      bg.removeAttribute('width'); bg.removeAttribute('height');
-      bg.width  = bg.parentElement.offsetWidth  || 1200;
-      bg.height = bg.parentElement.offsetHeight || 130;
-      if(WV_DATA_CACHE[t.file]){
-        drawWaveformBg(bg, WV_DATA_CACHE[t.file]);
-      } else {
-        drawWaveform(document.createElement('canvas'), t.file).then(()=>{
-          const bgEl = document.getElementById('paz-bg'); if(!bgEl) return;
-          bgEl.width  = bgEl.parentElement.offsetWidth  || 1200;
-          bgEl.height = bgEl.parentElement.offsetHeight || 130;
-          if(WV_DATA_CACHE[t.file]) drawWaveformBg(bgEl, WV_DATA_CACHE[t.file]);
-        });
-      }
-    }
-  }
-  if(!t) _pazWvLoaded = null;
+  // ── Waveform HD ──
+  pazLoadWaveform();
 
-  // Marqueurs NEXT et INTRO sur la waveform
+  // ── Marqueurs sur la waveform (traits) ──
   pazUpdateMarkers();
 
-  // Liste
+  // ── Liste des pistes ──
   pazRenderList();
+
+  // ── Éditeur de points ──
+  if(_cueEditorOpen) pazUpdateCueEditor();
 }
 
+// ── pazTick : 80ms — progression rouge + jaune + playhead + décompte ──
+function pazTick(){
+  const d = D[0];
+  const t = pazT();
+
+  if(!d.playing || !t){
+    // Reset visuel
+    const redEl  = document.getElementById('paz-red');
+    const yelEl  = document.getElementById('paz-yellow');
+    const phEl   = document.getElementById('paz-playhead');
+    const cdEl   = document.getElementById('paz-cd');
+    const titleEl= document.getElementById('paz-title');
+    if(redEl)   redEl.style.transform='scaleX(0)';
+    if(yelEl)   yelEl.style.width='0';
+    if(phEl)    phEl.style.display='none';
+    if(cdEl){   cdEl.textContent='--:--'; cdEl.style.color='var(--cyan)'; }
+    if(titleEl) titleEl.style.color='var(--txt-dim)';
+    return;
+  }
+
+  const pos   = pazPos();
+  const dur   = pazDur();
+  const inT   = cueStart(t);
+  const endT  = cueEnd(t);
+  const nextT = cueNext(t);
+  const introT= cueIntro(t);
+
+  if(dur <= 0) return;
+
+  // ── SURLIGNAGE ROUGE : de START jusqu'à la position courante (progression) ──
+  // La zone rouge couvre [inT → pos], soit un ratio de [inT/dur → pos/dur]
+  const redEl = document.getElementById('paz-red');
+  if(redEl){
+    // left = inT/dur %, width = (pos-inT)/dur %
+    const leftPct  = (inT  / dur * 100).toFixed(2);
+    const widthPct = (Math.max(0, pos - inT) / dur * 100).toFixed(2);
+    redEl.style.left      = leftPct + '%';
+    redEl.style.width     = widthPct + '%';
+    redEl.style.transform = 'none'; // on passe à left/width, pas scaleX
+  }
+
+  // ── SURLIGNAGE JAUNE : de START jusqu'à INTRO (si défini et si on est encore dans la phase intro) ──
+  const yelEl = document.getElementById('paz-yellow');
+  if(yelEl){
+    if(introT != null && pos < introT){
+      // Phase INTRO active : jaune couvre [inT → introT] en totalité (statique)
+      const leftPct  = (inT   / dur * 100).toFixed(2);
+      const widthPct = ((introT - inT) / dur * 100).toFixed(2);
+      yelEl.style.left    = leftPct + '%';
+      yelEl.style.width   = widthPct + '%';
+      yelEl.style.display = 'block';
+    } else {
+      yelEl.style.display = 'none';
+    }
+  }
+
+  // ── Couleur du titre ──
+  const titleEl = document.getElementById('paz-title');
+  if(titleEl){
+    if(introT != null && pos < introT) titleEl.style.color = '#f5c400'; // jaune pendant intro
+    else                               titleEl.style.color = '#ffffff'; // blanc/rouge sinon
+  }
+
+  // ── Playhead (ligne blanche) ──
+  const phEl = document.getElementById('paz-playhead');
+  if(phEl){
+    phEl.style.display = 'block';
+    phEl.style.left    = (pos / dur * 100).toFixed(2) + '%';
+  }
+
+  // ── Décompte NEXT ──
+  const cdEl  = document.getElementById('paz-cd');
+  const lblEl = document.getElementById('paz-cd-lbl');
+  if(cdEl){
+    const isIntro = (introT != null && pos < introT);
+    if(isIntro){
+      const remIntro = Math.max(0, introT - pos);
+      cdEl.textContent = fmtFull(remIntro);
+      cdEl.style.color = '#f5c400';
+      if(lblEl) lblEl.textContent = 'INTRO';
+    } else {
+      const remNext = Math.max(0, nextT - pos);
+      cdEl.textContent = fmtFull(remNext);
+      cdEl.style.color = remNext < 10 ? '#e03020' : remNext < 30 ? '#f5c400' : '#ff4040';
+      if(lblEl) lblEl.textContent = 'NEXT';
+    }
+  }
+
+  // ── Mise à jour décompte dans la liste (ligne active) ──
+  const ci = d.ci;
+  const cdRow = document.getElementById('pr-cd-active');
+  if(cdRow){
+    const remNext = Math.max(0, nextT - pos);
+    cdRow.textContent = fmtFull(remNext);
+  }
+  // Progression rouge sur la ligne active dans la liste
+  const activeRow = document.getElementById('pr-active');
+  if(activeRow){
+    const span = (nextT - inT) || 1;
+    const ratio = Math.min(1, Math.max(0, (pos - inT) / span));
+    activeRow.style.setProperty('--prog', ratio.toFixed(4));
+  }
+}
+
+// ── Marqueurs NEXT et INTRO sur la waveform ──
 function pazUpdateMarkers(){
-  const t   = pazTrack();
+  const t   = pazT();
   const dur = pazDur();
   const nm  = document.getElementById('paz-next-marker');
   const im  = document.getElementById('paz-intro-marker');
-  if(!t || dur <= 0){ if(nm) nm.style.display='none'; if(im) im.style.display='none'; return; }
 
-  const nextT  = pazNext(t);
-  const introT = pazIntro(t);
-
+  if(!t || dur <= 0){
+    if(nm) nm.style.display='none';
+    if(im) im.style.display='none';
+    return;
+  }
   if(nm){
-    const pct = (nextT / dur * 100).toFixed(2);
-    nm.style.left    = pct + '%';
+    nm.style.left    = (cueNext(t)/dur*100).toFixed(2)+'%';
     nm.style.display = 'block';
   }
   if(im){
+    const introT = cueIntro(t);
     if(introT != null){
-      const pct = (introT / dur * 100).toFixed(2);
-      im.style.left    = pct + '%';
+      im.style.left    = (introT/dur*100).toFixed(2)+'%';
       im.style.display = 'block';
     } else {
       im.style.display = 'none';
@@ -2410,96 +2544,11 @@ function pazUpdateMarkers(){
   }
 }
 
-// ── Tick (80ms) : timecodes + progress + playhead + intro logic ──
-function pazTick(){
-  const d = D[0];
-  if(!d.playing || !pazTrack()){
-    // État idle
-    const elEl = document.getElementById('paz-elapsed');
-    const cdEl = document.getElementById('paz-cd');
-    const lbl  = document.getElementById('paz-cd-lbl');
-    if(elEl){ elEl.textContent = '--:--:--'; elEl.className = 'paz-elapsed-idle'; }
-    if(cdEl){ cdEl.textContent = '--:--:--'; cdEl.className = 'paz-cd-idle'; }
-    const ph = document.getElementById('paz-playhead'); if(ph) ph.style.display='none';
-    const prog = document.getElementById('paz-prog'); if(prog) prog.style.transform='scaleX(0)';
-    return;
-  }
-
-  const t   = pazTrack();
-  const pos = pazPos();
-  const dur = pazDur();
-  const inT   = pazIn(t);
-  const endT  = pazEnd(t);
-  const nextT = pazNext(t);
-  const introT= pazIntro(t);
-  const elapsed = Math.max(0, pos - inT);
-  const remNext = Math.max(0, nextT - pos);
-  const isIntro = (introT != null && pos >= inT && pos < introT);
-
-  // Elapsed (col gauche)
-  const elEl = document.getElementById('paz-elapsed');
-  if(elEl){ elEl.textContent = fmtFull(elapsed); elEl.className = 'paz-elapsed-live'; }
-
-  // Décompte (col droite)
-  const cdEl = document.getElementById('paz-cd');
-  const lbl  = document.getElementById('paz-cd-lbl');
-  if(cdEl){
-    if(isIntro){
-      // Phase intro → compte de inT → introT
-      const remIntro = Math.max(0, introT - pos);
-      cdEl.textContent = fmtFull(remIntro);
-      cdEl.className   = 'paz-cd-intro';
-      if(lbl) lbl.textContent = 'INTRO';
-    } else {
-      // Normal → compte jusqu'à NEXT
-      cdEl.textContent = fmtFull(remNext);
-      if(remNext < 10)       cdEl.className = 'paz-cd-urgent';
-      else if(remNext < 30)  cdEl.className = 'paz-cd-warn';
-      else                   cdEl.className = 'paz-cd-live';
-      if(lbl) lbl.textContent = 'NEXT';
-    }
-  }
-
-  // Titre couleur : jaune pendant intro, rouge sinon
-  const titleEl = document.getElementById('paz-title');
-  if(titleEl){
-    if(isIntro)       titleEl.className = 'paz-title-intro';
-    else              titleEl.className = 'paz-title-live';
-  }
-
-  // Playhead
-  const ph = document.getElementById('paz-playhead');
-  if(ph && dur > 0){
-    ph.style.display = 'block';
-    ph.style.left    = (pos / dur * 100).toFixed(2) + '%';
-  }
-
-  // Progression rouge (inT → nextT)
-  const prog = document.getElementById('paz-prog');
-  if(prog && (nextT - inT) > 0){
-    const ratio = Math.min(1, Math.max(0, (pos - inT) / (nextT - inT)));
-    prog.style.transform = 'scaleX(' + ratio.toFixed(4) + ')';
-  }
-
-  // Update row courante dans la liste (si elle est visible)
-  const activeRow = document.getElementById('pr-active');
-  if(activeRow && (nextT - inT) > 0){
-    const ratio = Math.min(1, Math.max(0, (pos - inT) / (nextT - inT)));
-    activeRow.style.setProperty('--prog', ratio.toFixed(4));
-  }
-
-  // Horaire (mise à jour temps réel)
-  const hrEl = document.getElementById('paz-horaire');
-  if(hrEl) hrEl.textContent = nowClock();
-}
-
-// ── Rendu de la liste ──
+// ── Liste des pistes ──
 function pazRenderList(){
   const d    = D[0];
   const list = document.getElementById('paz-list'); if(!list) return;
-  const ci   = d.ci;
-
-  const now = new Date(); let cur = new Date(now);
+  const now  = new Date(); let cur = new Date(now);
   const starts = d.tracks.map((_,i)=>{
     const ts = new Date(cur);
     cur = new Date(cur.getTime() + d._playDur(i)*1000);
@@ -2507,17 +2556,16 @@ function pazRenderList(){
   });
 
   list.innerHTML = '';
-  d.tracks.forEach((t, i)=>{
-    const isActive = i === ci && d.playing;
-    const isNext   = i === ci + (d.playing ? 1 : 0) && !isActive;
+  d.tracks.forEach((t,i)=>{
+    const isActive = i===d.ci && d.playing;
+    const isNext   = i===d.ci+(d.playing?1:0) && !isActive;
     const st       = starts[i];
     const hhmm     = fmt2(st.getHours())+':'+fmt2(st.getMinutes())+':'+fmt2(st.getSeconds());
-    const rem      = d._playDur(i);
 
     const row = document.createElement('div');
-    row.className = 'pr' + (isActive ? ' is-active' : isNext ? ' is-next' : '') + (t.isMacro ? ' is-macro' : '');
+    row.className = 'pr'+(isActive?' is-active':isNext?' is-next':'')+(t.isMacro?' is-macro':'');
     if(isActive) row.id = 'pr-active';
-    row.onclick = ()=> d.jumpTo(i);
+    row.onclick = ()=>d.jumpTo(i);
 
     if(t.isMacro){
       row.innerHTML = `
@@ -2529,14 +2577,16 @@ function pazRenderList(){
         <div class="pr-bar" style="background:#6a5a00"></div>
         <button class="pr-del" onclick="event.stopPropagation();diffRemoveTrack(0,${i})">✕</button>`;
     } else {
-      const cdTxt = isActive ? `<span id="pr-cd-${i}">${fmtFull(rem)}</span>` : fmtFull(rem);
-      const cdCol = isActive ? 'style="color:#ff4040"' : '';
+      const durTxt = fmtFull(d.durs[i]||0);
+      const cdTxt  = fmtFull(d._playDur(i));
+      const cdId   = isActive ? 'id="pr-cd-active"' : '';
+      const cdColor= isActive ? 'color:#ff4040' : '';
       row.innerHTML = `
-        <div class="pr-num">${isActive ? '▶' : (i+1)}</div>
+        <div class="pr-num">${isActive?'▶':(i+1)}</div>
         <div class="pr-time">${hhmm}</div>
         <div class="pr-title" title="${t.title}">${t.title}</div>
-        <div class="pr-dur">${fmtFull(d.durs[i]||0)}</div>
-        <div class="pr-cd" ${cdCol}>${cdTxt}</div>
+        <div class="pr-dur">${durTxt}</div>
+        <div class="pr-cd" ${cdId} style="${cdColor}">${cdTxt}</div>
         <div class="pr-bar" style="background:${t.color}"></div>
         <button class="pr-del" onclick="event.stopPropagation();diffRemoveTrack(0,${i})">✕</button>`;
     }
@@ -2544,94 +2594,84 @@ function pazRenderList(){
   });
 
   if(!d.tracks.length){
-    list.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);letter-spacing:2px;padding:2rem;text-align:center;">— Glisse des fichiers audio ci-dessus —</div>';
+    list.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);letter-spacing:2px;padding:2rem;text-align:center;">— Glisse des fichiers audio ci-dessus —</div>';
   }
 }
 
 // ── Éditeur de points ──
-let _cueEditorOpen = false;
 function toggleCueEditor(){
   _cueEditorOpen = !_cueEditorOpen;
-  const el = document.getElementById('cue-editor');
-  if(el) el.style.display = _cueEditorOpen ? 'block' : 'none';
+  const el  = document.getElementById('cue-editor');
   const btn = document.getElementById('cue-editor-btn');
-  if(btn){
-    btn.style.borderColor = _cueEditorOpen ? '#9b6de5' : '#3a3060';
-    btn.style.color       = _cueEditorOpen ? '#9b6de5' : '#8070c0';
-  }
+  if(el) el.style.display = _cueEditorOpen ? 'block' : 'none';
+  if(btn){ btn.style.borderColor=_cueEditorOpen?'#9b6de5':'#3a3060'; btn.style.color=_cueEditorOpen?'#9b6de5':'#8070c0'; }
   if(_cueEditorOpen) pazUpdateCueEditor();
 }
 
 function pazUpdateCueEditor(){
-  const t = pazTrack();
-  const dur = pazDur();
-  const s = document.getElementById('cue-start-val');
-  const e = document.getElementById('cue-end-val');
-  const n = document.getElementById('cue-next-val');
-  const ii= document.getElementById('cue-intro-val');
-  if(s)  s.textContent  = t ? fmtMs(pazIn(t))    : '—';
-  if(e)  e.textContent  = t ? fmtMs(pazEnd(t))   : '—';
-  if(n)  n.textContent  = t ? fmtMs(pazNext(t))  : '—';
-  if(ii) ii.textContent = t ? (t.introCue != null ? fmtMs(t.introCue) : '—') : '—';
+  const t = pazT();
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('cue-start-val', t ? fmtMs(cueStart(t))                    : '—');
+  set('cue-end-val',   t ? fmtMs(cueEnd(t))                      : '—');
+  set('cue-next-val',  t ? fmtMs(cueNext(t))                     : '—');
+  set('cue-intro-val', t ? (t.introCue!=null?fmtMs(t.introCue):'—') : '—');
 }
 
 function setCueNow(type){
-  const t = pazTrack(); if(!t) return;
-  const pos = pazPos();
-  if(type === 'start')  { t.inCue    = pos; }
-  if(type === 'end')    { t.outCue   = pos; }
-  if(type === 'next')   { t.nextCue  = pos; }
-  if(type === 'intro')  { t.introCue = pos; }
-  pazUpdateCueEditor();
-  pazUpdateMarkers();
-  pazRenderList(); // met à jour les infos de cues dans la liste
+  const t=pazT(); if(!t) return;
+  const pos=pazPos();
+  if(type==='start') t.inCue    = pos;
+  if(type==='end')   t.outCue   = pos;
+  if(type==='next')  t.nextCue  = pos;
+  if(type==='intro') t.introCue = pos;
+  pazUpdateCueEditor(); pazUpdateMarkers();
 }
 
 function resetCue(type){
-  const t = pazTrack(); if(!t) return;
-  const dur = pazDur();
-  if(type === 'start') { t.inCue    = 0; }
-  if(type === 'end')   { t.outCue   = dur || null; }
-  if(type === 'next')  { t.nextCue  = null; }
-  if(type === 'intro') { t.introCue = null; }
-  pazUpdateCueEditor();
-  pazUpdateMarkers();
+  const t=pazT(); if(!t) return;
+  const dur=pazDur();
+  if(type==='start') t.inCue    = 0;
+  if(type==='end')   t.outCue   = dur || null;
+  if(type==='next')  t.nextCue  = null;
+  if(type==='intro') t.introCue = null;
+  pazUpdateCueEditor(); pazUpdateMarkers();
 }
 
-// ── Patch render() pour appeler pazRender ──
+// ── Patch _outOf : NEXT comme point d'enchaînement ──
+const _origOutOf0 = D[0]._outOf.bind(D[0]);
+D[0]._outOf = function(i){
+  const t=this.tracks[i]; if(!t) return 0;
+  if(t.nextCue != null) return t.nextCue;
+  return _origOutOf0(i);
+};
+
+// ── Patch _startTrack : mémoriser heure de lancement ──
+const _origStart0 = D[0]._startTrack.bind(D[0]);
+D[0]._startTrack = function(i){
+  _pazWvFile = null; // forcer rechargement waveform
+  _pazLaunchTime = nowClock();
+  const ltEl = document.getElementById('paz-launch-time');
+  if(ltEl) ltEl.textContent = _pazLaunchTime;
+  _origStart0(i);
+};
+
+// ── Patch render() ──
 const _origRender0 = D[0].render.bind(D[0]);
-D[0].render = function(){ _origRender0(); pazRender(); if(_cueEditorOpen) pazUpdateCueEditor(); };
+D[0].render = function(){ _origRender0(); pazRender(); };
 
 // ── nextTrackForced ──
 D[0].nextTrackForced = function(){
   if(!this.tracks.length) return;
-  _pazWvLoaded = null; // forcer rechargement waveform
-  if(this.playing){ this.stopAll(); this.ci = Math.min(this.ci+1, this.tracks.length-1); this.togglePlay(); }
-  else             { this.ci = Math.min(this.ci+1, this.tracks.length-1); this.render(); }
-};
-
-// ── Patch _outOf pour utiliser nextCue comme point d'enchaînement ──
-const _origOutOf0 = D[0]._outOf.bind(D[0]);
-D[0]._outOf = function(i){
-  const t = this.tracks[i]; if(!t) return 0;
-  // nextCue = point d'enchaînement (NEXT) si défini, sinon outCue (END)
-  if(t.nextCue != null && t.nextCue !== undefined) return t.nextCue;
-  return _origOutOf0(i);
-};
-
-// ── Patch _startTrack : réinitialiser waveform au changement de piste ──
-const _origStart0 = D[0]._startTrack.bind(D[0]);
-D[0]._startTrack = function(i){
-  _pazWvLoaded = null; // force rechargement waveform fond
-  _origStart0(i);
+  _pazWvFile = null;
+  if(this.playing){ this.stopAll(); this.ci=Math.min(this.ci+1,this.tracks.length-1); this.togglePlay(); }
+  else             { this.ci=Math.min(this.ci+1,this.tracks.length-1); this.render(); }
 };
 
 // ── Init ──
-setTimeout(()=>{ pazRender(); }, 150);
-
-// ── Brancher pazTick dans le setInterval global ──
+setTimeout(()=>{ pazRender(); }, 200);
 
 
+// ══════════════════════════════════════════════════════════════
 // Supprimer une piste d'un diffuseur
 function diffRemoveTrack(diffIdx, trackIdx){
   const d=D[diffIdx];
