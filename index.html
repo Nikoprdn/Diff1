@@ -17,9 +17,8 @@
     --yellow:#f5c400; --orange:#f07800; --red:#e03020;
     --txt:#ddeeff; --txt-dim:#5a7090; --txt-mute:#3a5070;
   }
-  html,body{background:var(--bg)!important;margin:0;}
-html{height:100%;overflow:hidden;}
-body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  html{height:100%;overflow:hidden;background:var(--bg)!important;}
+body{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)!important;margin:0;}
   .navbar.is-console{background:var(--s1);border-bottom:1px solid var(--border);}
   .navbar-brand .navbar-item{font-family:var(--display);font-size:20px;font-weight:700;color:var(--cyan);letter-spacing:2px;}
   .navbar-end .navbar-item{font-family:var(--mono);font-size:11px;color:var(--txt-dim);}
@@ -472,8 +471,8 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
   }
   .tab-btn:hover { color:var(--txt-dim); }
   .tab-btn.active { color:var(--cyan); border-bottom-color:var(--cyan); }
-  .tab-panel { display:none; }
-  .tab-panel.active { display:flex;flex-direction:column;flex:1;min-height:0; }
+  .tab-panel{display:none;}
+  .tab-panel.active{display:flex;flex-direction:column;flex:1;min-height:0;}
 
   /* ── Module Rendez-vous ── */
   .rdv-section {
@@ -1017,27 +1016,9 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
   .mod-journal-line.reprise  .mod-journal-txt{color:#00d96a;}
   .mod-journal-line .mod-journal-time{color:#3a5070;font-size:9px;flex-shrink:0;}
 
-
-  /* ══ LISTE playlist rows ══ */
-  .pr{display:flex;align-items:center;height:52px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .08s;position:relative;overflow:hidden;}
-  .pr:hover{background:#0e1830;}
-  .pr.is-next{background:#071408;border-left:3px solid var(--green-dk);}
-  .pr.is-macro{border-left:3px solid var(--yellow);background:#080a00;}
-  .pr.is-active{background:#0e0408;border-left:3px solid var(--red);}
-  .pr.is-active::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(160,8,8,.7),rgba(80,3,3,.5));transform-origin:left;transform:scaleX(var(--prog,0));transition:transform .1s linear;z-index:0;}
-  .pr>*{position:relative;z-index:1;}
-  .pr-num{width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;color:var(--txt-mute);text-align:center;}
-  .pr-time{width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);letter-spacing:1px;}
-  .pr-title{flex:1;font-family:var(--display);font-size:17px;font-weight:700;color:var(--txt);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
-  .pr-dur{width:70px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;}
-  .pr-cd{width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;color:#7a9ab8;text-align:right;padding-right:14px;}
-  .pr-bar{width:5px;flex-shrink:0;align-self:stretch;}
-  .pr-del{width:32px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;transition:color .1s;}
+  /* ── Liste PR rows ── */
+  .pr-del{background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;transition:color .1s;}
   .pr-del:hover{color:var(--red);}
-  .pr.is-next .pr-num{color:var(--green);}
-  .pr.is-next .pr-title{color:#40d870;}
-  .pr.is-next .pr-cd{color:#40d870;}
-  .pr.is-macro .pr-title{color:var(--yellow);font-size:14px;}
 
 </style>
 </head>
@@ -1212,8 +1193,6 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 <div id="tab-diffusion" class="tab-panel active" style="flex:1;display:flex;flex-direction:column;min-height:0;">
 <section class="section is-console" style="padding:0;">
 
-
-
 <div class="card is-dark-card">
   <div class="card-header diff-card-header" id="diff-header-0" style="display:flex;align-items:stretch">
     <div style="display:flex;align-items:center;padding:0 1rem;border-right:1px solid #1e3060">
@@ -1237,7 +1216,6 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
       <button class="button is-dark is-small" onclick="D[0].prevTrack()">|◀</button>
       <button class="button is-dark is-small" onclick="D[0].nextTrack()">▶|</button>
       <button class="button is-auto is-small" id="auto-btn-0" onclick="D[0].toggleAuto()">AUTO</button>
-      <button class="button is-dark is-small" onclick="toggleCueEditor()" id="cue-editor-btn" style="border-color:#3a3060;color:#8070c0;font-size:10px!important;letter-spacing:1px!important;">✦ POINTS</button>
       <div class="macro-dropdown-wrap">
         <button class="macro-dropdown-btn" id="mdrop-btn-0" onclick="toggleMacroMenu(0)">⚡ MACRO ▾</button>
         <div class="macro-dropdown-menu" id="mdrop-menu-0">
@@ -1261,149 +1239,90 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
   <progress class="progress is-elapsed" id="c1-progress" value="0" max="100"></progress>
 
   <div class="card-content">
-    <!-- ══ PLAYER ZONE ══ -->
-    <div id="paz" style="display:flex;align-items:stretch;height:160px;position:relative;overflow:hidden;flex-shrink:0;border-bottom:2px solid var(--border);background:#04060c;">
 
-      <!-- ── COUCHES DE FOND (z-index 0→3) ── -->
-
-      <!-- Waveform HD (canvas plein fond) -->
-      <canvas id="paz-bg" style="position:absolute;inset:0;pointer-events:none;z-index:0;display:block;"></canvas>
-
-      <!-- Surlignage ROUGE : progression de START → END -->
-      <div id="paz-red" style="position:absolute;top:0;bottom:0;left:0;width:0;z-index:1;background:linear-gradient(90deg,rgba(180,10,10,.72) 0%,rgba(100,5,5,.55) 100%);pointer-events:none;transition:width .08s linear,left .08s linear;"></div>
-
-      <!-- Surlignage JAUNE : zone INTRO (de START jusqu'à INTRO) — par-dessus le rouge -->
-      <div id="paz-yellow" style="position:absolute;top:0;bottom:0;z-index:2;background:linear-gradient(90deg,rgba(200,160,0,.65) 0%,rgba(140,110,0,.45) 100%);pointer-events:none;display:none;left:0;width:0;"></div>
-
-      <!-- Playhead blanc fin -->
-      <div id="paz-playhead" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.7);z-index:3;display:none;pointer-events:none;box-shadow:0 0 6px rgba(255,255,255,.4);"></div>
-
-      <!-- Marqueur NEXT (trait vert + label) -->
-      <div id="paz-next-marker" style="position:absolute;top:0;bottom:0;width:2px;background:#00d96a;z-index:4;display:none;pointer-events:none;">
+    <!-- ══ ZONE ACTIVE ══ -->
+    <div id="paz" style="position:relative;height:150px;flex-shrink:0;overflow:hidden;border-bottom:2px solid var(--border);background:#03050e;">
+      <!-- Waveform fond HD -->
+      <canvas id="paz-bg" style="position:absolute;inset:0;display:block;pointer-events:none;z-index:0;"></canvas>
+      <!-- Progression rouge START→pos -->
+      <div id="paz-red" style="position:absolute;top:0;bottom:0;left:0;width:0;z-index:1;background:linear-gradient(90deg,rgba(160,8,8,.72),rgba(80,3,3,.5));pointer-events:none;"></div>
+      <!-- Zone jaune START→INTRO (fixe) -->
+      <div id="paz-yellow" style="position:absolute;top:0;bottom:0;left:0;width:0;z-index:2;background:linear-gradient(90deg,rgba(190,148,0,.55),rgba(120,90,0,.35));pointer-events:none;display:none;"></div>
+      <!-- Playhead -->
+      <div id="paz-ph" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,200,.8);z-index:5;display:none;pointer-events:none;"></div>
+      <!-- Marqueur NEXT -->
+      <div id="paz-mn" style="position:absolute;top:0;bottom:0;width:2px;background:#00d96a;z-index:4;display:none;pointer-events:none;">
         <span style="position:absolute;bottom:4px;left:4px;font-family:var(--mono);font-size:8px;color:#00d96a;background:rgba(0,0,0,.8);padding:1px 4px;border-radius:2px;white-space:nowrap;">NEXT</span>
       </div>
-
-      <!-- Marqueur INTRO (trait jaune + label) -->
-      <div id="paz-intro-marker" style="position:absolute;top:0;bottom:0;width:2px;background:#f5c400;z-index:4;display:none;pointer-events:none;">
-        <span style="position:absolute;bottom:4px;left:4px;font-family:var(--mono);font-size:8px;color:#f5c400;background:rgba(0,0,0,.8);padding:1px 4px;border-radius:2px;white-space:nowrap;">INTRO</span>
+      <!-- Marqueur INTRO -->
+      <div id="paz-mi" style="position:absolute;top:0;bottom:0;width:2px;background:#f5c400;z-index:4;display:none;pointer-events:none;">
+        <span style="position:absolute;bottom:18px;left:4px;font-family:var(--mono);font-size:8px;color:#f5c400;background:rgba(0,0,0,.8);padding:1px 4px;border-radius:2px;white-space:nowrap;">INTRO</span>
+      </div>
+      <!-- Mini barre de zoom -->
+      <div id="paz-zoom-bar" style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.06);display:none;z-index:6;">
+        <div id="paz-zoom-pos" style="position:absolute;height:100%;background:rgba(0,212,240,.4);"></div>
       </div>
 
-      <!-- ── COLONNES (z-index 5) ── -->
-
-      <!-- COL GAUCHE : heure de lancement -->
-      <div style="width:120px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid rgba(255,255,255,.08);padding:0 10px;position:relative;z-index:5;">
-        <span style="font-family:var(--mono);font-size:10px;color:rgba(0,212,240,.5);letter-spacing:2px;text-transform:uppercase;">LANCÉ À</span>
-        <span id="paz-launch-time" style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--cyan);letter-spacing:3px;line-height:1;text-shadow:0 0 20px rgba(0,212,240,.4);">--:--:--</span>
+      <!-- Colonne gauche : heure lancement -->
+      <div style="position:absolute;top:0;bottom:0;left:0;width:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid rgba(255,255,255,.07);padding:0 8px;z-index:6;">
+        <span style="font-family:var(--mono);font-size:9px;color:rgba(0,212,240,.45);letter-spacing:2px;text-transform:uppercase;">LANCÉ À</span>
+        <span id="paz-launch" style="font-family:var(--mono);font-size:26px;font-weight:700;color:var(--cyan);letter-spacing:2px;line-height:1;">--:--:--</span>
       </div>
 
-      <!-- COL CENTRE : titre en grand -->
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 20px;gap:6px;position:relative;z-index:5;min-width:0;overflow:hidden;">
-        <div id="paz-title" style="font-family:var(--display);font-size:36px;font-weight:700;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 20px rgba(0,0,0,.95);transition:color .15s;color:var(--txt-dim);">AUCUNE PISTE</div>
-        <div id="paz-cues" style="font-family:var(--mono);font-size:9px;color:rgba(0,212,240,.5);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <!-- Centre : titre + cues -->
+      <div style="position:absolute;top:0;bottom:0;left:110px;right:160px;display:flex;flex-direction:column;justify-content:center;padding:12px 18px;gap:6px;z-index:6;overflow:hidden;">
+        <div id="paz-title" style="font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 18px rgba(0,0,0,.95);color:rgba(180,200,230,.55);transition:color .2s;">AUCUNE PISTE</div>
+        <div id="paz-cues" style="font-family:var(--mono);font-size:9px;color:rgba(0,212,240,.45);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
       </div>
 
-      <!-- COL DROITE : décompte NEXT séparé du bouton -->
-      <div style="width:150px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-left:1px solid rgba(255,255,255,.08);padding:0 14px;position:relative;z-index:5;">
-        <span id="paz-cd-lbl" style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;">NEXT</span>
-        <span id="paz-cd" style="font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:2px;line-height:1;color:var(--cyan);text-shadow:0 0 16px rgba(0,212,240,.3);">--:--</span>
-      </div>
-
-      <!-- Bouton NEXT séparé en bas à droite -->
-      <div style="position:absolute;bottom:8px;right:10px;z-index:6;display:flex;gap:6px;">
-        <button onclick="openEditModal()" title="Éditer les points"
-          style="background:rgba(30,20,60,.7);border:1px solid rgba(130,90,220,.5);border-radius:3px;color:#9b6de5;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .12s;"
-          onmouseover="this.style.borderColor='#9b6de5';this.style.background='rgba(50,20,80,.8)'"
-          onmouseout="this.style.borderColor='rgba(130,90,220,.5)';this.style.background='rgba(30,20,60,.7)'">✦ EDIT</button>
-        <button id="paz-auto-next-btn" onclick="pazToggleAutoNext()" title="Activer/désactiver l'enchaînement automatique"
-          style="background:rgba(0,0,0,.5);border:1px solid rgba(60,60,80,.6);border-radius:3px;color:#4a5070;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .12s;">⛓ AUTO</button>
-      </div>
-    </div>
-
-    <!-- ══ ÉDITEUR DE POINTS ══ -->
-    <div id="cue-editor" style="display:none;flex-shrink:0;background:#040810;border-bottom:1px solid var(--border);padding:8px 14px;">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:2px;margin-right:4px;">POINTS</span>
-        <!-- START -->
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#00d4f0;flex-shrink:0;"></div>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--cyan);letter-spacing:1px;">START</span>
-          <span id="cue-start-val" style="font-family:var(--mono);font-size:11px;color:var(--cyan);min-width:52px;text-align:center;background:#030810;border:1px solid #1a3060;border-radius:2px;padding:2px 6px;">0.000</span>
-          <button onclick="setCueNow('start')" style="font-family:var(--mono);font-size:9px;padding:2px 7px;background:transparent;border:1px solid #1a3060;border-radius:2px;color:var(--cyan);cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='#1a3060'">▶ ICI</button>
-          <button onclick="resetCue('start')" style="font-family:var(--mono);font-size:8px;padding:2px 5px;background:transparent;border:1px solid #1a2040;border-radius:2px;color:var(--txt-mute);cursor:pointer;" title="Reset">↺</button>
-        </div>
-        <div style="width:1px;height:20px;background:var(--border);"></div>
-        <!-- END -->
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#e03020;flex-shrink:0;"></div>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:1px;">END</span>
-          <span id="cue-end-val" style="font-family:var(--mono);font-size:11px;color:var(--red);min-width:52px;text-align:center;background:#030810;border:1px solid #3a1010;border-radius:2px;padding:2px 6px;">—</span>
-          <button onclick="setCueNow('end')" style="font-family:var(--mono);font-size:9px;padding:2px 7px;background:transparent;border:1px solid #3a1010;border-radius:2px;color:var(--red);cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='#3a1010'">▶ ICI</button>
-          <button onclick="resetCue('end')" style="font-family:var(--mono);font-size:8px;padding:2px 5px;background:transparent;border:1px solid #1a2040;border-radius:2px;color:var(--txt-mute);cursor:pointer;" title="Reset">↺</button>
-        </div>
-        <div style="width:1px;height:20px;background:var(--border);"></div>
-        <!-- NEXT -->
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#00d96a;flex-shrink:0;"></div>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:1px;">NEXT</span>
-          <span id="cue-next-val" style="font-family:var(--mono);font-size:11px;color:var(--green);min-width:52px;text-align:center;background:#030810;border:1px solid #004a20;border-radius:2px;padding:2px 6px;">—</span>
-          <button onclick="setCueNow('next')" style="font-family:var(--mono);font-size:9px;padding:2px 7px;background:transparent;border:1px solid #004a20;border-radius:2px;color:var(--green);cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='#004a20'">▶ ICI</button>
-          <button onclick="resetCue('next')" style="font-family:var(--mono);font-size:8px;padding:2px 5px;background:transparent;border:1px solid #1a2040;border-radius:2px;color:var(--txt-mute);cursor:pointer;" title="Reset">↺</button>
-        </div>
-        <div style="width:1px;height:20px;background:var(--border);"></div>
-        <!-- INTRO -->
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#f5c400;flex-shrink:0;"></div>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--yellow);letter-spacing:1px;">INTRO</span>
-          <span id="cue-intro-val" style="font-family:var(--mono);font-size:11px;color:var(--yellow);min-width:52px;text-align:center;background:#030810;border:1px solid #3a3000;border-radius:2px;padding:2px 6px;">—</span>
-          <button onclick="setCueNow('intro')" style="font-family:var(--mono);font-size:9px;padding:2px 7px;background:transparent;border:1px solid #3a3000;border-radius:2px;color:var(--yellow);cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='var(--yellow)'" onmouseout="this.style.borderColor='#3a3000'">▶ ICI</button>
-          <button onclick="resetCue('intro')" style="font-family:var(--mono);font-size:8px;padding:2px 5px;background:transparent;border:1px solid #1a2040;border-radius:2px;color:var(--txt-mute);cursor:pointer;" title="Reset">↺</button>
-        </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-          <button onclick="toggleCueEditor()" style="font-family:var(--mono);font-size:9px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--txt-mute);cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt-mute)'">✕ FERMER</button>
+      <!-- Colonne droite : décompte + boutons -->
+      <div style="position:absolute;top:0;bottom:0;right:0;width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-left:1px solid rgba(255,255,255,.07);padding:0 12px;z-index:6;">
+        <span id="paz-cd-lbl" style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;">NEXT</span>
+        <span id="paz-cd" style="font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:2px;line-height:1;color:var(--cyan);">--:--</span>
+        <div style="display:flex;gap:6px;margin-top:2px;">
+          <button id="paz-auto-btn" onclick="pazToggleAuto()" title="Activer/désactiver enchaînement"
+            style="background:rgba(0,0,0,.4);border:1px solid rgba(60,60,80,.5);border-radius:2px;color:#3a4050;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;transition:all .15s;">⛓ AUTO</button>
+          <button onclick="openEditModal()" title="Éditer les points"
+            style="background:rgba(20,10,40,.5);border:1px solid rgba(100,70,180,.4);border-radius:2px;color:#7060a0;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;transition:all .15s;" onmouseover="this.style.color='#9b6de5';this.style.borderColor='#9b6de5'" onmouseout="this.style.color='#7060a0';this.style.borderColor='rgba(100,70,180,.4)'">✦ EDIT</button>
         </div>
       </div>
     </div>
 
-    <!-- ══ ZONE DROP + THEAD collées ══ -->
-    <div style="flex-shrink:0;">
-      <div id="fdz-outer" style="border-bottom:1px solid var(--border);">
-        <div class="file-drop-zone" id="fdz1" onclick="document.getElementById('fi1').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,0)" style="margin:0;border:none;border-bottom:1px dashed var(--border);border-radius:0;padding:5px 14px;">
-          <input type="file" id="fi1" multiple accept="audio/*" onchange="handleFiles(this.files,0)">
-          <div class="fdz-row">
-            <span class="fdz-icon">⊕</span>
-            <span class="fdz-text">Glisser des fichiers audio · ou cliquer</span>
-            <span class="fdz-add-badge">+ AJOUTER</span>
-            <span class="fdz-count" id="fdz1-count">Aucun fichier</span>
-          </div>
-        </div>
-        <!-- THEAD directement collé sous le drop -->
-        <div style="display:flex;align-items:center;height:26px;background:var(--s3);border-bottom:1px solid var(--border);">
-          <div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:center;">#</div>
-          <div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;padding-left:4px;">HORAIRE</div>
-          <div style="flex:1;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;padding-left:4px;">TITRE</div>
-          <div style="width:70px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:right;">DURÉE</div>
-          <div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:right;padding-right:14px;">DÉCOMPTE</div>
-          <div style="width:5px;flex-shrink:0;"></div>
-          <div style="width:32px;flex-shrink:0;"></div>
-        </div>
+    <!-- ══ ZONE DROP ══ -->
+    <div class="file-drop-zone" id="fdz1" onclick="document.getElementById('fi1').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,0)" style="margin:0;border:none;border-bottom:1px dashed var(--border);border-radius:0;padding:5px 14px;flex-shrink:0;">
+      <input type="file" id="fi1" multiple accept="audio/*" onchange="handleFiles(this.files,0)">
+      <div class="fdz-row">
+        <span class="fdz-icon">⊕</span>
+        <span class="fdz-text">Glisser des fichiers audio · ou cliquer</span>
+        <span class="fdz-add-badge">+ AJOUTER</span>
+        <span class="fdz-count" id="fdz1-count">Aucun fichier</span>
       </div>
     </div>
 
-    <!-- ══ LISTE PLAYLIST scrollable ══ -->
-    <div id="paz-list" style="flex:1;overflow-y:auto;min-height:0;">
+    <!-- ══ EN-TÊTES COLONNES ══ -->
+    <div style="display:flex;align-items:center;height:26px;background:var(--s3);border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:center;">#</div>
+      <div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;padding-left:4px;">HORAIRE</div>
+      <div style="flex:1;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;padding-left:4px;">TITRE</div>
+      <div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:right;">DURÉE</div>
+      <div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:right;padding-right:12px;">DÉCOMPTE</div>
+      <div style="width:5px;flex-shrink:0;"></div>
+      <div style="width:30px;flex-shrink:0;"></div>
     </div>
 
-    <!-- IDs fantômes pour compatibilité JS -->
+    <!-- ══ LISTE PLAYLIST ══ -->
+    <div id="paz-list" style="flex:1;overflow-y:auto;min-height:0;"></div>
+
+    <!-- IDs fantômes pour compatibilité -->
     <div style="display:none">
       <tbody id="c1-body"></tbody>
       <span id="c1-micros">00:00</span>
       <span id="c1-total">00:00:00</span>
       <span id="c1-suffix">A</span>
+      <span id="c1-counter">0/0</span>
     </div>
   </div>
-  <div class="card-footer" style="display:none">
-    <span id="c1-counter">0/0</span>
-  </div>
+  <div class="card-footer" style="display:none"><span></span></div>
   <div class="vu-strip" id="vu-strip-d0"><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#00d96a"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#f5c400"></div><div class="vu-strip-bar" style="background:#e03020"></div><div class="vu-strip-bar" style="background:#e03020"></div></div>
   <!-- Popup rendez-vous DIFF 1 -->
   <div class="rdv-popup" id="rdv-popup-0">
@@ -1427,7 +1346,7 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 <!-- VU MÈTRES STICKY : DIFF 1 + DIFF 2 — toujours visible -->
 <div class="vu-section">
 
-  <!-- Ligne 1 : VU diffuseurs masquée -->
+  <!-- VU diffuseurs masqués -->
   <div style="display:none">
         <div class="vu-wrap">
           <div class="vu-label-block">
@@ -1751,11 +1670,6 @@ class Diffuser{
         this.render();
         const cv=document.getElementById(`wv-${this.idx}-${idx}`);
         if(cv){cv.width=800;cv.height=80;drawWaveform(cv,this.tracks[idx].file);}
-        // ── Déclencher waveform PAZ si c'est la piste en tête ──
-        if(this.idx===0 && idx===this.ci){
-          _pazWvFile=null;
-          setTimeout(()=>pazLoadWaveform(), 50);
-        }
       });
       // !! PAS de addEventListener('ended') — géré par audio.onended + token dans _startTrack
       this.audios[idx]=a;
@@ -2124,27 +2038,17 @@ class Diffuser{
 
     audio.currentTime = inCue;
 
-    // Au point NEXT : enchaîner la piste suivante SI autoNext est activé
+    // Au point OUT : démarrer la piste suivante (sans couper celle-ci)
     this._outTimer = setTimeout(()=>{
       if(token !== this._playToken || !this.playing) return;
-
-      // ── Vérifier le flag autoNext sur la piste courante ──
-      const autoNextOn = (t.autoNext !== false); // true par défaut
-
-      if(!autoNextOn){
-        // autoNext désactivé : le son continue jusqu'à sa fin naturelle,
-        // mais on ne lance PAS la piste suivante.
-        // On met juste à jour l'UI pour signaler la fin du décompte.
-        this.render();
-        return;
-      }
-
-      // autoNext activé : enchaîner normalement
+      // La piste i continue de jouer — on avance juste le curseur
       this.ci = 0;
-      this.render();
+      this.render(); // met à jour l'UI (la suivante devient active visuellement)
       if(this.tracks.length > 1){
+        // Lancer la piste suivante (index 1, qui deviendra 0 après suppression de i)
         this._startNextAfterChain(i, token);
       }
+      // Si c'est la seule piste, on laisse juste le son finir naturellement
     }, chainDelay * 1000);
 
     // À la fin naturelle du son : supprimer la piste de la liste
@@ -2306,619 +2210,568 @@ class Diffuser{
 const D=CONFIGS.map((cfg,i)=>new Diffuser(cfg,i));
 
 // ══════════════════════════════════════════════════════════════
-// PAZ — Player Active Zone v3
-// Logique : surlignage JAUNE (START→INTRO) + ROUGE (START→END)
-// Titre affiché, heure de lancement fixe, waveform HD en fond
+// PAZ — Player Active Zone + Modal Éditeur de Points
 // ══════════════════════════════════════════════════════════════
 
-let _pazWvFile    = null;  // fichier waveform chargé
-let _pazLaunchTime = null; // heure HH:MM:SS au lancement
-let _cueEditorOpen = false;
+// ── Variables d'état ──
+let _pazWvFile    = null;
+let _pazLaunchTime = null;
+let _pazAutoNext  = true;
+let _pazZoom      = { on:false, s:0, e:1, key:'' };
 
 // ── Accesseurs cues ──
-function pazT()    { return D[0].tracks[D[0].ci] || null; }
-function pazAudio(){ return D[0].audios[D[0].ci] || null; }
-function pazDur()  { return D[0].durs[D[0].ci]   || 0; }
-function pazPos()  { const a=pazAudio(); return (a&&!isNaN(a.currentTime))?a.currentTime:0; }
+function pazT()    { const d=D[0]; return d.tracks[d.ci]||null; }
+function pazPos()  { const a=D[0].audios[D[0].ci]; return (a&&!isNaN(a.currentTime))?a.currentTime:0; }
+function pazDur()  { return D[0].durs[D[0].ci]||0; }
+function cStart(t) { return t?(t.inCue||0):0; }
+function cEnd(t)   { return t?(t.outCue!=null?t.outCue:pazDur()):0; }
+function cNext(t)  { return t?(t.nextCue!=null?t.nextCue:cEnd(t)):0; }
+function cIntro(t) { return t?(t.introCue!=null?t.introCue:null):null; }
 
-function cueStart(t){ return t ? (t.inCue   || 0) : 0; }
-function cueEnd(t)  { return t ? (t.outCue  != null ? t.outCue  : pazDur()) : 0; }
-function cueNext(t) { return t ? (t.nextCue != null ? t.nextCue : cueEnd(t)) : 0; }
-function cueIntro(t){ return t ? (t.introCue!= null ? t.introCue : null) : null; }
+// ── Charger + dessiner la waveform de fond ──
+function pazDrawBg(force){
+  const d = D[0];
+  const t = d.tracks[d.ci]||null;
+  if(!t||!t.file){ _pazWvFile=null; return; }
+  if(!force && t.file===_pazWvFile) return;
 
-// ── Waveform HD plein fond ──
-function _pazSizeCanvas(){
-  // Dimensionner le canvas paz-bg à la taille réelle du conteneur #paz
-  const bg  = document.getElementById('paz-bg');  if(!bg)  return;
-  const paz = document.getElementById('paz');      if(!paz) return;
-  const W = paz.offsetWidth  || 900;
-  const H = paz.offsetHeight || 160;
-  if(bg.width !== W || bg.height !== H){
-    bg.width  = W;
-    bg.height = H;
-    bg.style.width  = W + 'px';
-    bg.style.height = H + 'px';
-  }
-  return {bg, W, H};
+  const bg  = document.getElementById('paz-bg'); if(!bg) return;
+  const paz = document.getElementById('paz');    if(!paz) return;
+  const W   = paz.offsetWidth||900;
+  const H   = paz.offsetHeight||150;
+  bg.width=W; bg.height=H;
+  _pazWvFile = t.file;
+
+  const draw = (data)=> pazPaintBg(bg, data, _pazZoom.on?_pazZoom.s:0, _pazZoom.on?_pazZoom.e:1);
+
+  if(WV_DATA_CACHE[t.file]){ draw(WV_DATA_CACHE[t.file]); return; }
+  // Feedback pendant chargement
+  const ctx=bg.getContext('2d');
+  ctx.fillStyle='rgba(0,212,240,.08)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,212,240,.4)'; ctx.font="11px 'Share Tech Mono',monospace";
+  ctx.fillText('⟳ Chargement…',16,H/2+4);
+  drawWaveform(document.createElement('canvas'), t.file).then(()=>{
+    if(t.file!==_pazWvFile) return;
+    const b=document.getElementById('paz-bg'); if(!b) return;
+    b.width=b.parentElement.offsetWidth||900;
+    b.height=b.parentElement.offsetHeight||150;
+    if(WV_DATA_CACHE[t.file]) draw(WV_DATA_CACHE[t.file]);
+  });
 }
 
-function pazLoadWaveform(){
-  const d    = D[0];
-  const tRaw = d.tracks[d.ci] || null;
-  if(!tRaw || !tRaw.file) { _pazWvFile=null; return; }
-
-  const file = tRaw.file;
-  const r = _pazSizeCanvas(); if(!r) return;
-  const {bg, W, H} = r;
-
-  // Si même fichier et canvas déjà correct → juste redessiner si cache dispo
-  if(file === _pazWvFile && WV_DATA_CACHE[file]){
-    _drawPazWv(bg, WV_DATA_CACHE[file]); return;
-  }
-  _pazWvFile = file;
-
-  if(WV_DATA_CACHE[file]){
-    _drawPazWv(bg, WV_DATA_CACHE[file]);
-  } else {
-    // Feedback visuel pendant le chargement
-    const ctx = bg.getContext('2d');
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='rgba(0,212,240,.06)';
-    ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='rgba(0,212,240,.3)';
-    ctx.font='11px monospace';
-    ctx.fillText('⟳ Chargement waveform...', 20, H/2+4);
-
-    // Déclencher le décodage
-    drawWaveform(document.createElement('canvas'), file).then(()=>{
-      if(file !== _pazWvFile) return; // piste changée
-      const el = document.getElementById('paz-bg'); if(!el) return;
-      _pazSizeCanvas();
-      if(WV_DATA_CACHE[file]) _drawPazWv(el, WV_DATA_CACHE[file]);
-    });
-  }
-}
-
-function _drawPazWv(canvas, data){
+function pazPaintBg(canvas, data, vS, vE){
   const W=canvas.width, H=canvas.height;
-  const ctx=canvas.getContext('2d');
-  // fond transparent
-  ctx.clearRect(0,0,W,H);
-  const step=Math.max(1,Math.floor(data.length/W));
-
-  // Zone remplie (silhouette) — bien visible en fond
-  const grad=ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,   'rgba(0,180,230,0.18)');
-  grad.addColorStop(0.5, 'rgba(0,210,250,0.38)');
-  grad.addColorStop(1,   'rgba(0,180,230,0.18)');
-  ctx.fillStyle=grad;
-  ctx.beginPath(); ctx.moveTo(0,H/2);
-  for(let x=0;x<W;x++){
-    let mx=0;
-    for(let j=0;j<step;j++){const v=Math.abs(data[x*step+j]||0);if(v>mx)mx=v;}
-    ctx.lineTo(x,H/2-mx*(H/2)*.9);
-  }
-  for(let x=W-1;x>=0;x--){
-    let mx=0;
-    for(let j=0;j<step;j++){const v=Math.abs(data[x*step+j]||0);if(v>mx)mx=v;}
-    ctx.lineTo(x,H/2+mx*(H/2)*.9);
-  }
-  ctx.closePath(); ctx.fill();
-
-  // Traits — blanc bien contrasté
-  ctx.strokeStyle='rgba(200,230,255,0.80)';
-  ctx.lineWidth=1;
-  for(let x=0;x<W;x++){
-    let mn=0,mx=0;
-    for(let j=0;j<step;j++){
-      const v=data[x*step+j]||0;
-      if(v<mn)mn=v; if(v>mx)mx=v;
-    }
-    const y1=Math.round((1-mx)/2*H);
-    const y2=Math.round((1-mn)/2*H);
-    if(y2>y1){ ctx.beginPath();ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);ctx.stroke(); }
-  }
-}
-
-// ── Waveform PAZ avec zoom (vue [vStart, vEnd]) ──
-function _drawPazWvZoomed(canvas, data, vStart, vEnd){
-  const W=canvas.width, H=canvas.height;
-  if(!W || !H) return;
+  if(!W||!H) return;
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
   const total=data.length;
-  const s=Math.floor(vStart*total);
-  const e=Math.floor(vEnd*total);
-  const len=Math.max(1,e-s);
-  const step=Math.max(1,Math.floor(len/W));
-
-  // Indicateur de zoom (bandeau subtil)
-  if(vStart > 0 || vEnd < 1){
-    ctx.fillStyle='rgba(0,0,0,.15)';
-    ctx.fillRect(0,0,W,H);
-    // Mini barre de position en bas
-    ctx.fillStyle='rgba(255,255,255,.08)';
-    ctx.fillRect(0,H-3,W,3);
-    ctx.fillStyle='rgba(0,212,240,.4)';
-    ctx.fillRect(vStart*W, H-3, (vEnd-vStart)*W, 3);
-  }
+  const s=Math.floor(vS*total), e=Math.floor(vE*total);
+  const len=Math.max(1,e-s), step=Math.max(1,Math.floor(len/W));
 
   // Silhouette
-  const grad=ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,   'rgba(0,180,230,.18)');
-  grad.addColorStop(0.5, 'rgba(0,210,250,.42)');
-  grad.addColorStop(1,   'rgba(0,180,230,.18)');
-  ctx.fillStyle=grad;
+  const gr=ctx.createLinearGradient(0,0,0,H);
+  gr.addColorStop(0,'rgba(0,170,220,.16)');
+  gr.addColorStop(.5,'rgba(0,210,250,.40)');
+  gr.addColorStop(1,'rgba(0,170,220,.16)');
+  ctx.fillStyle=gr;
   ctx.beginPath(); ctx.moveTo(0,H/2);
   for(let x=0;x<W;x++){
-    let mx=0;
-    for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}
-    ctx.lineTo(x,H/2-mx*(H/2)*.9);
+    let mx=0; for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}
+    ctx.lineTo(x,H/2-mx*(H/2)*.88);
   }
   for(let x=W-1;x>=0;x--){
-    let mx=0;
-    for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}
-    ctx.lineTo(x,H/2+mx*(H/2)*.9);
+    let mx=0; for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}
+    ctx.lineTo(x,H/2+mx*(H/2)*.88);
   }
   ctx.closePath(); ctx.fill();
 
   // Traits
-  ctx.strokeStyle='rgba(200,230,255,.80)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(180,225,255,.78)'; ctx.lineWidth=1;
   for(let x=0;x<W;x++){
     let mn=0,mx=0;
     for(let j=0;j<step;j++){const v=data[s+x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
-    const y1=Math.round((1-mx)/2*H), y2=Math.round((1-mn)/2*H);
+    const y1=Math.round((1-mx)/2*H),y2=Math.round((1-mn)/2*H);
     if(y2>y1){ctx.beginPath();ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);ctx.stroke();}
   }
+
+  // Barre mini zoom
+  const zb=document.getElementById('paz-zoom-bar');
+  const zp=document.getElementById('paz-zoom-pos');
+  if(_pazZoom.on && zb && zp){
+    zb.style.display='block';
+    zp.style.left=(_pazZoom.s*100).toFixed(1)+'%';
+    zp.style.width=((_pazZoom.e-_pazZoom.s)*100).toFixed(1)+'%';
+  } else if(zb){ zb.style.display='none'; }
 }
 
-// ── pazRender : appelé à chaque changement d'état ──
+// ── pazRender — titre, cues, waveform, liste ──
 function pazRender(){
-  const d     = D[0];
-  const t     = pazT();
-  const play  = d.playing;
-  const dur   = pazDur();
+  const d=D[0], t=pazT(), play=d.playing;
 
-  // ── Titre : toujours la piste à ci (même hors lecture) ──
-  const titleEl = document.getElementById('paz-title');
-  if(titleEl){
-    const d2 = D[0];
-    // On cherche dans l'ordre : piste active, piste à ci, première piste
-    const tDisplay = d2.tracks[d2.ci] || (d2.tracks.length ? d2.tracks[0] : null);
-    if(tDisplay && !tDisplay.isMacro){
-      titleEl.textContent = tDisplay.title;
-      titleEl.style.color = play ? '#ffffff' : 'rgba(220,235,255,0.65)';
+  // Titre
+  const tEl=document.getElementById('paz-title');
+  if(tEl){
+    const tDisp = d.tracks[d.ci]||(d.tracks.length?d.tracks[0]:null);
+    if(tDisp&&!tDisp.isMacro){
+      tEl.textContent=tDisp.title;
+      tEl.style.color=play?'#ffffff':'rgba(200,220,255,.6)';
     } else {
-      titleEl.textContent = 'AUCUNE PISTE';
-      titleEl.style.color = 'var(--txt-dim)';
+      tEl.textContent='AUCUNE PISTE'; tEl.style.color='rgba(100,120,150,.5)';
     }
   }
 
-  // ── Heure de lancement (fixe dès le play) ──
-  const ltEl = document.getElementById('paz-launch-time');
-  if(ltEl) ltEl.textContent = _pazLaunchTime || '--:--:--';
+  // Heure de lancement
+  const lEl=document.getElementById('paz-launch');
+  if(lEl) lEl.textContent=_pazLaunchTime||'--:--:--';
 
-  // ── Cues label ──
-  const cuesEl = document.getElementById('paz-cues');
-  if(cuesEl && t){
-    const parts = ['START '+fmtMs(cueStart(t))];
-    if(t.introCue != null) parts.push('INTRO '+fmtMs(t.introCue));
-    parts.push('NEXT '+fmtMs(cueNext(t)));
-    parts.push('END ' +fmtMs(cueEnd(t)));
-    cuesEl.textContent = parts.join('  ·  ');
-  } else if(cuesEl){ cuesEl.textContent=''; }
+  // Cues
+  const cEl=document.getElementById('paz-cues');
+  if(cEl&&t){
+    const parts=['START '+fmtMs(cStart(t))];
+    if(t.introCue!=null) parts.push('INTRO '+fmtMs(t.introCue));
+    parts.push('NEXT '+fmtMs(cNext(t)));
+    parts.push('END '+fmtMs(cEnd(t)));
+    cEl.textContent=parts.join('  ·  ');
+  } else if(cEl){ cEl.textContent=''; }
 
-  // ── Waveform HD (toujours, même hors lecture) ──
-  pazLoadWaveform();
-
-  // ── Marqueurs sur la waveform (traits) ──
-  pazUpdateMarkers();
-
-  // ── Liste des pistes ──
+  // Waveform
+  pazDrawBg(false);
+  pazMarkers();
   pazRenderList();
-
-  // ── Éditeur de points ──
-  if(_cueEditorOpen) pazUpdateCueEditor();
-
-  // ── Bouton AUTO NEXT ──
-  _pazUpdateAutoNextBtn();
+  _pazUpdateAutoBtn();
 }
 
-// ── Zoom state pour la waveform PAZ ──
-let _pazZoom = { active:false, start:0, end:1, key:'' };
-
-// ── pazTick : 80ms — progression rouge + jaune + playhead + décompte + zoom ──
+// ── pazTick — 80ms ──
 function pazTick(){
-  const d = D[0];
-  const t = pazT();
+  const d=D[0], t=pazT();
 
-  // Charger waveform si pas encore fait
-  if(t && t.file && !WV_DATA_CACHE[t.file] && t.file !== _pazWvFile+'_loading'){
-    _pazWvFile = t.file + '_loading';
-    pazLoadWaveform();
-  } else if(t && t.file && WV_DATA_CACHE[t.file] && t.file !== _pazWvFile){
-    pazLoadWaveform();
-  }
+  // Déclencher waveform si dispo mais pas encore dessinée
+  if(t&&t.file&&WV_DATA_CACHE[t.file]&&t.file!==_pazWvFile) pazDrawBg(true);
 
-  if(!d.playing || !t){
-    // Reset visuel
-    const redEl  = document.getElementById('paz-red');
-    const yelEl  = document.getElementById('paz-yellow');
-    const phEl   = document.getElementById('paz-playhead');
-    const cdEl   = document.getElementById('paz-cd');
-    const titleEl= document.getElementById('paz-title');
-    if(redEl)   redEl.style.transform='scaleX(0)';
-    if(yelEl)   yelEl.style.width='0';
-    if(phEl)    phEl.style.display='none';
-    if(cdEl){   cdEl.textContent='--:--'; cdEl.style.color='var(--cyan)'; }
-    if(titleEl) titleEl.style.color='var(--txt-dim)';
+  if(!d.playing||!t){
+    ['paz-red','paz-yellow'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.left='0';el.style.width='0';}});
+    const ph=document.getElementById('paz-ph'); if(ph) ph.style.display='none';
+    const cd=document.getElementById('paz-cd'); if(cd){cd.textContent='--:--';cd.style.color='var(--cyan)';}
+    const lb=document.getElementById('paz-cd-lbl'); if(lb) lb.textContent='NEXT';
     return;
   }
 
-  const pos   = pazPos();
-  const dur   = pazDur();
-  const inT   = cueStart(t);
-  const endT  = cueEnd(t);
-  const nextT = cueNext(t);
-  const introT= cueIntro(t);
+  const pos=pazPos(), dur=pazDur()||1;
+  const inT=cStart(t), endT=cEnd(t), nextT=cNext(t), introT=cIntro(t);
 
-  if(dur <= 0) return;
-
-  // ── SURLIGNAGE ROUGE : de START jusqu'à la position courante (progression) ──
-  // La zone rouge couvre [inT → pos], soit un ratio de [inT/dur → pos/dur]
-  const redEl = document.getElementById('paz-red');
-  if(redEl){
-    // left = inT/dur %, width = (pos-inT)/dur %
-    const leftPct  = (inT  / dur * 100).toFixed(2);
-    const widthPct = (Math.max(0, pos - inT) / dur * 100).toFixed(2);
-    redEl.style.left      = leftPct + '%';
-    redEl.style.width     = widthPct + '%';
-    redEl.style.transform = 'none'; // on passe à left/width, pas scaleX
+  // Progression rouge (inT → pos)
+  const rEl=document.getElementById('paz-red');
+  if(rEl){
+    const span=_pazZoom.on?(_pazZoom.e-_pazZoom.s):1;
+    const lPct=_pazZoom.on?(((inT/dur)-_pazZoom.s)/span*100):((inT/dur)*100);
+    const wPct=Math.max(0,pos-inT)/dur/span*100;
+    rEl.style.left=lPct.toFixed(2)+'%'; rEl.style.width=wPct.toFixed(2)+'%';
   }
 
-  // ── SURLIGNAGE JAUNE : de START jusqu'à INTRO (si défini et si on est encore dans la phase intro) ──
-  const yelEl = document.getElementById('paz-yellow');
-  if(yelEl){
-    if(introT != null && pos < introT){
-      // Phase INTRO active : jaune couvre [inT → introT] en totalité (statique)
-      const leftPct  = (inT   / dur * 100).toFixed(2);
-      const widthPct = ((introT - inT) / dur * 100).toFixed(2);
-      yelEl.style.left    = leftPct + '%';
-      yelEl.style.width   = widthPct + '%';
-      yelEl.style.display = 'block';
-    } else {
-      yelEl.style.display = 'none';
-    }
+  // Zone jaune (inT → introT) — fixe tant que pos < introT
+  const yEl=document.getElementById('paz-yellow');
+  if(yEl){
+    if(introT!=null&&pos<introT){
+      const span=_pazZoom.on?(_pazZoom.e-_pazZoom.s):1;
+      const lPct=_pazZoom.on?(((inT/dur)-_pazZoom.s)/span*100):((inT/dur)*100);
+      const wPct=(introT-inT)/dur/span*100;
+      yEl.style.left=lPct.toFixed(2)+'%'; yEl.style.width=Math.max(0,wPct).toFixed(2)+'%';
+      yEl.style.display='block';
+    } else { yEl.style.display='none'; }
   }
 
-  // ── Couleur du titre ──
-  const titleEl = document.getElementById('paz-title');
-  if(titleEl){
-    if(introT != null && pos < introT) titleEl.style.color = '#f5c400'; // jaune pendant intro
-    else                               titleEl.style.color = '#ffffff'; // blanc/rouge sinon
+  // Couleur titre
+  const tEl=document.getElementById('paz-title');
+  if(tEl) tEl.style.color=(introT!=null&&pos<introT)?'#f5c400':'#ffffff';
+
+  // Playhead
+  const ph=document.getElementById('paz-ph');
+  if(ph){
+    const span=_pazZoom.on?(_pazZoom.e-_pazZoom.s):1;
+    const pct=_pazZoom.on?(((pos/dur)-_pazZoom.s)/span*100):((pos/dur)*100);
+    if(pct>=0&&pct<=100){ ph.style.display='block'; ph.style.left=pct.toFixed(2)+'%'; }
+    else ph.style.display='none';
   }
 
-  // ── Playhead (ligne blanche) ──
-  const phEl = document.getElementById('paz-playhead');
-  if(phEl){
-    phEl.style.display = 'block';
-    phEl.style.left    = (pos / dur * 100).toFixed(2) + '%';
-  }
-
-  // ── Décompte NEXT ──
-  const cdEl  = document.getElementById('paz-cd');
-  const lblEl = document.getElementById('paz-cd-lbl');
-  if(cdEl){
-    const isIntro = (introT != null && pos < introT);
+  // Décompte
+  const cd=document.getElementById('paz-cd'), lb=document.getElementById('paz-cd-lbl');
+  if(cd){
+    const isIntro=introT!=null&&pos<introT;
     if(isIntro){
-      const remIntro = Math.max(0, introT - pos);
-      cdEl.textContent = fmtFull(remIntro);
-      cdEl.style.color = '#f5c400';
-      if(lblEl) lblEl.textContent = 'INTRO';
+      const r=Math.max(0,introT-pos);
+      cd.textContent=fmtFull(r); cd.style.color='#f5c400';
+      if(lb) lb.textContent='INTRO';
     } else {
-      const remNext = Math.max(0, nextT - pos);
-      cdEl.textContent = fmtFull(remNext);
-      cdEl.style.color = remNext < 10 ? '#e03020' : remNext < 30 ? '#f5c400' : '#ff4040';
-      if(lblEl) lblEl.textContent = 'NEXT';
+      const r=Math.max(0,nextT-pos);
+      cd.textContent=fmtFull(r);
+      cd.style.color=r<10?'#e03020':r<30?'#f5c400':'#ff4040';
+      if(lb) lb.textContent='NEXT';
     }
   }
 
-  // ── ZOOM waveform sur INTRO (±10s) et NEXT (±20s) ──
-  const dur = pazDur();
-  if(dur > 0){
-    const ZOOM_INTRO = 12; // ±12s autour du point INTRO
-    const ZOOM_NEXT  = 20; // ±20s autour du point NEXT
+  // Décompte dans la liste
+  const cdR=document.getElementById('paz-row-cd-active');
+  if(cdR) cdR.textContent=fmtFull(Math.max(0,nextT-pos));
 
-    const introT = cueIntro(t);
-    const nextT  = cueNext(t);
-
-    // Calculer la zone de zoom souhaitée
-    let wantZoom = false, wStart = 0, wEnd = 1, wKey = '';
-
-    // Priorité : INTRO d'abord (si on est dans les 12s avant INTRO)
-    if(introT != null && pos < introT && (introT - pos) <= ZOOM_INTRO){
-      const s = Math.max(0, (introT - ZOOM_INTRO) / dur);
-      const e = Math.min(1, (introT + ZOOM_INTRO*0.5) / dur);
-      wantZoom=true; wStart=s; wEnd=e; wKey='intro';
-    }
-    // Ensuite NEXT (si on est dans les 20s avant NEXT)
-    else if(nextT > 0 && pos < nextT && (nextT - pos) <= ZOOM_NEXT){
-      const s = Math.max(0, (nextT - ZOOM_NEXT) / dur);
-      const e = Math.min(1, (nextT + ZOOM_NEXT*0.5) / dur);
-      wantZoom=true; wStart=s; wEnd=e; wKey='next';
-    }
-    // Ou si on vient de passer INTRO (rester zoomé 4s après)
-    else if(introT != null && pos > introT && (pos - introT) <= 4){
-      const s = Math.max(0, (introT - ZOOM_INTRO*0.5) / dur);
-      const e = Math.min(1, (introT + ZOOM_INTRO) / dur);
-      wantZoom=true; wStart=s; wEnd=e; wKey='intro-after';
-    }
-
-    // Appliquer le zoom seulement si l'état change (éviter le redessin inutile)
-    if(wantZoom !== _pazZoom.active || wKey !== _pazZoom.key){
-      _pazZoom.active = wantZoom;
-      _pazZoom.key    = wKey;
-      _pazZoom.start  = wantZoom ? wStart : 0;
-      _pazZoom.end    = wantZoom ? wEnd   : 1;
-      // Redessiner la waveform de fond avec la nouvelle vue
-      const bg   = document.getElementById('paz-bg');
-      const data = WV_DATA_CACHE[t.file];
-      if(bg && data) _drawPazWvZoomed(bg, data, _pazZoom.start, _pazZoom.end);
-    }
+  // ── ZOOM : approche INTRO (±12s) et NEXT (±20s) ──
+  const ZI=12, ZN=20;
+  let wantOn=false, wS=0, wE=1, wKey='';
+  if(introT!=null&&pos<introT&&(introT-pos)<=ZI){
+    wantOn=true; wS=Math.max(0,(introT-ZI)/dur); wE=Math.min(1,(introT+ZI*.5)/dur); wKey='intro';
+  } else if(introT!=null&&pos>=introT&&(pos-introT)<=4){
+    wantOn=true; wS=Math.max(0,(introT-ZI*.5)/dur); wE=Math.min(1,(introT+ZI)/dur); wKey='intro+';
+  } else if(nextT>0&&pos<nextT&&(nextT-pos)<=ZN){
+    wantOn=true; wS=Math.max(0,(nextT-ZN)/dur); wE=Math.min(1,(nextT+ZN*.5)/dur); wKey='next';
   }
-
-  // ── Mise à jour décompte dans la liste (ligne active) ──
-  const ci = d.ci;
-  const cdRow = document.getElementById('pr-cd-active');
-  if(cdRow){
-    const remNext = Math.max(0, nextT - pos);
-    cdRow.textContent = fmtFull(remNext);
-  }
-  // Progression rouge sur la ligne active dans la liste
-  const activeRow = document.getElementById('pr-active');
-  if(activeRow){
-    const span = (nextT - inT) || 1;
-    const ratio = Math.min(1, Math.max(0, (pos - inT) / span));
-    activeRow.style.setProperty('--prog', ratio.toFixed(4));
+  if(wantOn!==_pazZoom.on||wKey!==_pazZoom.key){
+    _pazZoom={on:wantOn,s:wS,e:wE,key:wKey};
+    pazDrawBg(true); pazMarkers();
   }
 }
 
-// ── Marqueurs NEXT et INTRO sur la waveform ──
-function pazUpdateMarkers(){
-  const t   = pazT();
-  const dur = pazDur();
-  const nm  = document.getElementById('paz-next-marker');
-  const im  = document.getElementById('paz-intro-marker');
-
-  if(!t || dur <= 0){
-    if(nm) nm.style.display='none';
-    if(im) im.style.display='none';
-    return;
-  }
-
-  // Convertir seconde en % de la vue (avec zoom éventuel)
-  const secToPct = sec => {
-    const ratio = sec / dur;
-    const span  = (_pazZoom.end - _pazZoom.start) || 1;
-    const pct   = (ratio - _pazZoom.start) / span * 100;
-    return pct;
+// ── Marqueurs NEXT / INTRO ──
+function pazMarkers(){
+  const t=pazT(), dur=pazDur();
+  const sec2pct=s=>{
+    const r=s/dur;
+    const span=_pazZoom.on?(_pazZoom.e-_pazZoom.s):1;
+    return _pazZoom.on?((r-_pazZoom.s)/span*100):(r*100);
   };
-
-  const nextPct  = secToPct(cueNext(t));
-  const introT   = cueIntro(t);
-
-  if(nm){
-    if(nextPct >= 0 && nextPct <= 100){
-      nm.style.left    = nextPct.toFixed(2)+'%';
-      nm.style.display = 'block';
-    } else {
-      nm.style.display = 'none';
-    }
-  }
-  if(im){
-    if(introT != null){
-      const introPct = secToPct(introT);
-      if(introPct >= 0 && introPct <= 100){
-        im.style.left    = introPct.toFixed(2)+'%';
-        im.style.display = 'block';
-      } else {
-        im.style.display = 'none';
-      }
-    } else {
-      im.style.display = 'none';
-    }
+  const show=(id,pct)=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(!t||dur<=0||pct<0||pct>100){ el.style.display='none'; return; }
+    el.style.display='block'; el.style.left=pct.toFixed(2)+'%';
+  };
+  if(t&&dur>0){
+    show('paz-mn',sec2pct(cNext(t)));
+    const iT=cIntro(t);
+    show('paz-mi', iT!=null?sec2pct(iT):-1);
+  } else {
+    ['paz-mn','paz-mi'].forEach(id=>{ const el=document.getElementById(id);if(el)el.style.display='none'; });
   }
 }
 
 // ── Liste des pistes ──
 function pazRenderList(){
-  const d    = D[0];
-  const list = document.getElementById('paz-list'); if(!list) return;
-  const now  = new Date(); let cur = new Date(now);
-  const starts = d.tracks.map((_,i)=>{
-    const ts = new Date(cur);
-    cur = new Date(cur.getTime() + d._playDur(i)*1000);
-    return ts;
-  });
+  const d=D[0], list=document.getElementById('paz-list'); if(!list) return;
+  const now=new Date(); let cur=new Date(now);
+  const starts=d.tracks.map((_,i)=>{ const ts=new Date(cur); cur=new Date(cur.getTime()+d._playDur(i)*1000); return ts; });
 
-  list.innerHTML = '';
-  d.tracks.forEach((t,i)=>{
-    const isActive = i===d.ci && d.playing;
-    const isNext   = i===d.ci+(d.playing?1:0) && !isActive;
-    const st       = starts[i];
-    const hhmm     = fmt2(st.getHours())+':'+fmt2(st.getMinutes())+':'+fmt2(st.getSeconds());
-
-    const row = document.createElement('div');
-    row.className = 'pr'+(isActive?' is-active':isNext?' is-next':'')+(t.isMacro?' is-macro':'');
-    if(isActive) row.id = 'pr-active';
-    row.onclick = ()=>d.jumpTo(i);
-
-    if(t.isMacro){
-      row.innerHTML = `
-        <div class="pr-num" style="color:var(--yellow)">${isActive?'⚡':(i+1)}</div>
-        <div class="pr-time" style="color:var(--yellow);font-size:9px">MACRO</div>
-        <div class="pr-title">${t.title}</div>
-        <div class="pr-dur" style="color:var(--txt-mute)">—</div>
-        <div class="pr-cd" style="color:var(--yellow)">ACTION</div>
-        <div class="pr-bar" style="background:#6a5a00"></div>
-        <button class="pr-del" onclick="event.stopPropagation();diffRemoveTrack(0,${i})">✕</button>`;
-    } else {
-      const durTxt = fmtFull(d.durs[i]||0);
-      const cdTxt  = fmtFull(d._playDur(i));
-      const cdId   = isActive ? 'id="pr-cd-active"' : '';
-      const cdColor= isActive ? 'color:#ff4040' : '';
-      // Indicateur autoNext
-      const autoOn = t.autoNext !== false;
-      const autoIcon = `<span title="${autoOn?'Enchaînement activé':'Enchaînement désactivé'}" onclick="event.stopPropagation();pazToggleAutoNextFor(${i})" style="cursor:pointer;margin-right:4px;opacity:${autoOn?1:.3};font-size:11px;">${autoOn?'⛓':'⛓'}</span>`;
-      row.innerHTML = `
-        <div class="pr-num">${isActive?'▶':(i+1)}</div>
-        <div class="pr-time">${hhmm}</div>
-        <div class="pr-title" title="${t.title}">${autoIcon}${t.title}</div>
-        <div class="pr-dur">${durTxt}</div>
-        <div class="pr-cd" ${cdId} style="${cdColor}">${cdTxt}</div>
-        <div class="pr-bar" style="background:${t.color}"></div>
-        <button class="pr-del" onclick="event.stopPropagation();diffRemoveTrack(0,${i})">✕</button>`;
-    }
-    list.appendChild(row);
-  });
-
+  list.innerHTML='';
   if(!d.tracks.length){
     list.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);letter-spacing:2px;padding:2rem;text-align:center;">— Glisse des fichiers audio ci-dessus —</div>';
+    return;
   }
+  d.tracks.forEach((t,i)=>{
+    const isAct=i===d.ci&&d.playing, isNxt=i===d.ci+(d.playing?1:0)&&!isAct;
+    const st=starts[i];
+    const hhmm=fmt2(st.getHours())+':'+fmt2(st.getMinutes())+':'+fmt2(st.getSeconds());
+    const autoOn=t.autoNext!==false;
+
+    const row=document.createElement('div');
+    row.style.cssText=`display:flex;align-items:center;height:52px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;transition:background .08s;${isAct?'background:#0e0408;border-left:3px solid var(--red);':isNxt?'background:#071408;border-left:3px solid var(--green-dk);':''}`;
+    if(isAct){ row.id='paz-row-active'; }
+    row.onclick=()=>d.jumpTo(i);
+
+    // Barre progression rouge sur la ligne active
+    if(isAct){
+      const prog=document.createElement('div');
+      prog.style.cssText='position:absolute;inset:0;background:linear-gradient(90deg,rgba(120,6,6,.65),rgba(60,2,2,.45));transform-origin:left;transform:scaleX(0);transition:transform .1s linear;z-index:0;pointer-events:none;';
+      prog.id='paz-row-prog';
+      row.appendChild(prog);
+    }
+
+    const inner=document.createElement('div');
+    inner.style.cssText='display:flex;align-items:center;width:100%;position:relative;z-index:1;';
+
+    if(t.isMacro){
+      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;color:var(--yellow);text-align:center;">${isAct?'⚡':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--yellow);padding-left:4px;">MACRO</div><div style="flex:1;font-family:var(--display);font-size:14px;font-weight:700;color:var(--yellow);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:10px;color:var(--txt-mute);text-align:right;">—</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--yellow);text-align:right;padding-right:12px;">ACTION</div><div style="width:5px;flex-shrink:0;background:#6a5a00;align-self:stretch;"></div><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:30px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
+    } else {
+      const dur=fmtFull(d.durs[i]||0);
+      const cd=fmtFull(d._playDur(i));
+      const cdId=isAct?'id="paz-row-cd-active"':'';
+      const cdCol=isAct?'color:#ff4040':'color:#7a9ab8';
+      const titleCol=isAct?'color:#ff6060':isNxt?'color:#40d870':'color:var(--txt)';
+      const numCol=isAct?'color:var(--red)':isNxt?'color:var(--green)':'color:var(--txt-mute)';
+      // icône autoNext
+      const aIcon=`<span onclick="event.stopPropagation();pazToggleAutoFor(${i})" title="${autoOn?'Enchaînement ON':'Enchaînement OFF'}" style="margin-right:5px;cursor:pointer;font-size:10px;opacity:${autoOn?1:.25};user-select:none;">⛓</span>`;
+      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;${numCol};text-align:center;">${isAct?'▶':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);padding-left:4px;">${hhmm}</div><div style="flex:1;font-family:var(--display);font-size:17px;font-weight:700;${titleCol};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${aIcon}${t.title}</div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;">${dur}</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;${cdCol};text-align:right;padding-right:12px;" ${cdId}>${cd}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;"></div><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:30px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
+    }
+    row.appendChild(inner);
+    list.appendChild(row);
+  });
 }
 
-// ── Éditeur de points ──
-function toggleCueEditor(){
-  _cueEditorOpen = !_cueEditorOpen;
-  const el  = document.getElementById('cue-editor');
-  const btn = document.getElementById('cue-editor-btn');
-  if(el) el.style.display = _cueEditorOpen ? 'block' : 'none';
-  if(btn){ btn.style.borderColor=_cueEditorOpen?'#9b6de5':'#3a3060'; btn.style.color=_cueEditorOpen?'#9b6de5':'#8070c0'; }
-  if(_cueEditorOpen) pazUpdateCueEditor();
-}
-
-function pazUpdateCueEditor(){
-  const t = pazT();
-  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-  set('cue-start-val', t ? fmtMs(cueStart(t))                    : '—');
-  set('cue-end-val',   t ? fmtMs(cueEnd(t))                      : '—');
-  set('cue-next-val',  t ? fmtMs(cueNext(t))                     : '—');
-  set('cue-intro-val', t ? (t.introCue!=null?fmtMs(t.introCue):'—') : '—');
-}
-
-function setCueNow(type){
+// ── Barre de progression dans la liste ──
+function pazUpdateRowProg(){
+  if(!D[0].playing) return;
   const t=pazT(); if(!t) return;
-  const pos=pazPos();
-  if(type==='start') t.inCue    = pos;
-  if(type==='end')   t.outCue   = pos;
-  if(type==='next')  t.nextCue  = pos;
-  if(type==='intro') t.introCue = pos;
-  pazUpdateCueEditor(); pazUpdateMarkers();
+  const pos=pazPos(), inT=cStart(t), nextT=cNext(t);
+  const span=nextT-inT||1;
+  const ratio=Math.min(1,Math.max(0,(pos-inT)/span));
+  const prog=document.getElementById('paz-row-prog');
+  if(prog) prog.style.transform='scaleX('+ratio.toFixed(4)+')';
 }
 
-function resetCue(type){
+// ── AUTO NEXT toggle ──
+function pazToggleAuto(){
   const t=pazT(); if(!t) return;
-  const dur=pazDur();
-  if(type==='start') t.inCue    = 0;
-  if(type==='end')   t.outCue   = dur || null;
-  if(type==='next')  t.nextCue  = null;
-  if(type==='intro') t.introCue = null;
-  pazUpdateCueEditor(); pazUpdateMarkers();
+  t.autoNext=(t.autoNext===false)?true:false;
+  _pazUpdateAutoBtn(); pazRenderList();
 }
-
-// ── Patch _outOf : NEXT comme point d'enchaînement ──
-const _origOutOf0 = D[0]._outOf.bind(D[0]);
-D[0]._outOf = function(i){
-  const t=this.tracks[i]; if(!t) return 0;
-  if(t.nextCue != null) return t.nextCue;
-  return _origOutOf0(i);
-};
-
-// ── Patch _startTrack : mémoriser heure de lancement ──
-const _origStart0 = D[0]._startTrack.bind(D[0]);
-D[0]._startTrack = function(i){
-  _pazWvFile = null; // forcer rechargement waveform
-  _pazLaunchTime = nowClock();
-  const ltEl = document.getElementById('paz-launch-time');
-  if(ltEl) ltEl.textContent = _pazLaunchTime;
-  _origStart0(i);
-};
-
-// ── Patch render() ──
-const _origRender0 = D[0].render.bind(D[0]);
-D[0].render = function(){ _origRender0(); pazRender(); };
-
-// ── Patch addTracks → actualiser PAZ dès le chargement des fichiers ──
-const _origAddTracks0 = D[0].addTracks.bind(D[0]);
-D[0].addTracks = function(newTracks){
-  _pazWvFile = null;
-  _origAddTracks0(newTracks);
-  // Mise à jour immédiate du titre (avant loadedmetadata)
-  const d=D[0]; const tFirst = d.tracks[d.ci];
-  const titleEl = document.getElementById('paz-title');
-  if(titleEl && tFirst && !tFirst.isMacro){
-    titleEl.textContent = tFirst.title;
-    titleEl.style.color = 'rgba(200,220,255,0.6)';
-  }
-  // Waveform dès que l'audio est décodé
-  setTimeout(()=>{ _pazWvFile=null; pazLoadWaveform(); }, 80);
-  setTimeout(()=>{ _pazWvFile=null; pazRender(); }, 120);
-};
-
-// ── nextTrackForced (interne, utilisé par le moteur) ──
-D[0].nextTrackForced = function(){
-  if(!this.tracks.length) return;
-  _pazWvFile = null;
-  if(this.playing){ this.stopAll(); this.ci=Math.min(this.ci+1,this.tracks.length-1); this.togglePlay(); }
-  else             { this.ci=Math.min(this.ci+1,this.tracks.length-1); this.render(); }
-};
-
-// ── Toggle AUTO NEXT (par piste) ──
-// Chaque piste a un flag autoNext (true par défaut = enchaînement activé)
-let _pazAutoNext = true; // état global affiché dans le bouton
-
-function pazToggleAutoNext(){
-  const t = pazT(); if(!t) return;
-  t.autoNext = (t.autoNext === false) ? true : false;
-  _pazAutoNext = t.autoNext !== false;
-  _pazUpdateAutoNextBtn();
-  pazRenderList(); // Mettre à jour l'icône dans la liste
-}
-
-function pazToggleAutoNextFor(idx){
-  const t = D[0].tracks[idx]; if(!t) return;
-  t.autoNext = (t.autoNext === false) ? true : false;
-  if(idx === D[0].ci) _pazUpdateAutoNextBtn();
+function pazToggleAutoFor(idx){
+  const t=D[0].tracks[idx]; if(!t) return;
+  t.autoNext=(t.autoNext===false)?true:false;
+  if(idx===D[0].ci) _pazUpdateAutoBtn();
   pazRenderList();
 }
-
-function _pazUpdateAutoNextBtn(){
-  const t   = pazT();
-  const on  = t ? (t.autoNext !== false) : _pazAutoNext;
-  const btn = document.getElementById('paz-auto-next-btn');
-  if(!btn) return;
+function _pazUpdateAutoBtn(){
+  const t=pazT();
+  const on=t?(t.autoNext!==false):_pazAutoNext;
+  const btn=document.getElementById('paz-auto-btn'); if(!btn) return;
   if(on){
-    btn.textContent      = '⛓ AUTO';
-    btn.style.border     = '1px solid rgba(0,217,106,.5)';
-    btn.style.color      = '#00d96a';
-    btn.style.background = 'rgba(0,40,10,.6)';
+    btn.textContent='⛓ AUTO'; btn.style.color='#00d96a';
+    btn.style.borderColor='rgba(0,217,106,.5)'; btn.style.background='rgba(0,40,10,.4)';
   } else {
-    btn.textContent      = '⛓ AUTO';
-    btn.style.border     = '1px solid rgba(60,60,80,.4)';
-    btn.style.color      = '#3a4050';
-    btn.style.background = 'rgba(0,0,0,.4)';
-    // Barre de texte pour indiquer OFF
-    btn.textContent = '⛓̸ AUTO';
+    btn.textContent='⛓ AUTO'; btn.style.color='#3a4050';
+    btn.style.borderColor='rgba(60,60,80,.4)'; btn.style.background='rgba(0,0,0,.4)';
   }
 }
 
-// ── Init ──
-setTimeout(()=>{ pazRender(); }, 200);
-// Redimensionner la waveform si la fenêtre change
-window.addEventListener('resize', ()=>{ _pazWvFile=null; pazLoadWaveform(); });
+// ── Patches D[0] ──
+const _r0=D[0].render.bind(D[0]);
+D[0].render=function(){ _r0(); pazRender(); };
 
+const _s0=D[0]._startTrack.bind(D[0]);
+D[0]._startTrack=function(i){
+  _pazWvFile=null; _pazZoom={on:false,s:0,e:1,key:''};
+  _pazLaunchTime=nowClock();
+  const lEl=document.getElementById('paz-launch');
+  if(lEl) lEl.textContent=_pazLaunchTime;
+  _s0(i);
+};
+
+const _add0=D[0].addTracks.bind(D[0]);
+D[0].addTracks=function(newTracks){
+  _pazWvFile=null;
+  _add0(newTracks);
+  setTimeout(()=>{ pazRender(); },80);
+};
+
+// Patch autoNext dans _startTrack original
+const _out0=D[0]._outOf.bind(D[0]);
+D[0]._outOf=function(i){
+  const t=this.tracks[i]; if(!t) return 0;
+  if(t.nextCue!=null) return t.nextCue;
+  return _out0(i);
+};
+
+// Redimensionner la waveform si la fenêtre change
+window.addEventListener('resize',()=>{ _pazWvFile=null; pazDrawBg(true); });
+
+// Init
+setTimeout(()=>{ pazRender(); },200);
 
 // ══════════════════════════════════════════════════════════════
+// MODAL ÉDITEUR DE POINTS
+// ══════════════════════════════════════════════════════════════
+const EM={trackIdx:null,dur:0,audio:null,playing:false,drag:null,raf:null,vs:0,ve:1};
+
+function openEditModal(idx){
+  const d=D[0];
+  const ti=(idx!==undefined)?idx:d.ci;
+  const t=d.tracks[ti]; if(!t||t.isMacro) return;
+  EM.trackIdx=ti; EM.dur=d.durs[ti]||0; EM.vs=0; EM.ve=1;
+  if(EM.audio){EM.audio.pause();}
+  EM.audio=new Audio(t.file); EM.playing=false;
+  document.getElementById('em-title').textContent=t.title;
+  const modal=document.getElementById('edit-modal');
+  modal.style.display='flex';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    emResize(); emDraw(); emHandles(); emZones(); emTc(); emPlayBtn();
+  }));
+  emStartRaf();
+}
+
+function closeEditModal(){
+  emStop(); if(EM.raf){cancelAnimationFrame(EM.raf);EM.raf=null;}
+  document.getElementById('edit-modal').style.display='none';
+  pazRender();
+}
+
+function emResize(){
+  const z=document.getElementById('em-wv'); if(!z) return;
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const W=z.getBoundingClientRect().width||860;
+  const H=Math.max(160,Math.round(W*0.22));
+  cv.width=Math.round(W); cv.height=H;
+  z.style.height=H+'px';
+}
+
+function emDraw(){
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const W=cv.width,H=cv.height;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#01020a'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(20,40,80,.7)'; ctx.lineWidth=1;
+  [.25,.5,.75].forEach(y=>{ctx.beginPath();ctx.moveTo(0,y*H+.5);ctx.lineTo(W,y*H+.5);ctx.stroke();});
+  const t=D[0].tracks[EM.trackIdx]; if(!t) return;
+  if(WV_DATA_CACHE[t.file]){ emPaint(ctx,WV_DATA_CACHE[t.file],W,H); emHandles(); emZones(); }
+  else{
+    ctx.fillStyle='rgba(0,212,240,.45)'; ctx.font="11px 'Share Tech Mono',monospace";
+    ctx.fillText('⟳ Décodage audio…',18,H/2+4);
+    drawWaveform(document.createElement('canvas'),t.file).then(()=>{
+      if(EM.trackIdx===null) return;
+      const t2=D[0].tracks[EM.trackIdx]; if(!t2||t2.file!==t.file) return;
+      emResize(); emDraw();
+    });
+  }
+}
+
+function emPaint(ctx,data,W,H){
+  const total=data.length;
+  const s=Math.floor(EM.vs*total),e=Math.floor(EM.ve*total);
+  const len=Math.max(1,e-s),step=Math.max(1,Math.floor(len/W));
+  const gr=ctx.createLinearGradient(0,0,0,H);
+  gr.addColorStop(0,'rgba(0,160,210,.16)'); gr.addColorStop(.5,'rgba(0,210,250,.42)'); gr.addColorStop(1,'rgba(0,160,210,.16)');
+  ctx.fillStyle=gr;
+  ctx.beginPath(); ctx.moveTo(0,H/2);
+  for(let x=0;x<W;x++){let mx=0;for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}ctx.lineTo(x,H/2-mx*(H/2)*.88);}
+  for(let x=W-1;x>=0;x--){let mx=0;for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}ctx.lineTo(x,H/2+mx*(H/2)*.88);}
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,212,240,.82)'; ctx.lineWidth=1;
+  for(let x=0;x<W;x++){
+    let mn=0,mx=0;
+    for(let j=0;j<step;j++){const v=data[s+x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
+    const y1=Math.round((1-mx)/2*H),y2=Math.round((1-mn)/2*H);
+    if(y2>y1){ctx.beginPath();ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);ctx.stroke();}
+  }
+}
+
+function emSec2x(s){
+  const cv=document.getElementById('em-cv'); if(!cv) return 0;
+  const dur=EM.dur||1, span=EM.ve-EM.vs||1;
+  return ((s/dur-EM.vs)/span)*cv.width;
+}
+function emX2sec(x){
+  const cv=document.getElementById('em-cv'); if(!cv) return 0;
+  const dur=EM.dur||1, span=EM.ve-EM.vs||1;
+  return Math.max(0,Math.min(dur,(EM.vs+x/cv.width*span)*dur));
+}
+
+function emHandles(){
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t) return;
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const place=(id,sec,show)=>{
+    const el=document.getElementById(id); if(!el) return;
+    const x=emSec2x(sec);
+    if(!show||x<-10||x>cv.width+10){el.style.display='none';return;}
+    el.style.display='block'; el.style.left=x+'px';
+  };
+  place('em-h-start',cStart(t),true);
+  place('em-h-end',cEnd(t),true);
+  place('em-h-next',cNext(t),true);
+  place('em-h-intro',t.introCue!=null?t.introCue:0,t.introCue!=null);
+}
+
+function emZones(){
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t) return;
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const W=cv.width;
+  const z=(id,s,e,show)=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(!show){el.style.display='none';return;}
+    const x1=Math.max(0,emSec2x(s)), x2=Math.min(W,emSec2x(e));
+    el.style.left=x1+'px'; el.style.width=Math.max(0,x2-x1)+'px'; el.style.display='block';
+  };
+  z('em-z-body',cStart(t),cEnd(t),true);
+  z('em-z-intro',cStart(t),t.introCue??0,t.introCue!=null);
+}
+
+function emTc(){
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null;
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  sv('em-v-start',t?fmtMs(cStart(t)):'—');
+  sv('em-v-intro',t?(t.introCue!=null?fmtMs(t.introCue):'—'):'—');
+  sv('em-v-next',t?fmtMs(cNext(t)):'—');
+  sv('em-v-end',t?fmtMs(cEnd(t)):'—');
+}
+
+function emStartRaf(){
+  if(EM.raf) cancelAnimationFrame(EM.raf);
+  const tick=()=>{
+    EM.raf=requestAnimationFrame(tick);
+    const a=EM.audio; if(!a) return;
+    const pos=a.currentTime, dur=EM.dur||1;
+    const ph=document.getElementById('em-ph');
+    if(ph){ const x=emSec2x(pos); ph.style.display='block'; ph.style.left=x+'px'; }
+  };
+  tick();
+}
+
+function emTogglePlay(){
+  if(!EM.audio) return;
+  const btn=document.getElementById('em-play-btn');
+  if(EM.playing){
+    EM.audio.pause(); EM.playing=false;
+    if(btn){btn.textContent='▶ PLAY';btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)';btn.style.borderColor='#1a8a40';btn.style.color='#60ff90';}
+  } else {
+    EM.audio.play(); EM.playing=true;
+    if(btn){btn.textContent='❙❙ PAUSE';btn.style.background='linear-gradient(180deg,#2a3a00,#141e00)';btn.style.borderColor='#6a8a00';btn.style.color='#ccff40';}
+  }
+}
+function emStop(){
+  if(!EM.audio) return;
+  EM.audio.pause(); EM.audio.currentTime=0; EM.playing=false; emPlayBtn();
+}
+function emPlayBtn(){
+  const btn=document.getElementById('em-play-btn'); if(!btn) return;
+  btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90';
+}
+function emGoTo(type){
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t||!EM.audio) return;
+  const map={start:cStart(t),end:cEnd(t),next:cNext(t),intro:t.introCue};
+  if(map[type]!=null) EM.audio.currentTime=map[type];
+}
+function emSetHere(type){
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t||!EM.audio) return;
+  const pos=EM.audio.currentTime;
+  if(type==='start') t.inCue=pos;
+  if(type==='end')   t.outCue=pos;
+  if(type==='next')  t.nextCue=pos;
+  if(type==='intro') t.introCue=pos;
+  emHandles(); emZones(); emTc(); pazMarkers();
+}
+
+// Clic waveform → curseur
+document.addEventListener('click',e=>{
+  if(EM.drag) return;
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  if(!e.target.closest('#em-wv')) return;
+  const rect=cv.getBoundingClientRect();
+  const x=(e.clientX-rect.left)*(cv.width/rect.width);
+  if(EM.audio) EM.audio.currentTime=emX2sec(x);
+});
+
+// Drag poignées
+function emStartDrag(e,type){ e.preventDefault(); e.stopPropagation(); EM.drag=type; }
+document.addEventListener('mousemove',e=>{
+  if(!EM.drag) return;
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const rect=cv.getBoundingClientRect();
+  const x=(e.clientX-rect.left)*(cv.width/rect.width);
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t) return;
+  const pos=emX2sec(x);
+  if(EM.drag==='start') t.inCue=pos;
+  if(EM.drag==='end')   t.outCue=pos;
+  if(EM.drag==='next')  t.nextCue=pos;
+  if(EM.drag==='intro') t.introCue=pos;
+  emHandles(); emZones(); emTc();
+});
+document.addEventListener('mouseup',()=>{ if(EM.drag){EM.drag=null;pazMarkers();} });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){const m=document.getElementById('edit-modal');if(m&&m.style.display!=='none')closeEditModal();} });
+
+
 // Supprimer une piste d'un diffuseur
 function diffRemoveTrack(diffIdx, trackIdx){
   const d=D[diffIdx];
@@ -3304,9 +3157,8 @@ function checkSilence(key,db){
       if(listenBtn) listenBtn.classList.add('silence-alarm');
       // Journal
       addJournalLine('absence', key, timeStr);
-      // Bip immédiat + répétition toutes les 8s
+      // Bip unique au déclenchement
       playBip();
-      s.bipTimer=setInterval(playBip,8000);
       // Mail d'alerte début
       sendSilenceEmail(key,'start',timeStr);
     }
@@ -3315,7 +3167,7 @@ function checkSilence(key,db){
     if(s.alerting){
       s.alerting=false;
       const returnTime=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-      if(s.bipTimer){clearInterval(s.bipTimer);s.bipTimer=null;}
+      // bipTimer supprimé (bip unique)
       if(wrap) wrap.classList.remove('silence-warn');
       if(badge) badge.classList.remove('active');
       // Retirer point rouge + clignotement
@@ -3393,7 +3245,7 @@ document.addEventListener('click',function initBipOnce(){
   document.removeEventListener('click',initBipOnce);
 },{once:true});
 
-setInterval(()=>{document.getElementById('global-clock').textContent=nowClock();D.forEach(d=>d.tick());rdvTick();pazTick();},80);
+setInterval(()=>{document.getElementById('global-clock').textContent=nowClock();D.forEach(d=>d.tick());rdvTick();pazTick();pazUpdateRowProg();},80);
 
 // ══════════════════════════════════════
 // ONGLETS
@@ -4381,88 +4233,75 @@ plInit();
 
 </script>
 <!-- ══ MODAL ÉDITEUR DE POINTS ══ -->
-</body>
-</html>
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,4,18,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="background:#02040c;border:2px solid #1e3a8a;border-radius:10px;width:92vw;max-width:980px;max-height:94vh;box-shadow:0 0 80px rgba(0,30,180,.3);overflow:hidden;display:flex;flex-direction:column;font-family:var(--mono);">
 
-<!-- ══════════════════════════════════════════════════════
-     MODAL ÉDITEUR DE POINTS v2
-     ══════════════════════════════════════════════════════ -->
-<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,5,20,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
-  <div id="em-box" style="background:#02040c;border:2px solid #1e3a8a;border-radius:10px;width:92vw;max-width:980px;box-shadow:0 0 80px rgba(0,30,180,.3);overflow:hidden;display:flex;flex-direction:column;">
-
-    <!-- ── Barre titre ── -->
+    <!-- Titre -->
     <div style="background:#050a1e;border-bottom:1px solid #1e3a8a;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:14px;">
-        <span style="font-family:var(--mono);font-size:9px;color:#4a6aaa;letter-spacing:3px;text-transform:uppercase;">✦ Éditeur de points</span>
-        <span id="em-title" style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--cyan);letter-spacing:2px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:50vw;">—</span>
+        <span style="font-size:9px;color:#4a6aaa;letter-spacing:3px;">✦ ÉDITEUR DE POINTS</span>
+        <span id="em-title" style="font-family:var(--display);font-size:17px;font-weight:700;color:var(--cyan);letter-spacing:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:55vw;">—</span>
       </div>
-      <button onclick="closeEditModal()" style="background:transparent;border:1px solid #4a1010;color:#e03020;font-family:var(--mono);font-size:10px;padding:4px 12px;border-radius:2px;cursor:pointer;letter-spacing:1px;transition:background .1s;" onmouseover="this.style.background='#200808'" onmouseout="this.style.background='transparent'">✕ FERMER</button>
+      <button onclick="closeEditModal()" style="background:transparent;border:1px solid #4a1010;color:#e03020;font-family:var(--mono);font-size:10px;padding:4px 12px;border-radius:2px;cursor:pointer;transition:background .1s;" onmouseover="this.style.background='#200808'" onmouseout="this.style.background='transparent'">✕ FERMER</button>
     </div>
 
-    <!-- ── Canvas waveform ── -->
-    <div id="em-wv-zone" style="position:relative;background:#000;flex-shrink:0;overflow:hidden;" onmousedown="emWvClick(event)" style="cursor:crosshair;">
-      <canvas id="em-cv" style="display:block;width:100%;cursor:crosshair;"></canvas>
-
-      <!-- Zones colorées (derrière les poignées) -->
-      <div id="em-z-body"  style="position:absolute;top:0;bottom:0;background:rgba(150,8,8,.22);pointer-events:none;z-index:1;display:none;"></div>
-      <div id="em-z-intro" style="position:absolute;top:0;bottom:0;background:rgba(190,148,0,.28);pointer-events:none;z-index:2;display:none;"></div>
-
-      <!-- Poignées : zone de hit large, trait fin centré -->
-      <div id="em-h-start" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:6;touch-action:none;" onmousedown="emStartDrag(event,'start')">
-        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#00d4f0;pointer-events:none;"></div>
-        <div style="position:absolute;left:14px;top:6px;font-family:var(--mono);font-size:8px;color:#00d4f0;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">START</div>
-      </div>
-      <div id="em-h-intro" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:7;touch-action:none;display:none;" onmousedown="emStartDrag(event,'intro')">
-        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#f5c400;pointer-events:none;"></div>
-        <div style="position:absolute;right:14px;top:6px;font-family:var(--mono);font-size:8px;color:#f5c400;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">INTRO</div>
-      </div>
-      <div id="em-h-next" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:7;touch-action:none;" onmousedown="emStartDrag(event,'next')">
-        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#00d96a;pointer-events:none;"></div>
-        <div style="position:absolute;left:14px;bottom:6px;font-family:var(--mono);font-size:8px;color:#00d96a;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">NEXT</div>
-      </div>
-      <div id="em-h-end" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:6;touch-action:none;" onmousedown="emStartDrag(event,'end')">
-        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#e03020;pointer-events:none;"></div>
-        <div style="position:absolute;right:14px;bottom:6px;font-family:var(--mono);font-size:8px;color:#e03020;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">END</div>
-      </div>
-
+    <!-- Waveform -->
+    <div id="em-wv" style="position:relative;background:#000;flex-shrink:0;overflow:hidden;">
+      <canvas id="em-cv" style="display:block;width:100%;"></canvas>
+      <!-- Zones -->
+      <div id="em-z-body"  style="position:absolute;top:0;bottom:0;left:0;width:0;background:rgba(140,8,8,.20);z-index:1;pointer-events:none;display:none;"></div>
+      <div id="em-z-intro" style="position:absolute;top:0;bottom:0;left:0;width:0;background:rgba(180,140,0,.28);z-index:2;pointer-events:none;display:none;"></div>
       <!-- Playhead -->
-      <div id="em-ph" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,180,.85);z-index:8;pointer-events:none;display:none;box-shadow:0 0 4px rgba(255,255,150,.5);"></div>
+      <div id="em-ph" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,180,.85);z-index:8;pointer-events:none;display:block;left:0;box-shadow:0 0 4px rgba(255,255,150,.4);"></div>
+      <!-- Poignées — zone de hit 28px, trait 2px centré -->
+      <div id="em-h-start" onmousedown="emStartDrag(event,'start')" style="position:absolute;top:0;bottom:0;width:28px;transform:translateX(-14px);cursor:ew-resize;z-index:6;touch-action:none;display:none;">
+        <div style="position:absolute;left:13px;top:0;bottom:0;width:2px;background:#00d4f0;pointer-events:none;"></div>
+        <div style="position:absolute;left:18px;top:6px;font-size:8px;color:#00d4f0;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">START</div>
+      </div>
+      <div id="em-h-intro" onmousedown="emStartDrag(event,'intro')" style="position:absolute;top:0;bottom:0;width:28px;transform:translateX(-14px);cursor:ew-resize;z-index:7;touch-action:none;display:none;">
+        <div style="position:absolute;left:13px;top:0;bottom:0;width:2px;background:#f5c400;pointer-events:none;"></div>
+        <div style="position:absolute;right:18px;top:6px;font-size:8px;color:#f5c400;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">INTRO</div>
+      </div>
+      <div id="em-h-next" onmousedown="emStartDrag(event,'next')" style="position:absolute;top:0;bottom:0;width:28px;transform:translateX(-14px);cursor:ew-resize;z-index:7;touch-action:none;display:none;">
+        <div style="position:absolute;left:13px;top:0;bottom:0;width:2px;background:#00d96a;pointer-events:none;"></div>
+        <div style="position:absolute;left:18px;bottom:6px;font-size:8px;color:#00d96a;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">NEXT</div>
+      </div>
+      <div id="em-h-end" onmousedown="emStartDrag(event,'end')" style="position:absolute;top:0;bottom:0;width:28px;transform:translateX(-14px);cursor:ew-resize;z-index:6;touch-action:none;display:none;">
+        <div style="position:absolute;left:13px;top:0;bottom:0;width:2px;background:#e03020;pointer-events:none;"></div>
+        <div style="position:absolute;right:18px;bottom:6px;font-size:8px;color:#e03020;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">END</div>
+      </div>
     </div>
 
-    <!-- ── Timecodes ── -->
+    <!-- Timecodes -->
     <div style="background:#04070f;border-top:1px solid #0e1c3a;border-bottom:1px solid #0e1c3a;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;flex-shrink:0;">
-      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;border-right:1px solid #0e1c3a;">
-        <span style="font-family:var(--mono);font-size:8px;color:#00d4f0;letter-spacing:2px;margin-bottom:3px;">START</span>
-        <span id="em-v-start" style="font-family:var(--mono);font-size:15px;color:#00d4f0;letter-spacing:1px;">—</span>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0;border-right:1px solid #0e1c3a;gap:3px;">
+        <span style="font-size:8px;color:#00d4f0;letter-spacing:2px;">START</span>
+        <span id="em-v-start" style="font-size:15px;color:#00d4f0;letter-spacing:1px;">—</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;border-right:1px solid #0e1c3a;">
-        <span style="font-family:var(--mono);font-size:8px;color:#f5c400;letter-spacing:2px;margin-bottom:3px;">INTRO</span>
-        <span id="em-v-intro" style="font-family:var(--mono);font-size:15px;color:#f5c400;letter-spacing:1px;">—</span>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0;border-right:1px solid #0e1c3a;gap:3px;">
+        <span style="font-size:8px;color:#f5c400;letter-spacing:2px;">INTRO</span>
+        <span id="em-v-intro" style="font-size:15px;color:#f5c400;letter-spacing:1px;">—</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;border-right:1px solid #0e1c3a;">
-        <span style="font-family:var(--mono);font-size:8px;color:#00d96a;letter-spacing:2px;margin-bottom:3px;">NEXT</span>
-        <span id="em-v-next" style="font-family:var(--mono);font-size:15px;color:#00d96a;letter-spacing:1px;">—</span>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0;border-right:1px solid #0e1c3a;gap:3px;">
+        <span style="font-size:8px;color:#00d96a;letter-spacing:2px;">NEXT</span>
+        <span id="em-v-next" style="font-size:15px;color:#00d96a;letter-spacing:1px;">—</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;">
-        <span style="font-family:var(--mono);font-size:8px;color:#e03020;letter-spacing:2px;margin-bottom:3px;">END</span>
-        <span id="em-v-end" style="font-family:var(--mono);font-size:15px;color:#e03020;letter-spacing:1px;">—</span>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:3px;">
+        <span style="font-size:8px;color:#e03020;letter-spacing:2px;">END</span>
+        <span id="em-v-end" style="font-size:15px;color:#e03020;letter-spacing:1px;">—</span>
       </div>
     </div>
 
-    <!-- ── Transport ── -->
+    <!-- Transport -->
     <div style="background:#030610;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">
-      <button id="em-play-btn" onclick="emTogglePlay()" style="min-width:84px;background:linear-gradient(180deg,#0a4a1a,#052810);border:1px solid #1a8a40;border-radius:3px;color:#60ff90;font-family:var(--mono);font-size:11px;padding:6px 14px;cursor:pointer;letter-spacing:1px;transition:all .1s;">▶ PLAY</button>
-      <button onclick="emStop()" style="background:linear-gradient(180deg,#3a0808,#200404);border:1px solid #7a2020;border-radius:3px;color:#ff6060;font-family:var(--mono);font-size:11px;padding:6px 14px;cursor:pointer;letter-spacing:1px;transition:all .1s;">■ STOP</button>
-
-      <div style="width:1px;height:24px;background:#1e2840;margin:0 2px;"></div>
-
-      <!-- Aller aux points -->
+      <button id="em-play-btn" onclick="emTogglePlay()" style="min-width:80px;background:linear-gradient(180deg,#0a4a1a,#052810);border:1px solid #1a8a40;border-radius:3px;color:#60ff90;font-family:var(--mono);font-size:11px;padding:6px 14px;cursor:pointer;letter-spacing:1px;">▶ PLAY</button>
+      <button onclick="emStop()" style="background:linear-gradient(180deg,#3a0808,#200404);border:1px solid #7a2020;border-radius:3px;color:#ff6060;font-family:var(--mono);font-size:11px;padding:6px 14px;cursor:pointer;letter-spacing:1px;">■ STOP</button>
+      <div style="width:1px;height:22px;background:#1e2840;"></div>
       <button onclick="emGoTo('start')" style="background:#020510;border:1px solid #1a3060;border-radius:2px;color:#00d4f0;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ START</button>
       <button onclick="emGoTo('intro')" style="background:#020510;border:1px solid #3a3000;border-radius:2px;color:#f5c400;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ INTRO</button>
       <button onclick="emGoTo('next')" style="background:#020510;border:1px solid #004a20;border-radius:2px;color:#00d96a;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ NEXT</button>
       <button onclick="emGoTo('end')" style="background:#020510;border:1px solid #3a1010;border-radius:2px;color:#e03020;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ END</button>
-
-      <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <div style="margin-left:auto;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
         <span style="font-family:var(--mono);font-size:9px;color:#2a4060;letter-spacing:1px;">PLACER ICI →</span>
         <button onclick="emSetHere('start')" style="background:rgba(0,212,240,.06);border:1px solid #00d4f0;border-radius:2px;color:#00d4f0;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">START</button>
         <button onclick="emSetHere('intro')" style="background:rgba(245,196,0,.06);border:1px solid #f5c400;border-radius:2px;color:#f5c400;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">INTRO</button>
@@ -4473,330 +4312,5 @@ plInit();
 
   </div>
 </div>
-
-<script>
-// ══════════════════════════════════════════════════════════════
-// MODAL ÉDITEUR DE POINTS v2 — robuste et autonome
-// ══════════════════════════════════════════════════════════════
-
-const EM = {
-  trackIdx : null,
-  dur      : 0,
-  audio    : null,
-  playing  : false,
-  drag     : null,   // 'start'|'end'|'next'|'intro'
-  raf      : null,
-  // Zoom waveform
-  viewStart: 0,      // ratio [0-1] début de la vue
-  viewEnd  : 1,      // ratio [0-1] fin de la vue
-};
-
-// ── Ouvrir ──
-function openEditModal(trackIdx){
-  const d   = D[0];
-  const idx = (trackIdx !== undefined) ? trackIdx : d.ci;
-  const t   = d.tracks[idx];
-  if(!t || t.isMacro) return;
-
-  EM.trackIdx  = idx;
-  EM.dur       = d.durs[idx] || 0;
-  EM.viewStart = 0;
-  EM.viewEnd   = 1;
-
-  // Arrêter lecture précédente
-  if(EM.audio){ EM.audio.pause(); }
-  EM.audio   = new Audio(t.file);
-  EM.playing = false;
-
-  // Titre
-  document.getElementById('em-title').textContent = t.title;
-
-  // Ouvrir le modal AVANT de dessiner
-  const modal = document.getElementById('edit-modal');
-  modal.style.display = 'flex';
-
-  // Attendre 2 frames que le layout soit peint
-  requestAnimationFrame(()=> requestAnimationFrame(()=>{
-    emResizeCanvas();
-    emDrawFull();
-    emUpdateHandles();
-    emUpdateTimecodes();
-    emUpdatePlayBtn();
-    emStartRaf();
-  }));
-}
-
-function closeEditModal(){
-  emStop();
-  if(EM.raf){ cancelAnimationFrame(EM.raf); EM.raf=null; }
-  document.getElementById('edit-modal').style.display = 'none';
-  pazRender(); // mettre à jour le PAZ principal
-}
-
-// ── Dimensionner le canvas ──
-function emResizeCanvas(){
-  const zone = document.getElementById('em-wv-zone');
-  const cv   = document.getElementById('em-cv');
-  if(!zone || !cv) return;
-  const W = zone.getBoundingClientRect().width || 900;
-  const H = Math.round(W * 0.22); // ratio fixe ~22%
-  cv.width  = Math.round(W);
-  cv.height = Math.max(H, 160);
-  // Ajuster la hauteur du conteneur
-  zone.style.height = cv.height + 'px';
-}
-
-// ── Dessiner la waveform sur la vue courante [viewStart, viewEnd] ──
-function emDrawFull(){
-  const cv = document.getElementById('em-cv'); if(!cv) return;
-  const W  = cv.width, H = cv.height;
-  const ctx= cv.getContext('2d');
-
-  // Fond
-  ctx.fillStyle = '#01020a';
-  ctx.fillRect(0,0,W,H);
-
-  // Grille
-  ctx.strokeStyle='rgba(20,40,80,.7)'; ctx.lineWidth=1;
-  [.25,.5,.75].forEach(y=>{ ctx.beginPath();ctx.moveTo(0,y*H+.5);ctx.lineTo(W,y*H+.5);ctx.stroke(); });
-
-  const t = D[0].tracks[EM.trackIdx];
-  if(!t) return;
-
-  if(WV_DATA_CACHE[t.file]){
-    emDrawData(ctx, WV_DATA_CACHE[t.file], W, H, EM.viewStart, EM.viewEnd);
-    emUpdateHandles();
-    emUpdateZones();
-  } else {
-    ctx.fillStyle='rgba(0,212,240,.5)';
-    ctx.font=`12px 'Share Tech Mono',monospace`;
-    ctx.fillText('⟳ Décodage audio en cours…', 20, H/2+4);
-    drawWaveform(document.createElement('canvas'), t.file).then(()=>{
-      if(EM.trackIdx===null) return;
-      if(D[0].tracks[EM.trackIdx]?.file !== t.file) return;
-      emResizeCanvas();
-      emDrawFull();
-    });
-  }
-}
-
-function emDrawData(ctx, data, W, H, vStart, vEnd){
-  const total = data.length;
-  const s = Math.floor(vStart * total);
-  const e = Math.floor(vEnd   * total);
-  const len  = Math.max(1, e - s);
-  const step = Math.max(1, Math.floor(len / W));
-
-  // Silhouette
-  const grad = ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,   'rgba(0,170,220,.18)');
-  grad.addColorStop(0.5, 'rgba(0,210,250,.42)');
-  grad.addColorStop(1,   'rgba(0,170,220,.18)');
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.moveTo(0, H/2);
-  for(let x=0;x<W;x++){
-    let mx=0;
-    for(let j=0;j<step;j++){ const v=Math.abs(data[s+x*step+j]||0); if(v>mx)mx=v; }
-    ctx.lineTo(x, H/2 - mx*(H/2)*.9);
-  }
-  for(let x=W-1;x>=0;x--){
-    let mx=0;
-    for(let j=0;j<step;j++){ const v=Math.abs(data[s+x*step+j]||0); if(v>mx)mx=v; }
-    ctx.lineTo(x, H/2 + mx*(H/2)*.9);
-  }
-  ctx.closePath(); ctx.fill();
-
-  // Traits
-  ctx.strokeStyle='rgba(0,212,240,.82)'; ctx.lineWidth=1;
-  for(let x=0;x<W;x++){
-    let mn=0,mx=0;
-    for(let j=0;j<step;j++){ const v=data[s+x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
-    const y1=Math.round((1-mx)/2*H), y2=Math.round((1-mn)/2*H);
-    if(y2>y1){ ctx.beginPath();ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);ctx.stroke(); }
-  }
-}
-
-// ── Convertir seconde → pixel X sur la vue courante ──
-function emSecToX(sec){
-  const cv = document.getElementById('em-cv'); if(!cv) return 0;
-  const dur = EM.dur || 1;
-  const ratio = sec / dur;
-  // En dehors de la vue → -1
-  const span = EM.viewEnd - EM.viewStart;
-  if(span <= 0) return -1;
-  return ((ratio - EM.viewStart) / span) * cv.width;
-}
-function emXToSec(x){
-  const cv = document.getElementById('em-cv'); if(!cv) return 0;
-  const span = EM.viewEnd - EM.viewStart;
-  const ratio = EM.viewStart + (x / cv.width) * span;
-  return Math.max(0, Math.min(EM.dur, ratio * EM.dur));
-}
-
-// ── Mettre à jour les poignées ──
-function emUpdateHandles(){
-  const t = EM.trackIdx !== null ? D[0].tracks[EM.trackIdx] : null;
-  if(!t) return;
-
-  const place = (id, sec, show)=>{
-    const el = document.getElementById(id); if(!el) return;
-    const x = emSecToX(sec);
-    if(!show || x < 0 || x > (document.getElementById('em-cv')?.width||900)){
-      el.style.display='none'; return;
-    }
-    el.style.display = 'block';
-    el.style.left    = x + 'px';
-  };
-
-  place('em-h-start', cueStart(t), true);
-  place('em-h-end',   cueEnd(t),   true);
-  place('em-h-next',  cueNext(t),  true);
-  place('em-h-intro', t.introCue != null ? t.introCue : 0, t.introCue != null);
-}
-
-// ── Zones colorées ──
-function emUpdateZones(){
-  const t = EM.trackIdx !== null ? D[0].tracks[EM.trackIdx] : null;
-  if(!t){ ['em-z-body','em-z-intro'].forEach(id=>{ const el=document.getElementById(id); if(el)el.style.display='none'; }); return; }
-  const cv = document.getElementById('em-cv'); if(!cv) return;
-  const W  = cv.width;
-
-  const clamp = x => Math.max(0, Math.min(W, x));
-  const zone = (id, s, e, show)=>{
-    const el=document.getElementById(id); if(!el) return;
-    if(!show){ el.style.display='none'; return; }
-    const x1=clamp(emSecToX(s)), x2=clamp(emSecToX(e));
-    el.style.left    = x1+'px';
-    el.style.width   = Math.max(0,x2-x1)+'px';
-    el.style.display = 'block';
-  };
-  zone('em-z-body',  cueStart(t), cueEnd(t),   true);
-  zone('em-z-intro', cueStart(t), t.introCue ?? 0, t.introCue != null);
-}
-
-// ── Timecodes ──
-function emUpdateTimecodes(){
-  const t = EM.trackIdx !== null ? D[0].tracks[EM.trackIdx] : null;
-  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-  set('em-v-start', t ? fmtMs(cueStart(t)) : '—');
-  set('em-v-intro', t ? (t.introCue!=null ? fmtMs(t.introCue) : '—') : '—');
-  set('em-v-next',  t ? fmtMs(cueNext(t))  : '—');
-  set('em-v-end',   t ? fmtMs(cueEnd(t))   : '—');
-}
-
-// ── RAF : playhead + redessiner si nécessaire ──
-function emStartRaf(){
-  if(EM.raf) cancelAnimationFrame(EM.raf);
-  const tick = ()=>{
-    EM.raf = requestAnimationFrame(tick);
-    const a = EM.audio; if(!a) return;
-    const pos = a.currentTime;
-    const dur = EM.dur || 1;
-    const cv  = document.getElementById('em-cv'); if(!cv) return;
-
-    // Playhead
-    const ph = document.getElementById('em-ph');
-    if(ph){
-      const x = emSecToX(pos);
-      if(x >= 0 && x <= cv.width){
-        ph.style.display = 'block';
-        ph.style.left    = x + 'px';
-      } else {
-        ph.style.display = 'none';
-      }
-    }
-  };
-  tick();
-}
-
-// ── Transport ──
-function emTogglePlay(){
-  if(!EM.audio) return;
-  const btn = document.getElementById('em-play-btn');
-  if(EM.playing){
-    EM.audio.pause(); EM.playing=false;
-    if(btn){ btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90'; }
-  } else {
-    EM.audio.play(); EM.playing=true;
-    if(btn){ btn.textContent='❙❙ PAUSE'; btn.style.background='linear-gradient(180deg,#2a3a00,#141e00)'; btn.style.borderColor='#6a8a00'; btn.style.color='#ccff40'; }
-  }
-}
-function emStop(){
-  if(!EM.audio) return;
-  EM.audio.pause(); EM.audio.currentTime=0; EM.playing=false;
-  emUpdatePlayBtn();
-}
-function emUpdatePlayBtn(){
-  const btn = document.getElementById('em-play-btn'); if(!btn) return;
-  btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90';
-}
-function emGoTo(type){
-  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t||!EM.audio) return;
-  if(type==='start') EM.audio.currentTime=cueStart(t);
-  if(type==='end')   EM.audio.currentTime=cueEnd(t);
-  if(type==='next')  EM.audio.currentTime=cueNext(t);
-  if(type==='intro'&&t.introCue!=null) EM.audio.currentTime=t.introCue;
-}
-function emSetHere(type){
-  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t||!EM.audio) return;
-  const pos=EM.audio.currentTime;
-  if(type==='start') t.inCue    = pos;
-  if(type==='end')   t.outCue   = pos;
-  if(type==='next')  t.nextCue  = pos;
-  if(type==='intro') t.introCue = pos;
-  emUpdateHandles(); emUpdateZones(); emUpdateTimecodes();
-  pazUpdateMarkers();
-}
-
-// ── Clic sur waveform → déplacer le curseur ──
-function emWvClick(e){
-  if(EM.drag) return; // ignorer si on drag
-  const cv=document.getElementById('em-cv'); if(!cv) return;
-  const rect=cv.getBoundingClientRect();
-  const x=(e.clientX-rect.left)*(cv.width/rect.width);
-  if(!EM.audio) return;
-  EM.audio.currentTime = emXToSec(x);
-}
-
-// ── Drag des poignées ──
-function emStartDrag(e, type){
-  e.preventDefault(); e.stopPropagation();
-  EM.drag = type;
-}
-document.addEventListener('mousemove', e=>{
-  if(!EM.drag) return;
-  const cv=document.getElementById('em-cv'); if(!cv) return;
-  const rect=cv.getBoundingClientRect();
-  const x=(e.clientX-rect.left)*(cv.width/rect.width);
-  const pos=emXToSec(x);
-  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t) return;
-  if(EM.drag==='start') t.inCue    = pos;
-  if(EM.drag==='end')   t.outCue   = pos;
-  if(EM.drag==='next')  t.nextCue  = pos;
-  if(EM.drag==='intro') t.introCue = pos;
-  emUpdateHandles(); emUpdateZones(); emUpdateTimecodes();
-});
-document.addEventListener('mouseup',  ()=>{ if(EM.drag){ EM.drag=null; pazUpdateMarkers(); } });
-document.addEventListener('touchmove', e=>{
-  if(!EM.drag) return;
-  e.preventDefault();
-  const cv=document.getElementById('em-cv'); if(!cv) return;
-  const rect=cv.getBoundingClientRect();
-  const x=(e.touches[0].clientX-rect.left)*(cv.width/rect.width);
-  const pos=emXToSec(x);
-  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t) return;
-  if(EM.drag==='start') t.inCue    = pos;
-  if(EM.drag==='end')   t.outCue   = pos;
-  if(EM.drag==='next')  t.nextCue  = pos;
-  if(EM.drag==='intro') t.introCue = pos;
-  emUpdateHandles(); emUpdateZones(); emUpdateTimecodes();
-},{passive:false});
-document.addEventListener('touchend', ()=>{ if(EM.drag){ EM.drag=null; pazUpdateMarkers(); } });
-
-// Fermer avec Échap
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape' && document.getElementById('edit-modal').style.display!=='none') closeEditModal();
-});
-</script>
 </body>
 </html>
