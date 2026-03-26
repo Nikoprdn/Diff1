@@ -1267,7 +1267,7 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
       <!-- ── COUCHES DE FOND (z-index 0→3) ── -->
 
       <!-- Waveform HD (canvas plein fond) -->
-      <canvas id="paz-bg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+      <canvas id="paz-bg" style="position:absolute;inset:0;pointer-events:none;z-index:0;display:block;"></canvas>
 
       <!-- Surlignage ROUGE : progression de START → END -->
       <div id="paz-red" style="position:absolute;top:0;bottom:0;left:0;width:0;z-index:1;background:linear-gradient(90deg,rgba(180,10,10,.72) 0%,rgba(100,5,5,.55) 100%);pointer-events:none;transition:width .08s linear,left .08s linear;"></div>
@@ -1309,10 +1309,16 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
       </div>
 
       <!-- Bouton NEXT séparé en bas à droite -->
-      <button onclick="D[0].nextTrackForced()" title="Piste suivante"
-        style="position:absolute;bottom:10px;right:12px;z-index:6;background:rgba(0,0,0,.5);border:1px solid rgba(240,120,0,.4);border-radius:3px;color:var(--orange);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .12s;"
-        onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(60,20,0,.6)'"
-        onmouseout="this.style.borderColor='rgba(240,120,0,.4)';this.style.background='rgba(0,0,0,.5)'">↓ NEXT</button>
+      <div style="position:absolute;bottom:8px;right:10px;z-index:6;display:flex;gap:6px;">
+        <button onclick="openEditModal()" title="Éditer les points"
+          style="background:rgba(30,20,60,.7);border:1px solid rgba(130,90,220,.5);border-radius:3px;color:#9b6de5;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .12s;"
+          onmouseover="this.style.borderColor='#9b6de5';this.style.background='rgba(50,20,80,.8)'"
+          onmouseout="this.style.borderColor='rgba(130,90,220,.5)';this.style.background='rgba(30,20,60,.7)'">✦ EDIT</button>
+        <button onclick="D[0].nextTrackForced()" title="Piste suivante"
+          style="background:rgba(0,0,0,.5);border:1px solid rgba(240,120,0,.4);border-radius:3px;color:var(--orange);font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .12s;"
+          onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(60,20,0,.6)'"
+          onmouseout="this.style.borderColor='rgba(240,120,0,.4)';this.style.background='rgba(0,0,0,.5)'">↓ NEXT</button>
+      </div>
     </div>
 
     <!-- ══ ÉDITEUR DE POINTS ══ -->
@@ -1747,6 +1753,11 @@ class Diffuser{
         this.render();
         const cv=document.getElementById(`wv-${this.idx}-${idx}`);
         if(cv){cv.width=800;cv.height=80;drawWaveform(cv,this.tracks[idx].file);}
+        // ── Déclencher waveform PAZ si c'est la piste en tête ──
+        if(this.idx===0 && idx===this.ci){
+          _pazWvFile=null;
+          setTimeout(()=>pazLoadWaveform(), 50);
+        }
       });
       // !! PAS de addEventListener('ended') — géré par audio.onended + token dans _startTrack
       this.audios[idx]=a;
@@ -2308,25 +2319,54 @@ function cueNext(t) { return t ? (t.nextCue != null ? t.nextCue : cueEnd(t)) : 0
 function cueIntro(t){ return t ? (t.introCue!= null ? t.introCue : null) : null; }
 
 // ── Waveform HD plein fond ──
+function _pazSizeCanvas(){
+  // Dimensionner le canvas paz-bg à la taille réelle du conteneur #paz
+  const bg  = document.getElementById('paz-bg');  if(!bg)  return;
+  const paz = document.getElementById('paz');      if(!paz) return;
+  const W = paz.offsetWidth  || 900;
+  const H = paz.offsetHeight || 160;
+  if(bg.width !== W || bg.height !== H){
+    bg.width  = W;
+    bg.height = H;
+    bg.style.width  = W + 'px';
+    bg.style.height = H + 'px';
+  }
+  return {bg, W, H};
+}
+
 function pazLoadWaveform(){
-  const t = pazT(); if(!t || !t.file) return;
-  if(t.file === _pazWvFile) return;
-  _pazWvFile = t.file;
+  const d    = D[0];
+  const tRaw = d.tracks[d.ci] || null;
+  if(!tRaw || !tRaw.file) { _pazWvFile=null; return; }
 
-  const bg = document.getElementById('paz-bg'); if(!bg) return;
-  const W = bg.parentElement.offsetWidth  || 1200;
-  const H = bg.parentElement.offsetHeight || 160;
-  bg.width = W; bg.height = H;
+  const file = tRaw.file;
+  const r = _pazSizeCanvas(); if(!r) return;
+  const {bg, W, H} = r;
 
-  if(WV_DATA_CACHE[t.file]){
-    _drawPazWv(bg, WV_DATA_CACHE[t.file]);
+  // Si même fichier et canvas déjà correct → juste redessiner si cache dispo
+  if(file === _pazWvFile && WV_DATA_CACHE[file]){
+    _drawPazWv(bg, WV_DATA_CACHE[file]); return;
+  }
+  _pazWvFile = file;
+
+  if(WV_DATA_CACHE[file]){
+    _drawPazWv(bg, WV_DATA_CACHE[file]);
   } else {
+    // Feedback visuel pendant le chargement
+    const ctx = bg.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,212,240,.06)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,212,240,.3)';
+    ctx.font='11px monospace';
+    ctx.fillText('⟳ Chargement waveform...', 20, H/2+4);
+
     // Déclencher le décodage
-    drawWaveform(document.createElement('canvas'), t.file).then(()=>{
+    drawWaveform(document.createElement('canvas'), file).then(()=>{
+      if(file !== _pazWvFile) return; // piste changée
       const el = document.getElementById('paz-bg'); if(!el) return;
-      el.width  = el.parentElement.offsetWidth  || 1200;
-      el.height = el.parentElement.offsetHeight || 160;
-      if(WV_DATA_CACHE[t.file]) _drawPazWv(el, WV_DATA_CACHE[t.file]);
+      _pazSizeCanvas();
+      if(WV_DATA_CACHE[file]) _drawPazWv(el, WV_DATA_CACHE[file]);
     });
   }
 }
@@ -2338,11 +2378,11 @@ function _drawPazWv(canvas, data){
   ctx.clearRect(0,0,W,H);
   const step=Math.max(1,Math.floor(data.length/W));
 
-  // Zone remplie (silhouette)
+  // Zone remplie (silhouette) — bien visible en fond
   const grad=ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,'rgba(0,180,230,0.10)');
-  grad.addColorStop(0.5,'rgba(0,210,250,0.22)');
-  grad.addColorStop(1,'rgba(0,180,230,0.10)');
+  grad.addColorStop(0,   'rgba(0,180,230,0.18)');
+  grad.addColorStop(0.5, 'rgba(0,210,250,0.38)');
+  grad.addColorStop(1,   'rgba(0,180,230,0.18)');
   ctx.fillStyle=grad;
   ctx.beginPath(); ctx.moveTo(0,H/2);
   for(let x=0;x<W;x++){
@@ -2357,8 +2397,8 @@ function _drawPazWv(canvas, data){
   }
   ctx.closePath(); ctx.fill();
 
-  // Traits — blanc pour ressortir
-  ctx.strokeStyle='rgba(255,255,255,0.55)';
+  // Traits — blanc bien contrasté
+  ctx.strokeStyle='rgba(200,230,255,0.80)';
   ctx.lineWidth=1;
   for(let x=0;x<W;x++){
     let mn=0,mx=0;
@@ -2379,11 +2419,19 @@ function pazRender(){
   const play  = d.playing;
   const dur   = pazDur();
 
-  // ── Titre ──
+  // ── Titre : toujours la piste à ci (même hors lecture) ──
   const titleEl = document.getElementById('paz-title');
   if(titleEl){
-    titleEl.textContent = (t && !t.isMacro) ? t.title : 'AUCUNE PISTE';
-    titleEl.style.color = play ? '#ffffff' : 'var(--txt-dim)';
+    const d2 = D[0];
+    // On cherche dans l'ordre : piste active, piste à ci, première piste
+    const tDisplay = d2.tracks[d2.ci] || (d2.tracks.length ? d2.tracks[0] : null);
+    if(tDisplay && !tDisplay.isMacro){
+      titleEl.textContent = tDisplay.title;
+      titleEl.style.color = play ? '#ffffff' : 'rgba(220,235,255,0.65)';
+    } else {
+      titleEl.textContent = 'AUCUNE PISTE';
+      titleEl.style.color = 'var(--txt-dim)';
+    }
   }
 
   // ── Heure de lancement (fixe dès le play) ──
@@ -2400,7 +2448,7 @@ function pazRender(){
     cuesEl.textContent = parts.join('  ·  ');
   } else if(cuesEl){ cuesEl.textContent=''; }
 
-  // ── Waveform HD ──
+  // ── Waveform HD (toujours, même hors lecture) ──
   pazLoadWaveform();
 
   // ── Marqueurs sur la waveform (traits) ──
@@ -2417,6 +2465,14 @@ function pazRender(){
 function pazTick(){
   const d = D[0];
   const t = pazT();
+
+  // Charger waveform si pas encore fait (le canvas peut être vide au départ)
+  if(t && t.file && !WV_DATA_CACHE[t.file] && t.file !== _pazWvFile+'_loading'){
+    _pazWvFile = t.file + '_loading'; // marqueur anti-boucle
+    pazLoadWaveform();
+  } else if(t && t.file && WV_DATA_CACHE[t.file] && t.file !== _pazWvFile){
+    pazLoadWaveform(); // cache dispo mais pas encore dessiné
+  }
 
   if(!d.playing || !t){
     // Reset visuel
@@ -2659,6 +2715,23 @@ D[0]._startTrack = function(i){
 const _origRender0 = D[0].render.bind(D[0]);
 D[0].render = function(){ _origRender0(); pazRender(); };
 
+// ── Patch addTracks → actualiser PAZ dès le chargement des fichiers ──
+const _origAddTracks0 = D[0].addTracks.bind(D[0]);
+D[0].addTracks = function(newTracks){
+  _pazWvFile = null;
+  _origAddTracks0(newTracks);
+  // Mise à jour immédiate du titre (avant loadedmetadata)
+  const d=D[0]; const tFirst = d.tracks[d.ci];
+  const titleEl = document.getElementById('paz-title');
+  if(titleEl && tFirst && !tFirst.isMacro){
+    titleEl.textContent = tFirst.title;
+    titleEl.style.color = 'rgba(200,220,255,0.6)';
+  }
+  // Waveform dès que l'audio est décodé
+  setTimeout(()=>{ _pazWvFile=null; pazLoadWaveform(); }, 80);
+  setTimeout(()=>{ _pazWvFile=null; pazRender(); }, 120);
+};
+
 // ── nextTrackForced ──
 D[0].nextTrackForced = function(){
   if(!this.tracks.length) return;
@@ -2669,6 +2742,8 @@ D[0].nextTrackForced = function(){
 
 // ── Init ──
 setTimeout(()=>{ pazRender(); }, 200);
+// Redimensionner la waveform si la fenêtre change
+window.addEventListener('resize', ()=>{ _pazWvFile=null; pazLoadWaveform(); });
 
 
 // ══════════════════════════════════════════════════════════════
@@ -4132,6 +4207,394 @@ function plInit(){
 }
 plInit();
 
+
+// ══════════════════════════════════════════════════════════════
+// MODAL ÉDITEUR DE POINTS — edit-modal
+// ══════════════════════════════════════════════════════════════
+
+let _em = {
+  trackIdx: null,   // index dans D[0].tracks
+  dur: 0,
+  audio: null,      // HTMLAudioElement dédié à l'éditeur
+  playing: false,
+  dragging: null,   // 'start'|'end'|'next'|'intro'|null
+  rafId: null,
+};
+
+// ── Ouvrir le modal pour la piste courante (ou index passé) ──
+function openEditModal(trackIdx){
+  const d = D[0];
+  const idx = (trackIdx !== undefined) ? trackIdx : d.ci;
+  const t = d.tracks[idx]; if(!t || t.isMacro) return;
+  const dur = d.durs[idx] || 0;
+
+  _em.trackIdx = idx;
+  _em.dur = dur;
+
+  // Arrêter l'audio précédent
+  emStop();
+  // Créer un Audio dédié pour l'éditeur
+  _em.audio = new Audio(t.file);
+
+  // Titre
+  const nm = document.getElementById('em-track-name');
+  if(nm) nm.textContent = t.title;
+
+  // Ouvrir le modal
+  const modal = document.getElementById('edit-modal');
+  if(modal) modal.style.display = 'flex';
+
+  // Dessiner la waveform
+  _emDrawWaveform(t.file);
+
+  // Mettre à jour les poignées et timecodes
+  _emUpdate();
+
+  // Boucle d'animation
+  _emStartLoop();
+}
+
+function closeEditModal(){
+  emStop();
+  if(_em.rafId){ cancelAnimationFrame(_em.rafId); _em.rafId=null; }
+  const modal = document.getElementById('edit-modal');
+  if(modal) modal.style.display = 'none';
+  // Mettre à jour le PAZ principal
+  pazRender();
+}
+
+// ── Dessin waveform dans le canvas de l'éditeur ──
+function _emDrawWaveform(file){
+  const cv = document.getElementById('em-canvas'); if(!cv) return;
+  const W = cv.offsetWidth || 860;
+  cv.width = W; cv.height = 180;
+  const ctx = cv.getContext('2d');
+
+  // Fond
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,W,180);
+
+  // Grille légère
+  ctx.strokeStyle = 'rgba(30,50,90,.5)'; ctx.lineWidth = 1;
+  [0.25, 0.5, 0.75].forEach(y=>{
+    ctx.beginPath(); ctx.moveTo(0, Math.round(180*y)+.5); ctx.lineTo(W, Math.round(180*y)+.5); ctx.stroke();
+  });
+
+  if(WV_DATA_CACHE[file]){
+    _emDrawData(ctx, WV_DATA_CACHE[file], W);
+  } else {
+    // Déclencher le décodage puis redessiner
+    ctx.fillStyle = 'rgba(0,212,240,.15)';
+    ctx.font = '11px monospace'; ctx.fillStyle='#3a5070';
+    ctx.fillText('Chargement waveform...', 20, 90);
+    drawWaveform(document.createElement('canvas'), file).then(()=>{
+      if(_em.trackIdx === null) return;
+      const t = D[0].tracks[_em.trackIdx]; if(!t) return;
+      if(t.file !== file) return;
+      cv.width = cv.offsetWidth || 860;
+      const c2 = cv.getContext('2d');
+      c2.fillStyle='#000'; c2.fillRect(0,0,cv.width,180);
+      [0.25,0.5,0.75].forEach(y=>{ c2.strokeStyle='rgba(30,50,90,.5)';c2.lineWidth=1;c2.beginPath();c2.moveTo(0,Math.round(180*y)+.5);c2.lineTo(cv.width,Math.round(180*y)+.5);c2.stroke(); });
+      if(WV_DATA_CACHE[file]) _emDrawData(c2, WV_DATA_CACHE[file], cv.width);
+      _emUpdate();
+    });
+  }
+}
+
+function _emDrawData(ctx, data, W){
+  const H = 180;
+  const step = Math.max(1, Math.floor(data.length/W));
+
+  // Silhouette gradient
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,   'rgba(0,160,210,0.10)');
+  grad.addColorStop(0.5, 'rgba(0,200,240,0.22)');
+  grad.addColorStop(1,   'rgba(0,160,210,0.10)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.moveTo(0,H/2);
+  for(let x=0;x<W;x++){
+    let mx=0;
+    for(let j=0;j<step;j++){ const v=Math.abs(data[x*step+j]||0); if(v>mx)mx=v; }
+    ctx.lineTo(x, H/2 - mx*(H/2)*.9);
+  }
+  for(let x=W-1;x>=0;x--){
+    let mx=0;
+    for(let j=0;j<step;j++){ const v=Math.abs(data[x*step+j]||0); if(v>mx)mx=v; }
+    ctx.lineTo(x, H/2 + mx*(H/2)*.9);
+  }
+  ctx.closePath(); ctx.fill();
+
+  // Traits min/max
+  ctx.strokeStyle = 'rgba(0,212,240,0.75)'; ctx.lineWidth = 1;
+  for(let x=0;x<W;x++){
+    let mn=0,mx=0;
+    for(let j=0;j<step;j++){ const v=data[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
+    const y1=Math.round((1-mx)/2*H), y2=Math.round((1-mn)/2*H);
+    if(y2>y1){ ctx.beginPath(); ctx.moveTo(x+.5,y1); ctx.lineTo(x+.5,y2); ctx.stroke(); }
+  }
+}
+
+// ── Mettre à jour poignées + timecodes + zones ──
+function _emUpdate(){
+  const idx = _em.trackIdx;
+  if(idx === null) return;
+  const t   = D[0].tracks[idx]; if(!t) return;
+  const dur = _em.dur || 1;
+  const cv  = document.getElementById('em-canvas'); if(!cv) return;
+  const W   = cv.offsetWidth || 860;
+
+  const startS = cueStart(t);
+  const endS   = cueEnd(t);
+  const nextS  = cueNext(t);
+  const introS = t.introCue != null ? t.introCue : null;
+
+  // Fonction pct
+  const pct = s => (s/dur*100).toFixed(2)+'%';
+
+  // Poignées
+  const h = id => document.getElementById(id);
+  h('em-h-start').style.left = pct(startS);
+  h('em-h-end'  ).style.left = pct(endS);
+  h('em-h-next' ).style.left = pct(nextS);
+
+  if(introS != null){
+    h('em-h-intro').style.left    = pct(introS);
+    h('em-h-intro').style.display = 'block';
+  } else {
+    h('em-h-intro').style.display = 'none';
+  }
+
+  // Zones colorées
+  const zEnd   = document.getElementById('em-zone-end');
+  const zIntro = document.getElementById('em-zone-intro');
+  if(zEnd){
+    zEnd.style.left    = pct(startS);
+    zEnd.style.width   = ((endS-startS)/dur*100).toFixed(2)+'%';
+    zEnd.style.display = 'block';
+  }
+  if(zIntro){
+    if(introS != null){
+      zIntro.style.left    = pct(startS);
+      zIntro.style.width   = ((introS-startS)/dur*100).toFixed(2)+'%';
+      zIntro.style.display = 'block';
+    } else {
+      zIntro.style.display = 'none';
+    }
+  }
+
+  // Timecodes
+  const sv = id => { const el=document.getElementById(id); return el; };
+  const fv = (id,v) => { const el=sv(id); if(el) el.textContent=v; };
+  fv('em-v-start', fmtMs(startS));
+  fv('em-v-end',   fmtMs(endS));
+  fv('em-v-next',  fmtMs(nextS));
+  fv('em-v-intro', introS!=null ? fmtMs(introS) : '—');
+}
+
+// ── Boucle d'animation (playhead) ──
+function _emStartLoop(){
+  if(_em.rafId) cancelAnimationFrame(_em.rafId);
+  const loop = ()=>{
+    _em.rafId = requestAnimationFrame(loop);
+    const a = _em.audio; if(!a) return;
+    const pos = a.currentTime;
+    const dur = _em.dur || 1;
+    const ph  = document.getElementById('em-playhead');
+    if(ph){
+      ph.style.display = 'block';
+      ph.style.left    = (pos/dur*100).toFixed(2)+'%';
+    }
+  };
+  loop();
+}
+
+// ── Transport ──
+function emTogglePlay(){
+  const a = _em.audio; if(!a) return;
+  const btn = document.getElementById('em-play-btn');
+  if(_em.playing){
+    a.pause(); _em.playing=false;
+    if(btn){ btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90'; }
+  } else {
+    a.play(); _em.playing=true;
+    if(btn){ btn.textContent='❙❙ PAUSE'; btn.style.background='linear-gradient(180deg,#3a4a00,#1a2800)'; btn.style.borderColor='#8aaa00'; btn.style.color='#ddff60'; }
+  }
+}
+function emStop(){
+  const a = _em.audio; if(!a) return;
+  a.pause(); a.currentTime = 0; _em.playing=false;
+  const btn = document.getElementById('em-play-btn');
+  if(btn){ btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90'; }
+}
+function emGoTo(type){
+  const a = _em.audio; if(!a) return;
+  const idx = _em.trackIdx; if(idx===null) return;
+  const t = D[0].tracks[idx]; if(!t) return;
+  if(type==='start') a.currentTime = cueStart(t);
+  if(type==='end')   a.currentTime = cueEnd(t);
+  if(type==='next')  a.currentTime = cueNext(t);
+  if(type==='intro' && t.introCue!=null) a.currentTime = t.introCue;
+}
+function emSetHere(type){
+  const a = _em.audio; if(!a) return;
+  const idx = _em.trackIdx; if(idx===null) return;
+  const t = D[0].tracks[idx]; if(!t) return;
+  const pos = a.currentTime;
+  if(type==='start') t.inCue    = pos;
+  if(type==='end')   t.outCue   = pos;
+  if(type==='next')  t.nextCue  = pos;
+  if(type==='intro') t.introCue = pos;
+  _emUpdate();
+  pazUpdateMarkers();
+}
+
+// ── Drag poignées ──
+(function bindEmDrag(){
+  const HANDLES = ['em-h-start','em-h-end','em-h-next','em-h-intro'];
+  const CUE_MAP = { 'em-h-start':'start', 'em-h-end':'end', 'em-h-next':'next', 'em-h-intro':'intro' };
+
+  HANDLES.forEach(hid=>{
+    const el = document.getElementById(hid); if(!el) return;
+    el.addEventListener('mousedown', e=>{
+      e.preventDefault(); e.stopPropagation();
+      _em.dragging = CUE_MAP[hid];
+    });
+    el.addEventListener('touchstart', e=>{
+      e.preventDefault(); e.stopPropagation();
+      _em.dragging = CUE_MAP[hid];
+    }, {passive:false});
+  });
+
+  const getX = e => e.touches ? e.touches[0].clientX : e.clientX;
+
+  const onMove = e=>{
+    if(!_em.dragging) return;
+    const cv = document.getElementById('em-canvas'); if(!cv) return;
+    const rect = cv.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (getX(e)-rect.left)/rect.width));
+    const pos = ratio * _em.dur;
+    const idx = _em.trackIdx; if(idx===null) return;
+    const t = D[0].tracks[idx]; if(!t) return;
+    if(_em.dragging==='start') t.inCue    = pos;
+    if(_em.dragging==='end')   t.outCue   = pos;
+    if(_em.dragging==='next')  t.nextCue  = pos;
+    if(_em.dragging==='intro') t.introCue = pos;
+    _emUpdate();
+  };
+  const onUp = ()=>{ _em.dragging=null; };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('mouseup',   onUp);
+  document.addEventListener('touchend',  onUp);
+
+  // Clic sur la waveform → déplacer le curseur audio
+  const cv = document.getElementById('em-canvas');
+  if(cv){
+    cv.addEventListener('click', e=>{
+      const rect = cv.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (e.clientX-rect.left)/rect.width));
+      const a = _em.audio; if(!a) return;
+      a.currentTime = ratio * _em.dur;
+    });
+  }
+})();
+
+
 </script>
+<!-- ══ MODAL ÉDITEUR DE POINTS ══ -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,16,.88);z-index:3000;align-items:center;justify-content:center;">
+  <div style="background:#03050f;border:2px solid #1a3a9a;border-radius:10px;width:min(860px,96vw);box-shadow:0 0 60px rgba(0,40,200,.25);overflow:hidden;font-family:var(--mono);">
+
+    <!-- Titre -->
+    <div style="background:#050a1e;border-bottom:2px solid #1a3a9a;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:10px;color:#4a6aaa;letter-spacing:2px;">✦ ÉDITEUR DE POINTS</span>
+        <span id="em-track-name" style="font-family:var(--display);font-size:16px;font-weight:700;color:var(--cyan);letter-spacing:2px;">—</span>
+      </div>
+      <button onclick="closeEditModal()" style="background:transparent;border:1px solid #3a1010;color:#e03020;font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:2px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.background='#2a0000'" onmouseout="this.style.background='transparent'">✕ FERMER</button>
+    </div>
+
+    <!-- Waveform interactive -->
+    <div style="background:#000;position:relative;height:180px;" id="em-wv-wrap">
+      <canvas id="em-canvas" width="860" height="180" style="display:block;width:100%;height:180px;cursor:crosshair;"></canvas>
+
+      <!-- Playhead -->
+      <div id="em-playhead" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,200,.9);z-index:5;display:none;pointer-events:none;"></div>
+
+      <!-- Zones colorées -->
+      <!-- Jaune : START → INTRO -->
+      <div id="em-zone-intro" style="position:absolute;top:0;bottom:0;background:rgba(200,155,0,.25);border-left:2px solid #f5c400;border-right:2px solid #f5c400;z-index:2;display:none;pointer-events:none;"></div>
+      <!-- Rouge : START → END -->
+      <div id="em-zone-end" style="position:absolute;top:0;bottom:0;background:rgba(160,10,10,.20);border-left:2px solid rgba(0,212,240,.7);z-index:1;display:none;pointer-events:none;"></div>
+
+      <!-- Poignées draggables -->
+      <!-- START (cyan) -->
+      <div id="em-h-start" data-cue="start"
+        style="position:absolute;top:0;bottom:0;width:3px;background:#00d4f0;z-index:6;cursor:ew-resize;touch-action:none;">
+        <span style="position:absolute;top:4px;left:5px;font-size:8px;color:#00d4f0;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">START</span>
+      </div>
+      <!-- END (rouge) -->
+      <div id="em-h-end" data-cue="end"
+        style="position:absolute;top:0;bottom:0;width:3px;background:#e03020;z-index:6;cursor:ew-resize;touch-action:none;">
+        <span style="position:absolute;top:4px;right:5px;font-size:8px;color:#e03020;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">END</span>
+      </div>
+      <!-- NEXT (vert) -->
+      <div id="em-h-next" data-cue="next"
+        style="position:absolute;top:0;bottom:0;width:3px;background:#00d96a;z-index:7;cursor:ew-resize;touch-action:none;">
+        <span style="position:absolute;bottom:4px;left:5px;font-size:8px;color:#00d96a;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">NEXT</span>
+      </div>
+      <!-- INTRO (jaune) -->
+      <div id="em-h-intro" data-cue="intro"
+        style="position:absolute;top:0;bottom:0;width:3px;background:#f5c400;z-index:7;cursor:ew-resize;touch-action:none;">
+        <span style="position:absolute;bottom:4px;right:5px;font-size:8px;color:#f5c400;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">INTRO</span>
+      </div>
+
+      <!-- Hit zone étendue sur chaque poignée -->
+    </div>
+
+    <!-- Timecodes row -->
+    <div style="background:#050a1e;border-top:1px solid #0a1a40;border-bottom:1px solid #0a1a40;display:grid;grid-template-columns:repeat(4,1fr);padding:6px 10px;gap:6px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:8px;color:#00d4f0;letter-spacing:2px;">START</span>
+        <span id="em-v-start" style="font-size:14px;color:#00d4f0;letter-spacing:1px;">0:00.000</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:8px;color:#f5c400;letter-spacing:2px;">INTRO</span>
+        <span id="em-v-intro" style="font-size:14px;color:#f5c400;letter-spacing:1px;">—</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:8px;color:#00d96a;letter-spacing:2px;">NEXT</span>
+        <span id="em-v-next" style="font-size:14px;color:#00d96a;letter-spacing:1px;">—</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:8px;color:#e03020;letter-spacing:2px;">END</span>
+        <span id="em-v-end" style="font-size:14px;color:#e03020;letter-spacing:1px;">—</span>
+      </div>
+    </div>
+
+    <!-- Transport -->
+    <div style="background:#040810;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <!-- Lecture/stop -->
+      <button id="em-play-btn" onclick="emTogglePlay()" style="background:linear-gradient(180deg,#0a4a1a,#052810);border:1px solid #1a8a40;border-radius:4px;color:#60ff90;font-family:var(--mono);font-size:12px;padding:6px 18px;cursor:pointer;letter-spacing:1px;min-width:80px;" onmouseover="this.style.background='linear-gradient(180deg,#1a5a2a,#0a3820)'" onmouseout="this.style.background='linear-gradient(180deg,#0a4a1a,#052810)'">▶ PLAY</button>
+      <button onclick="emStop()" style="background:linear-gradient(180deg,#4a0808,#2a0404);border:1px solid #8a2020;border-radius:4px;color:#ff6060;font-family:var(--mono);font-size:12px;padding:6px 18px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.background='linear-gradient(180deg,#6a1010,#3a0808)'" onmouseout="this.style.background='linear-gradient(180deg,#4a0808,#2a0404)'">■ STOP</button>
+      <!-- Aller aux points -->
+      <button onclick="emGoTo('start')" style="background:#030810;border:1px solid #1a3060;border-radius:3px;color:#00d4f0;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au START">|◀ START</button>
+      <button onclick="emGoTo('intro')" style="background:#030810;border:1px solid #3a3000;border-radius:3px;color:#f5c400;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au INTRO">|◀ INTRO</button>
+      <button onclick="emGoTo('next')" style="background:#030810;border:1px solid #004a20;border-radius:3px;color:#00d96a;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au NEXT">|◀ NEXT</button>
+      <button onclick="emGoTo('end')" style="background:#030810;border:1px solid #3a1010;border-radius:3px;color:#e03020;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au END">|◀ END</button>
+      <!-- Placer ici -->
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:9px;color:#3a5070;letter-spacing:1px;">PLACER ICI →</span>
+        <button onclick="emSetHere('start')" style="background:rgba(0,212,240,.08);border:1px solid #00d4f0;border-radius:2px;color:#00d4f0;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">START</button>
+        <button onclick="emSetHere('intro')" style="background:rgba(245,196,0,.08);border:1px solid #f5c400;border-radius:2px;color:#f5c400;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">INTRO</button>
+        <button onclick="emSetHere('next')" style="background:rgba(0,217,106,.08);border:1px solid #00d96a;border-radius:2px;color:#00d96a;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">NEXT</button>
+        <button onclick="emSetHere('end')" style="background:rgba(224,48,32,.08);border:1px solid #e03020;border-radius:2px;color:#e03020;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">END</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
