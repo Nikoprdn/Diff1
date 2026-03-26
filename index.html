@@ -2026,49 +2026,10 @@ let _previewAudio=null;
 let _previewCtx=null;  // AudioContext DÉDIÉ pré-écoute
 let _previewGn=null;
 let _previewTimer=null;
-let _previewTrack=null;
 // ═══════════════════════════════════════════════════════
-// FENÊTRE MIXAGE — TIMELINE DRAGGABLE
-// Les 2 blocs représentent piste A et piste B.
-// On déplace B pour régler le décalage par rapport au point OUT de A.
-// L'enchaînement se fait au point OUT de A → START de B.
+// FENÊTRE MIXAGE — TIMELINE
 // ═══════════════════════════════════════════════════════
-let _mixDragB=false;
-let _mixDragStartX=0;
-let _mixBlockBLeft=0; // left% du bloc B
-
 function mixInit(){
-  const blockB=document.getElementById('mix-block-b');
-  if(!blockB)return;
-
-  const onDown=(e)=>{
-    _mixDragB=true;
-    _mixDragStartX=e.touches?e.touches[0].clientX:e.clientX;
-    const tl=document.getElementById('mix-timeline');
-    const rect=tl?tl.getBoundingClientRect():{width:1};
-    _mixBlockBLeft=parseFloat(blockB.style.left)||50;
-    e.preventDefault();
-  };
-  const onMove=(e)=>{
-    if(!_mixDragB)return;
-    const clientX=e.touches?e.touches[0].clientX:e.clientX;
-    const tl=document.getElementById('mix-timeline');
-    const rect=tl?tl.getBoundingClientRect():{width:600};
-    const delta=(clientX-_mixDragStartX)/rect.width*100;
-    const newLeft=Math.max(0,Math.min(95,_mixBlockBLeft+delta));
-    blockB.style.left=newLeft+'%';
-    _mixRender();
-  };
-  const onUp=()=>{_mixDragB=false;};
-
-  blockB.addEventListener('mousedown',onDown,{passive:false});
-  blockB.addEventListener('touchstart',onDown,{passive:false});
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('touchmove',onMove,{passive:false});
-  document.addEventListener('mouseup',onUp);
-  document.addEventListener('touchend',onUp);
-
-  // Volume DIFF A
   volumeInit();
   _mixRender();
 }
@@ -2081,10 +2042,12 @@ function volumeInit(){
   const set=(clientX)=>{
     const rect=track.getBoundingClientRect();
     const pct=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
-    document.getElementById('vol-fill-a').style.width=(pct*100)+'%';
+    const fill=document.getElementById('vol-fill-a');
+    const val=document.getElementById('vol-val-a');
+    if(fill)fill.style.width=(pct*100)+'%';
     thumb.style.left=(pct*100)+'%';
-    document.getElementById('vol-val-a').textContent=Math.round(pct*100)+'%';
-    if(_masterGn0) _masterGn0.gain.value=pct;
+    if(val)val.textContent=Math.round(pct*100)+'%';
+    if(typeof _masterGn0!=='undefined'&&_masterGn0)_masterGn0.gain.value=pct;
   };
   thumb.addEventListener('mousedown',(e)=>{dragging=true;e.preventDefault();});
   track.addEventListener('mousedown',(e)=>{set(e.clientX);dragging=true;});
