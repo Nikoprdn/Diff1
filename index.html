@@ -2420,6 +2420,58 @@ function _drawPazWv(canvas, data){
   }
 }
 
+// ── Waveform PAZ avec zoom (vue [vStart, vEnd]) ──
+function _drawPazWvZoomed(canvas, data, vStart, vEnd){
+  const W=canvas.width, H=canvas.height;
+  if(!W || !H) return;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const total=data.length;
+  const s=Math.floor(vStart*total);
+  const e=Math.floor(vEnd*total);
+  const len=Math.max(1,e-s);
+  const step=Math.max(1,Math.floor(len/W));
+
+  // Indicateur de zoom (bandeau subtil)
+  if(vStart > 0 || vEnd < 1){
+    ctx.fillStyle='rgba(0,0,0,.15)';
+    ctx.fillRect(0,0,W,H);
+    // Mini barre de position en bas
+    ctx.fillStyle='rgba(255,255,255,.08)';
+    ctx.fillRect(0,H-3,W,3);
+    ctx.fillStyle='rgba(0,212,240,.4)';
+    ctx.fillRect(vStart*W, H-3, (vEnd-vStart)*W, 3);
+  }
+
+  // Silhouette
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,   'rgba(0,180,230,.18)');
+  grad.addColorStop(0.5, 'rgba(0,210,250,.42)');
+  grad.addColorStop(1,   'rgba(0,180,230,.18)');
+  ctx.fillStyle=grad;
+  ctx.beginPath(); ctx.moveTo(0,H/2);
+  for(let x=0;x<W;x++){
+    let mx=0;
+    for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}
+    ctx.lineTo(x,H/2-mx*(H/2)*.9);
+  }
+  for(let x=W-1;x>=0;x--){
+    let mx=0;
+    for(let j=0;j<step;j++){const v=Math.abs(data[s+x*step+j]||0);if(v>mx)mx=v;}
+    ctx.lineTo(x,H/2+mx*(H/2)*.9);
+  }
+  ctx.closePath(); ctx.fill();
+
+  // Traits
+  ctx.strokeStyle='rgba(200,230,255,.80)'; ctx.lineWidth=1;
+  for(let x=0;x<W;x++){
+    let mn=0,mx=0;
+    for(let j=0;j<step;j++){const v=data[s+x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
+    const y1=Math.round((1-mx)/2*H), y2=Math.round((1-mn)/2*H);
+    if(y2>y1){ctx.beginPath();ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);ctx.stroke();}
+  }
+}
+
 // ── pazRender : appelé à chaque changement d'état ──
 function pazRender(){
   const d     = D[0];
@@ -2472,17 +2524,20 @@ function pazRender(){
   _pazUpdateAutoNextBtn();
 }
 
-// ── pazTick : 80ms — progression rouge + jaune + playhead + décompte ──
+// ── Zoom state pour la waveform PAZ ──
+let _pazZoom = { active:false, start:0, end:1, key:'' };
+
+// ── pazTick : 80ms — progression rouge + jaune + playhead + décompte + zoom ──
 function pazTick(){
   const d = D[0];
   const t = pazT();
 
-  // Charger waveform si pas encore fait (le canvas peut être vide au départ)
+  // Charger waveform si pas encore fait
   if(t && t.file && !WV_DATA_CACHE[t.file] && t.file !== _pazWvFile+'_loading'){
-    _pazWvFile = t.file + '_loading'; // marqueur anti-boucle
+    _pazWvFile = t.file + '_loading';
     pazLoadWaveform();
   } else if(t && t.file && WV_DATA_CACHE[t.file] && t.file !== _pazWvFile){
-    pazLoadWaveform(); // cache dispo mais pas encore dessiné
+    pazLoadWaveform();
   }
 
   if(!d.playing || !t){
@@ -2568,6 +2623,50 @@ function pazTick(){
     }
   }
 
+  // ── ZOOM waveform sur INTRO (±10s) et NEXT (±20s) ──
+  const dur = pazDur();
+  if(dur > 0){
+    const ZOOM_INTRO = 12; // ±12s autour du point INTRO
+    const ZOOM_NEXT  = 20; // ±20s autour du point NEXT
+
+    const introT = cueIntro(t);
+    const nextT  = cueNext(t);
+
+    // Calculer la zone de zoom souhaitée
+    let wantZoom = false, wStart = 0, wEnd = 1, wKey = '';
+
+    // Priorité : INTRO d'abord (si on est dans les 12s avant INTRO)
+    if(introT != null && pos < introT && (introT - pos) <= ZOOM_INTRO){
+      const s = Math.max(0, (introT - ZOOM_INTRO) / dur);
+      const e = Math.min(1, (introT + ZOOM_INTRO*0.5) / dur);
+      wantZoom=true; wStart=s; wEnd=e; wKey='intro';
+    }
+    // Ensuite NEXT (si on est dans les 20s avant NEXT)
+    else if(nextT > 0 && pos < nextT && (nextT - pos) <= ZOOM_NEXT){
+      const s = Math.max(0, (nextT - ZOOM_NEXT) / dur);
+      const e = Math.min(1, (nextT + ZOOM_NEXT*0.5) / dur);
+      wantZoom=true; wStart=s; wEnd=e; wKey='next';
+    }
+    // Ou si on vient de passer INTRO (rester zoomé 4s après)
+    else if(introT != null && pos > introT && (pos - introT) <= 4){
+      const s = Math.max(0, (introT - ZOOM_INTRO*0.5) / dur);
+      const e = Math.min(1, (introT + ZOOM_INTRO) / dur);
+      wantZoom=true; wStart=s; wEnd=e; wKey='intro-after';
+    }
+
+    // Appliquer le zoom seulement si l'état change (éviter le redessin inutile)
+    if(wantZoom !== _pazZoom.active || wKey !== _pazZoom.key){
+      _pazZoom.active = wantZoom;
+      _pazZoom.key    = wKey;
+      _pazZoom.start  = wantZoom ? wStart : 0;
+      _pazZoom.end    = wantZoom ? wEnd   : 1;
+      // Redessiner la waveform de fond avec la nouvelle vue
+      const bg   = document.getElementById('paz-bg');
+      const data = WV_DATA_CACHE[t.file];
+      if(bg && data) _drawPazWvZoomed(bg, data, _pazZoom.start, _pazZoom.end);
+    }
+  }
+
   // ── Mise à jour décompte dans la liste (ligne active) ──
   const ci = d.ci;
   const cdRow = document.getElementById('pr-cd-active');
@@ -2596,15 +2695,35 @@ function pazUpdateMarkers(){
     if(im) im.style.display='none';
     return;
   }
+
+  // Convertir seconde en % de la vue (avec zoom éventuel)
+  const secToPct = sec => {
+    const ratio = sec / dur;
+    const span  = (_pazZoom.end - _pazZoom.start) || 1;
+    const pct   = (ratio - _pazZoom.start) / span * 100;
+    return pct;
+  };
+
+  const nextPct  = secToPct(cueNext(t));
+  const introT   = cueIntro(t);
+
   if(nm){
-    nm.style.left    = (cueNext(t)/dur*100).toFixed(2)+'%';
-    nm.style.display = 'block';
+    if(nextPct >= 0 && nextPct <= 100){
+      nm.style.left    = nextPct.toFixed(2)+'%';
+      nm.style.display = 'block';
+    } else {
+      nm.style.display = 'none';
+    }
   }
   if(im){
-    const introT = cueIntro(t);
     if(introT != null){
-      im.style.left    = (introT/dur*100).toFixed(2)+'%';
-      im.style.display = 'block';
+      const introPct = secToPct(introT);
+      if(introPct >= 0 && introPct <= 100){
+        im.style.left    = introPct.toFixed(2)+'%';
+        im.style.display = 'block';
+      } else {
+        im.style.display = 'none';
+      }
     } else {
       im.style.display = 'none';
     }
@@ -4260,401 +4379,424 @@ function plInit(){
 }
 plInit();
 
-
-// ══════════════════════════════════════════════════════════════
-// MODAL ÉDITEUR DE POINTS — edit-modal
-// ══════════════════════════════════════════════════════════════
-
-let _em = {
-  trackIdx: null,   // index dans D[0].tracks
-  dur: 0,
-  audio: null,      // HTMLAudioElement dédié à l'éditeur
-  playing: false,
-  dragging: null,   // 'start'|'end'|'next'|'intro'|null
-  rafId: null,
-};
-
-// ── Ouvrir le modal pour la piste courante (ou index passé) ──
-function openEditModal(trackIdx){
-  const d = D[0];
-  const idx = (trackIdx !== undefined) ? trackIdx : d.ci;
-  const t = d.tracks[idx]; if(!t || t.isMacro) return;
-  const dur = d.durs[idx] || 0;
-
-  _em.trackIdx = idx;
-  _em.dur = dur;
-
-  // Arrêter l'audio précédent
-  emStop();
-  // Créer un Audio dédié pour l'éditeur
-  _em.audio = new Audio(t.file);
-
-  // Titre
-  const nm = document.getElementById('em-track-name');
-  if(nm) nm.textContent = t.title;
-
-  // Ouvrir le modal EN PREMIER pour que le DOM soit rendu
-  const modal = document.getElementById('edit-modal');
-  if(modal) modal.style.display = 'flex';
-
-  // Attendre le prochain frame pour que le layout soit calculé
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      // Dessiner la waveform avec les vraies dimensions
-      _emDrawWaveform(t.file);
-      // Mettre à jour les poignées et timecodes
-      _emUpdate();
-    });
-  });
-
-  // Boucle d'animation
-  _emStartLoop();
-}
-
-function closeEditModal(){
-  emStop();
-  if(_em.rafId){ cancelAnimationFrame(_em.rafId); _em.rafId=null; }
-  const modal = document.getElementById('edit-modal');
-  if(modal) modal.style.display = 'none';
-  // Mettre à jour le PAZ principal
-  pazRender();
-}
-
-// ── Dessin waveform dans le canvas de l'éditeur ──
-function _emDrawWaveform(file){
-  const cv = document.getElementById('em-canvas'); if(!cv) return;
-  // Forcer la taille depuis le conteneur (pas offsetWidth qui peut être 0)
-  const wrap = document.getElementById('em-wv-wrap');
-  const W = (wrap ? wrap.getBoundingClientRect().width : 0) || cv.offsetWidth || 820;
-  cv.width = Math.round(W); cv.height = 180;
-  cv.style.width = '100%'; cv.style.height = '180px';
-  const ctx = cv.getContext('2d');
-
-  // Fond
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0,0,W,180);
-
-  // Grille légère
-  ctx.strokeStyle = 'rgba(30,50,90,.5)'; ctx.lineWidth = 1;
-  [0.25, 0.5, 0.75].forEach(y=>{
-    ctx.beginPath(); ctx.moveTo(0, Math.round(180*y)+.5); ctx.lineTo(W, Math.round(180*y)+.5); ctx.stroke();
-  });
-
-  if(WV_DATA_CACHE[file]){
-    _emDrawData(ctx, WV_DATA_CACHE[file], W);
-  } else {
-    // Déclencher le décodage puis redessiner
-    ctx.fillStyle = 'rgba(0,212,240,.15)';
-    ctx.font = '11px monospace'; ctx.fillStyle='#3a5070';
-    ctx.fillText('Chargement waveform...', 20, 90);
-    drawWaveform(document.createElement('canvas'), file).then(()=>{
-      if(_em.trackIdx === null) return;
-      const t = D[0].tracks[_em.trackIdx]; if(!t) return;
-      if(t.file !== file) return;
-      cv.width = cv.offsetWidth || 860;
-      const c2 = cv.getContext('2d');
-      c2.fillStyle='#000'; c2.fillRect(0,0,cv.width,180);
-      [0.25,0.5,0.75].forEach(y=>{ c2.strokeStyle='rgba(30,50,90,.5)';c2.lineWidth=1;c2.beginPath();c2.moveTo(0,Math.round(180*y)+.5);c2.lineTo(cv.width,Math.round(180*y)+.5);c2.stroke(); });
-      if(WV_DATA_CACHE[file]) _emDrawData(c2, WV_DATA_CACHE[file], cv.width);
-      _emUpdate();
-    });
-  }
-}
-
-function _emDrawData(ctx, data, W){
-  const H = 180;
-  const step = Math.max(1, Math.floor(data.length/W));
-
-  // Silhouette gradient
-  const grad = ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,   'rgba(0,160,210,0.10)');
-  grad.addColorStop(0.5, 'rgba(0,200,240,0.22)');
-  grad.addColorStop(1,   'rgba(0,160,210,0.10)');
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.moveTo(0,H/2);
-  for(let x=0;x<W;x++){
-    let mx=0;
-    for(let j=0;j<step;j++){ const v=Math.abs(data[x*step+j]||0); if(v>mx)mx=v; }
-    ctx.lineTo(x, H/2 - mx*(H/2)*.9);
-  }
-  for(let x=W-1;x>=0;x--){
-    let mx=0;
-    for(let j=0;j<step;j++){ const v=Math.abs(data[x*step+j]||0); if(v>mx)mx=v; }
-    ctx.lineTo(x, H/2 + mx*(H/2)*.9);
-  }
-  ctx.closePath(); ctx.fill();
-
-  // Traits min/max
-  ctx.strokeStyle = 'rgba(0,212,240,0.75)'; ctx.lineWidth = 1;
-  for(let x=0;x<W;x++){
-    let mn=0,mx=0;
-    for(let j=0;j<step;j++){ const v=data[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
-    const y1=Math.round((1-mx)/2*H), y2=Math.round((1-mn)/2*H);
-    if(y2>y1){ ctx.beginPath(); ctx.moveTo(x+.5,y1); ctx.lineTo(x+.5,y2); ctx.stroke(); }
-  }
-}
-
-// ── Mettre à jour poignées + timecodes + zones ──
-function _emUpdate(){
-  const idx = _em.trackIdx;
-  if(idx === null) return;
-  const t   = D[0].tracks[idx]; if(!t) return;
-  const dur = _em.dur || 1;
-  const cv  = document.getElementById('em-canvas'); if(!cv) return;
-  const W   = cv.getBoundingClientRect().width || cv.offsetWidth || 820;
-
-  const startS = cueStart(t);
-  const endS   = cueEnd(t);
-  const nextS  = cueNext(t);
-  const introS = t.introCue != null ? t.introCue : null;
-
-  // Fonction pct
-  const pct = s => (s/dur*100).toFixed(2)+'%';
-
-  // Poignées
-  const h = id => document.getElementById(id);
-  h('em-h-start').style.left = pct(startS);
-  h('em-h-end'  ).style.left = pct(endS);
-  h('em-h-next' ).style.left = pct(nextS);
-
-  if(introS != null){
-    h('em-h-intro').style.left    = pct(introS);
-    h('em-h-intro').style.display = 'block';
-  } else {
-    h('em-h-intro').style.display = 'none';
-  }
-
-  // Zones colorées
-  const zEnd   = document.getElementById('em-zone-end');
-  const zIntro = document.getElementById('em-zone-intro');
-  if(zEnd){
-    zEnd.style.left    = pct(startS);
-    zEnd.style.width   = ((endS-startS)/dur*100).toFixed(2)+'%';
-    zEnd.style.display = 'block';
-  }
-  if(zIntro){
-    if(introS != null){
-      zIntro.style.left    = pct(startS);
-      zIntro.style.width   = ((introS-startS)/dur*100).toFixed(2)+'%';
-      zIntro.style.display = 'block';
-    } else {
-      zIntro.style.display = 'none';
-    }
-  }
-
-  // Timecodes
-  const sv = id => { const el=document.getElementById(id); return el; };
-  const fv = (id,v) => { const el=sv(id); if(el) el.textContent=v; };
-  fv('em-v-start', fmtMs(startS));
-  fv('em-v-end',   fmtMs(endS));
-  fv('em-v-next',  fmtMs(nextS));
-  fv('em-v-intro', introS!=null ? fmtMs(introS) : '—');
-}
-
-// ── Boucle d'animation (playhead) ──
-function _emStartLoop(){
-  if(_em.rafId) cancelAnimationFrame(_em.rafId);
-  const loop = ()=>{
-    _em.rafId = requestAnimationFrame(loop);
-    const a = _em.audio; if(!a) return;
-    const pos = a.currentTime;
-    const dur = _em.dur || 1;
-    const ph  = document.getElementById('em-playhead');
-    if(ph){
-      ph.style.display = 'block';
-      ph.style.left    = (pos/dur*100).toFixed(2)+'%';
-    }
-  };
-  loop();
-}
-
-// ── Transport ──
-function emTogglePlay(){
-  const a = _em.audio; if(!a) return;
-  const btn = document.getElementById('em-play-btn');
-  if(_em.playing){
-    a.pause(); _em.playing=false;
-    if(btn){ btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90'; }
-  } else {
-    a.play(); _em.playing=true;
-    if(btn){ btn.textContent='❙❙ PAUSE'; btn.style.background='linear-gradient(180deg,#3a4a00,#1a2800)'; btn.style.borderColor='#8aaa00'; btn.style.color='#ddff60'; }
-  }
-}
-function emStop(){
-  const a = _em.audio; if(!a) return;
-  a.pause(); a.currentTime = 0; _em.playing=false;
-  const btn = document.getElementById('em-play-btn');
-  if(btn){ btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90'; }
-}
-function emGoTo(type){
-  const a = _em.audio; if(!a) return;
-  const idx = _em.trackIdx; if(idx===null) return;
-  const t = D[0].tracks[idx]; if(!t) return;
-  if(type==='start') a.currentTime = cueStart(t);
-  if(type==='end')   a.currentTime = cueEnd(t);
-  if(type==='next')  a.currentTime = cueNext(t);
-  if(type==='intro' && t.introCue!=null) a.currentTime = t.introCue;
-}
-function emSetHere(type){
-  const a = _em.audio; if(!a) return;
-  const idx = _em.trackIdx; if(idx===null) return;
-  const t = D[0].tracks[idx]; if(!t) return;
-  const pos = a.currentTime;
-  if(type==='start') t.inCue    = pos;
-  if(type==='end')   t.outCue   = pos;
-  if(type==='next')  t.nextCue  = pos;
-  if(type==='intro') t.introCue = pos;
-  _emUpdate();
-  pazUpdateMarkers();
-}
-
-// ── Drag poignées ──
-(function bindEmDrag(){
-  const HANDLES = ['em-h-start','em-h-end','em-h-next','em-h-intro'];
-  const CUE_MAP = { 'em-h-start':'start', 'em-h-end':'end', 'em-h-next':'next', 'em-h-intro':'intro' };
-
-  HANDLES.forEach(hid=>{
-    const el = document.getElementById(hid); if(!el) return;
-    el.addEventListener('mousedown', e=>{
-      e.preventDefault(); e.stopPropagation();
-      _em.dragging = CUE_MAP[hid];
-    });
-    el.addEventListener('touchstart', e=>{
-      e.preventDefault(); e.stopPropagation();
-      _em.dragging = CUE_MAP[hid];
-    }, {passive:false});
-  });
-
-  const getX = e => e.touches ? e.touches[0].clientX : e.clientX;
-
-  const onMove = e=>{
-    if(!_em.dragging) return;
-    const cv = document.getElementById('em-canvas'); if(!cv) return;
-    const rect = cv.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (getX(e)-rect.left)/rect.width));
-    const pos = ratio * _em.dur;
-    const idx = _em.trackIdx; if(idx===null) return;
-    const t = D[0].tracks[idx]; if(!t) return;
-    if(_em.dragging==='start') t.inCue    = pos;
-    if(_em.dragging==='end')   t.outCue   = pos;
-    if(_em.dragging==='next')  t.nextCue  = pos;
-    if(_em.dragging==='intro') t.introCue = pos;
-    _emUpdate();
-  };
-  const onUp = ()=>{ _em.dragging=null; };
-
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('touchmove', onMove, {passive:false});
-  document.addEventListener('mouseup',   onUp);
-  document.addEventListener('touchend',  onUp);
-
-  // Clic sur la waveform → déplacer le curseur audio
-  const cv = document.getElementById('em-canvas');
-  if(cv){
-    cv.addEventListener('click', e=>{
-      const rect = cv.getBoundingClientRect();
-      const ratio = Math.min(1, Math.max(0, (e.clientX-rect.left)/rect.width));
-      const a = _em.audio; if(!a) return;
-      a.currentTime = ratio * _em.dur;
-    });
-  }
-})();
-
-
 </script>
 <!-- ══ MODAL ÉDITEUR DE POINTS ══ -->
-<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,16,.88);z-index:3000;align-items:center;justify-content:center;">
-  <div style="background:#03050f;border:2px solid #1a3a9a;border-radius:10px;width:min(860px,96vw);box-shadow:0 0 60px rgba(0,40,200,.25);overflow:hidden;font-family:var(--mono);">
+</body>
+</html>
 
-    <!-- Titre -->
-    <div style="background:#050a1e;border-bottom:2px solid #1a3a9a;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:10px;color:#4a6aaa;letter-spacing:2px;">✦ ÉDITEUR DE POINTS</span>
-        <span id="em-track-name" style="font-family:var(--display);font-size:16px;font-weight:700;color:var(--cyan);letter-spacing:2px;">—</span>
+<!-- ══════════════════════════════════════════════════════
+     MODAL ÉDITEUR DE POINTS v2
+     ══════════════════════════════════════════════════════ -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,5,20,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+  <div id="em-box" style="background:#02040c;border:2px solid #1e3a8a;border-radius:10px;width:92vw;max-width:980px;box-shadow:0 0 80px rgba(0,30,180,.3);overflow:hidden;display:flex;flex-direction:column;">
+
+    <!-- ── Barre titre ── -->
+    <div style="background:#050a1e;border-bottom:1px solid #1e3a8a;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span style="font-family:var(--mono);font-size:9px;color:#4a6aaa;letter-spacing:3px;text-transform:uppercase;">✦ Éditeur de points</span>
+        <span id="em-title" style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--cyan);letter-spacing:2px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:50vw;">—</span>
       </div>
-      <button onclick="closeEditModal()" style="background:transparent;border:1px solid #3a1010;color:#e03020;font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:2px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.background='#2a0000'" onmouseout="this.style.background='transparent'">✕ FERMER</button>
+      <button onclick="closeEditModal()" style="background:transparent;border:1px solid #4a1010;color:#e03020;font-family:var(--mono);font-size:10px;padding:4px 12px;border-radius:2px;cursor:pointer;letter-spacing:1px;transition:background .1s;" onmouseover="this.style.background='#200808'" onmouseout="this.style.background='transparent'">✕ FERMER</button>
     </div>
 
-    <!-- Waveform interactive -->
-    <div style="background:#000;position:relative;height:180px;" id="em-wv-wrap">
-      <canvas id="em-canvas" width="860" height="180" style="display:block;width:100%;height:180px;cursor:crosshair;"></canvas>
+    <!-- ── Canvas waveform ── -->
+    <div id="em-wv-zone" style="position:relative;background:#000;flex-shrink:0;overflow:hidden;" onmousedown="emWvClick(event)" style="cursor:crosshair;">
+      <canvas id="em-cv" style="display:block;width:100%;cursor:crosshair;"></canvas>
+
+      <!-- Zones colorées (derrière les poignées) -->
+      <div id="em-z-body"  style="position:absolute;top:0;bottom:0;background:rgba(150,8,8,.22);pointer-events:none;z-index:1;display:none;"></div>
+      <div id="em-z-intro" style="position:absolute;top:0;bottom:0;background:rgba(190,148,0,.28);pointer-events:none;z-index:2;display:none;"></div>
+
+      <!-- Poignées : zone de hit large, trait fin centré -->
+      <div id="em-h-start" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:6;touch-action:none;" onmousedown="emStartDrag(event,'start')">
+        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#00d4f0;pointer-events:none;"></div>
+        <div style="position:absolute;left:14px;top:6px;font-family:var(--mono);font-size:8px;color:#00d4f0;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">START</div>
+      </div>
+      <div id="em-h-intro" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:7;touch-action:none;display:none;" onmousedown="emStartDrag(event,'intro')">
+        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#f5c400;pointer-events:none;"></div>
+        <div style="position:absolute;right:14px;top:6px;font-family:var(--mono);font-size:8px;color:#f5c400;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">INTRO</div>
+      </div>
+      <div id="em-h-next" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:7;touch-action:none;" onmousedown="emStartDrag(event,'next')">
+        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#00d96a;pointer-events:none;"></div>
+        <div style="position:absolute;left:14px;bottom:6px;font-family:var(--mono);font-size:8px;color:#00d96a;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">NEXT</div>
+      </div>
+      <div id="em-h-end" style="position:absolute;top:0;bottom:0;width:20px;transform:translateX(-10px);cursor:ew-resize;z-index:6;touch-action:none;" onmousedown="emStartDrag(event,'end')">
+        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:#e03020;pointer-events:none;"></div>
+        <div style="position:absolute;right:14px;bottom:6px;font-family:var(--mono);font-size:8px;color:#e03020;background:rgba(0,0,0,.9);padding:2px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">END</div>
+      </div>
 
       <!-- Playhead -->
-      <div id="em-playhead" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,200,.9);z-index:5;display:none;pointer-events:none;"></div>
-
-      <!-- Zones colorées -->
-      <!-- Jaune : START → INTRO -->
-      <div id="em-zone-intro" style="position:absolute;top:0;bottom:0;background:rgba(200,155,0,.25);border-left:2px solid #f5c400;border-right:2px solid #f5c400;z-index:2;display:none;pointer-events:none;"></div>
-      <!-- Rouge : START → END -->
-      <div id="em-zone-end" style="position:absolute;top:0;bottom:0;background:rgba(160,10,10,.20);border-left:2px solid rgba(0,212,240,.7);z-index:1;display:none;pointer-events:none;"></div>
-
-      <!-- Poignées draggables -->
-      <!-- START (cyan) -->
-      <div id="em-h-start" data-cue="start"
-        style="position:absolute;top:0;bottom:0;width:3px;background:#00d4f0;z-index:6;cursor:ew-resize;touch-action:none;">
-        <span style="position:absolute;top:4px;left:5px;font-size:8px;color:#00d4f0;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">START</span>
-      </div>
-      <!-- END (rouge) -->
-      <div id="em-h-end" data-cue="end"
-        style="position:absolute;top:0;bottom:0;width:3px;background:#e03020;z-index:6;cursor:ew-resize;touch-action:none;">
-        <span style="position:absolute;top:4px;right:5px;font-size:8px;color:#e03020;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">END</span>
-      </div>
-      <!-- NEXT (vert) -->
-      <div id="em-h-next" data-cue="next"
-        style="position:absolute;top:0;bottom:0;width:3px;background:#00d96a;z-index:7;cursor:ew-resize;touch-action:none;">
-        <span style="position:absolute;bottom:4px;left:5px;font-size:8px;color:#00d96a;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">NEXT</span>
-      </div>
-      <!-- INTRO (jaune) -->
-      <div id="em-h-intro" data-cue="intro"
-        style="position:absolute;top:0;bottom:0;width:3px;background:#f5c400;z-index:7;cursor:ew-resize;touch-action:none;">
-        <span style="position:absolute;bottom:4px;right:5px;font-size:8px;color:#f5c400;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:2px;white-space:nowrap;pointer-events:none;letter-spacing:1px;">INTRO</span>
-      </div>
-
-      <!-- Hit zone étendue sur chaque poignée -->
+      <div id="em-ph" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,180,.85);z-index:8;pointer-events:none;display:none;box-shadow:0 0 4px rgba(255,255,150,.5);"></div>
     </div>
 
-    <!-- Timecodes row -->
-    <div style="background:#050a1e;border-top:1px solid #0a1a40;border-bottom:1px solid #0a1a40;display:grid;grid-template-columns:repeat(4,1fr);padding:6px 10px;gap:6px;">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-        <span style="font-size:8px;color:#00d4f0;letter-spacing:2px;">START</span>
-        <span id="em-v-start" style="font-size:14px;color:#00d4f0;letter-spacing:1px;">0:00.000</span>
+    <!-- ── Timecodes ── -->
+    <div style="background:#04070f;border-top:1px solid #0e1c3a;border-bottom:1px solid #0e1c3a;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;flex-shrink:0;">
+      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;border-right:1px solid #0e1c3a;">
+        <span style="font-family:var(--mono);font-size:8px;color:#00d4f0;letter-spacing:2px;margin-bottom:3px;">START</span>
+        <span id="em-v-start" style="font-family:var(--mono);font-size:15px;color:#00d4f0;letter-spacing:1px;">—</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-        <span style="font-size:8px;color:#f5c400;letter-spacing:2px;">INTRO</span>
-        <span id="em-v-intro" style="font-size:14px;color:#f5c400;letter-spacing:1px;">—</span>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;border-right:1px solid #0e1c3a;">
+        <span style="font-family:var(--mono);font-size:8px;color:#f5c400;letter-spacing:2px;margin-bottom:3px;">INTRO</span>
+        <span id="em-v-intro" style="font-family:var(--mono);font-size:15px;color:#f5c400;letter-spacing:1px;">—</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-        <span style="font-size:8px;color:#00d96a;letter-spacing:2px;">NEXT</span>
-        <span id="em-v-next" style="font-size:14px;color:#00d96a;letter-spacing:1px;">—</span>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;border-right:1px solid #0e1c3a;">
+        <span style="font-family:var(--mono);font-size:8px;color:#00d96a;letter-spacing:2px;margin-bottom:3px;">NEXT</span>
+        <span id="em-v-next" style="font-family:var(--mono);font-size:15px;color:#00d96a;letter-spacing:1px;">—</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-        <span style="font-size:8px;color:#e03020;letter-spacing:2px;">END</span>
-        <span id="em-v-end" style="font-size:14px;color:#e03020;letter-spacing:1px;">—</span>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:7px 0;">
+        <span style="font-family:var(--mono);font-size:8px;color:#e03020;letter-spacing:2px;margin-bottom:3px;">END</span>
+        <span id="em-v-end" style="font-family:var(--mono);font-size:15px;color:#e03020;letter-spacing:1px;">—</span>
       </div>
     </div>
 
-    <!-- Transport -->
-    <div style="background:#040810;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <!-- Lecture/stop -->
-      <button id="em-play-btn" onclick="emTogglePlay()" style="background:linear-gradient(180deg,#0a4a1a,#052810);border:1px solid #1a8a40;border-radius:4px;color:#60ff90;font-family:var(--mono);font-size:12px;padding:6px 18px;cursor:pointer;letter-spacing:1px;min-width:80px;" onmouseover="this.style.background='linear-gradient(180deg,#1a5a2a,#0a3820)'" onmouseout="this.style.background='linear-gradient(180deg,#0a4a1a,#052810)'">▶ PLAY</button>
-      <button onclick="emStop()" style="background:linear-gradient(180deg,#4a0808,#2a0404);border:1px solid #8a2020;border-radius:4px;color:#ff6060;font-family:var(--mono);font-size:12px;padding:6px 18px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.background='linear-gradient(180deg,#6a1010,#3a0808)'" onmouseout="this.style.background='linear-gradient(180deg,#4a0808,#2a0404)'">■ STOP</button>
+    <!-- ── Transport ── -->
+    <div style="background:#030610;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">
+      <button id="em-play-btn" onclick="emTogglePlay()" style="min-width:84px;background:linear-gradient(180deg,#0a4a1a,#052810);border:1px solid #1a8a40;border-radius:3px;color:#60ff90;font-family:var(--mono);font-size:11px;padding:6px 14px;cursor:pointer;letter-spacing:1px;transition:all .1s;">▶ PLAY</button>
+      <button onclick="emStop()" style="background:linear-gradient(180deg,#3a0808,#200404);border:1px solid #7a2020;border-radius:3px;color:#ff6060;font-family:var(--mono);font-size:11px;padding:6px 14px;cursor:pointer;letter-spacing:1px;transition:all .1s;">■ STOP</button>
+
+      <div style="width:1px;height:24px;background:#1e2840;margin:0 2px;"></div>
+
       <!-- Aller aux points -->
-      <button onclick="emGoTo('start')" style="background:#030810;border:1px solid #1a3060;border-radius:3px;color:#00d4f0;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au START">|◀ START</button>
-      <button onclick="emGoTo('intro')" style="background:#030810;border:1px solid #3a3000;border-radius:3px;color:#f5c400;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au INTRO">|◀ INTRO</button>
-      <button onclick="emGoTo('next')" style="background:#030810;border:1px solid #004a20;border-radius:3px;color:#00d96a;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au NEXT">|◀ NEXT</button>
-      <button onclick="emGoTo('end')" style="background:#030810;border:1px solid #3a1010;border-radius:3px;color:#e03020;font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;" title="Aller au END">|◀ END</button>
-      <!-- Placer ici -->
+      <button onclick="emGoTo('start')" style="background:#020510;border:1px solid #1a3060;border-radius:2px;color:#00d4f0;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ START</button>
+      <button onclick="emGoTo('intro')" style="background:#020510;border:1px solid #3a3000;border-radius:2px;color:#f5c400;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ INTRO</button>
+      <button onclick="emGoTo('next')" style="background:#020510;border:1px solid #004a20;border-radius:2px;color:#00d96a;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ NEXT</button>
+      <button onclick="emGoTo('end')" style="background:#020510;border:1px solid #3a1010;border-radius:2px;color:#e03020;font-family:var(--mono);font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;">|◀ END</button>
+
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:9px;color:#3a5070;letter-spacing:1px;">PLACER ICI →</span>
-        <button onclick="emSetHere('start')" style="background:rgba(0,212,240,.08);border:1px solid #00d4f0;border-radius:2px;color:#00d4f0;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">START</button>
-        <button onclick="emSetHere('intro')" style="background:rgba(245,196,0,.08);border:1px solid #f5c400;border-radius:2px;color:#f5c400;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">INTRO</button>
-        <button onclick="emSetHere('next')" style="background:rgba(0,217,106,.08);border:1px solid #00d96a;border-radius:2px;color:#00d96a;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">NEXT</button>
-        <button onclick="emSetHere('end')" style="background:rgba(224,48,32,.08);border:1px solid #e03020;border-radius:2px;color:#e03020;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">END</button>
+        <span style="font-family:var(--mono);font-size:9px;color:#2a4060;letter-spacing:1px;">PLACER ICI →</span>
+        <button onclick="emSetHere('start')" style="background:rgba(0,212,240,.06);border:1px solid #00d4f0;border-radius:2px;color:#00d4f0;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">START</button>
+        <button onclick="emSetHere('intro')" style="background:rgba(245,196,0,.06);border:1px solid #f5c400;border-radius:2px;color:#f5c400;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">INTRO</button>
+        <button onclick="emSetHere('next')" style="background:rgba(0,217,106,.06);border:1px solid #00d96a;border-radius:2px;color:#00d96a;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">NEXT</button>
+        <button onclick="emSetHere('end')" style="background:rgba(224,48,32,.06);border:1px solid #e03020;border-radius:2px;color:#e03020;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">END</button>
       </div>
     </div>
 
   </div>
 </div>
 
+<script>
+// ══════════════════════════════════════════════════════════════
+// MODAL ÉDITEUR DE POINTS v2 — robuste et autonome
+// ══════════════════════════════════════════════════════════════
+
+const EM = {
+  trackIdx : null,
+  dur      : 0,
+  audio    : null,
+  playing  : false,
+  drag     : null,   // 'start'|'end'|'next'|'intro'
+  raf      : null,
+  // Zoom waveform
+  viewStart: 0,      // ratio [0-1] début de la vue
+  viewEnd  : 1,      // ratio [0-1] fin de la vue
+};
+
+// ── Ouvrir ──
+function openEditModal(trackIdx){
+  const d   = D[0];
+  const idx = (trackIdx !== undefined) ? trackIdx : d.ci;
+  const t   = d.tracks[idx];
+  if(!t || t.isMacro) return;
+
+  EM.trackIdx  = idx;
+  EM.dur       = d.durs[idx] || 0;
+  EM.viewStart = 0;
+  EM.viewEnd   = 1;
+
+  // Arrêter lecture précédente
+  if(EM.audio){ EM.audio.pause(); }
+  EM.audio   = new Audio(t.file);
+  EM.playing = false;
+
+  // Titre
+  document.getElementById('em-title').textContent = t.title;
+
+  // Ouvrir le modal AVANT de dessiner
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'flex';
+
+  // Attendre 2 frames que le layout soit peint
+  requestAnimationFrame(()=> requestAnimationFrame(()=>{
+    emResizeCanvas();
+    emDrawFull();
+    emUpdateHandles();
+    emUpdateTimecodes();
+    emUpdatePlayBtn();
+    emStartRaf();
+  }));
+}
+
+function closeEditModal(){
+  emStop();
+  if(EM.raf){ cancelAnimationFrame(EM.raf); EM.raf=null; }
+  document.getElementById('edit-modal').style.display = 'none';
+  pazRender(); // mettre à jour le PAZ principal
+}
+
+// ── Dimensionner le canvas ──
+function emResizeCanvas(){
+  const zone = document.getElementById('em-wv-zone');
+  const cv   = document.getElementById('em-cv');
+  if(!zone || !cv) return;
+  const W = zone.getBoundingClientRect().width || 900;
+  const H = Math.round(W * 0.22); // ratio fixe ~22%
+  cv.width  = Math.round(W);
+  cv.height = Math.max(H, 160);
+  // Ajuster la hauteur du conteneur
+  zone.style.height = cv.height + 'px';
+}
+
+// ── Dessiner la waveform sur la vue courante [viewStart, viewEnd] ──
+function emDrawFull(){
+  const cv = document.getElementById('em-cv'); if(!cv) return;
+  const W  = cv.width, H = cv.height;
+  const ctx= cv.getContext('2d');
+
+  // Fond
+  ctx.fillStyle = '#01020a';
+  ctx.fillRect(0,0,W,H);
+
+  // Grille
+  ctx.strokeStyle='rgba(20,40,80,.7)'; ctx.lineWidth=1;
+  [.25,.5,.75].forEach(y=>{ ctx.beginPath();ctx.moveTo(0,y*H+.5);ctx.lineTo(W,y*H+.5);ctx.stroke(); });
+
+  const t = D[0].tracks[EM.trackIdx];
+  if(!t) return;
+
+  if(WV_DATA_CACHE[t.file]){
+    emDrawData(ctx, WV_DATA_CACHE[t.file], W, H, EM.viewStart, EM.viewEnd);
+    emUpdateHandles();
+    emUpdateZones();
+  } else {
+    ctx.fillStyle='rgba(0,212,240,.5)';
+    ctx.font=`12px 'Share Tech Mono',monospace`;
+    ctx.fillText('⟳ Décodage audio en cours…', 20, H/2+4);
+    drawWaveform(document.createElement('canvas'), t.file).then(()=>{
+      if(EM.trackIdx===null) return;
+      if(D[0].tracks[EM.trackIdx]?.file !== t.file) return;
+      emResizeCanvas();
+      emDrawFull();
+    });
+  }
+}
+
+function emDrawData(ctx, data, W, H, vStart, vEnd){
+  const total = data.length;
+  const s = Math.floor(vStart * total);
+  const e = Math.floor(vEnd   * total);
+  const len  = Math.max(1, e - s);
+  const step = Math.max(1, Math.floor(len / W));
+
+  // Silhouette
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,   'rgba(0,170,220,.18)');
+  grad.addColorStop(0.5, 'rgba(0,210,250,.42)');
+  grad.addColorStop(1,   'rgba(0,170,220,.18)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.moveTo(0, H/2);
+  for(let x=0;x<W;x++){
+    let mx=0;
+    for(let j=0;j<step;j++){ const v=Math.abs(data[s+x*step+j]||0); if(v>mx)mx=v; }
+    ctx.lineTo(x, H/2 - mx*(H/2)*.9);
+  }
+  for(let x=W-1;x>=0;x--){
+    let mx=0;
+    for(let j=0;j<step;j++){ const v=Math.abs(data[s+x*step+j]||0); if(v>mx)mx=v; }
+    ctx.lineTo(x, H/2 + mx*(H/2)*.9);
+  }
+  ctx.closePath(); ctx.fill();
+
+  // Traits
+  ctx.strokeStyle='rgba(0,212,240,.82)'; ctx.lineWidth=1;
+  for(let x=0;x<W;x++){
+    let mn=0,mx=0;
+    for(let j=0;j<step;j++){ const v=data[s+x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
+    const y1=Math.round((1-mx)/2*H), y2=Math.round((1-mn)/2*H);
+    if(y2>y1){ ctx.beginPath();ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);ctx.stroke(); }
+  }
+}
+
+// ── Convertir seconde → pixel X sur la vue courante ──
+function emSecToX(sec){
+  const cv = document.getElementById('em-cv'); if(!cv) return 0;
+  const dur = EM.dur || 1;
+  const ratio = sec / dur;
+  // En dehors de la vue → -1
+  const span = EM.viewEnd - EM.viewStart;
+  if(span <= 0) return -1;
+  return ((ratio - EM.viewStart) / span) * cv.width;
+}
+function emXToSec(x){
+  const cv = document.getElementById('em-cv'); if(!cv) return 0;
+  const span = EM.viewEnd - EM.viewStart;
+  const ratio = EM.viewStart + (x / cv.width) * span;
+  return Math.max(0, Math.min(EM.dur, ratio * EM.dur));
+}
+
+// ── Mettre à jour les poignées ──
+function emUpdateHandles(){
+  const t = EM.trackIdx !== null ? D[0].tracks[EM.trackIdx] : null;
+  if(!t) return;
+
+  const place = (id, sec, show)=>{
+    const el = document.getElementById(id); if(!el) return;
+    const x = emSecToX(sec);
+    if(!show || x < 0 || x > (document.getElementById('em-cv')?.width||900)){
+      el.style.display='none'; return;
+    }
+    el.style.display = 'block';
+    el.style.left    = x + 'px';
+  };
+
+  place('em-h-start', cueStart(t), true);
+  place('em-h-end',   cueEnd(t),   true);
+  place('em-h-next',  cueNext(t),  true);
+  place('em-h-intro', t.introCue != null ? t.introCue : 0, t.introCue != null);
+}
+
+// ── Zones colorées ──
+function emUpdateZones(){
+  const t = EM.trackIdx !== null ? D[0].tracks[EM.trackIdx] : null;
+  if(!t){ ['em-z-body','em-z-intro'].forEach(id=>{ const el=document.getElementById(id); if(el)el.style.display='none'; }); return; }
+  const cv = document.getElementById('em-cv'); if(!cv) return;
+  const W  = cv.width;
+
+  const clamp = x => Math.max(0, Math.min(W, x));
+  const zone = (id, s, e, show)=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(!show){ el.style.display='none'; return; }
+    const x1=clamp(emSecToX(s)), x2=clamp(emSecToX(e));
+    el.style.left    = x1+'px';
+    el.style.width   = Math.max(0,x2-x1)+'px';
+    el.style.display = 'block';
+  };
+  zone('em-z-body',  cueStart(t), cueEnd(t),   true);
+  zone('em-z-intro', cueStart(t), t.introCue ?? 0, t.introCue != null);
+}
+
+// ── Timecodes ──
+function emUpdateTimecodes(){
+  const t = EM.trackIdx !== null ? D[0].tracks[EM.trackIdx] : null;
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('em-v-start', t ? fmtMs(cueStart(t)) : '—');
+  set('em-v-intro', t ? (t.introCue!=null ? fmtMs(t.introCue) : '—') : '—');
+  set('em-v-next',  t ? fmtMs(cueNext(t))  : '—');
+  set('em-v-end',   t ? fmtMs(cueEnd(t))   : '—');
+}
+
+// ── RAF : playhead + redessiner si nécessaire ──
+function emStartRaf(){
+  if(EM.raf) cancelAnimationFrame(EM.raf);
+  const tick = ()=>{
+    EM.raf = requestAnimationFrame(tick);
+    const a = EM.audio; if(!a) return;
+    const pos = a.currentTime;
+    const dur = EM.dur || 1;
+    const cv  = document.getElementById('em-cv'); if(!cv) return;
+
+    // Playhead
+    const ph = document.getElementById('em-ph');
+    if(ph){
+      const x = emSecToX(pos);
+      if(x >= 0 && x <= cv.width){
+        ph.style.display = 'block';
+        ph.style.left    = x + 'px';
+      } else {
+        ph.style.display = 'none';
+      }
+    }
+  };
+  tick();
+}
+
+// ── Transport ──
+function emTogglePlay(){
+  if(!EM.audio) return;
+  const btn = document.getElementById('em-play-btn');
+  if(EM.playing){
+    EM.audio.pause(); EM.playing=false;
+    if(btn){ btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90'; }
+  } else {
+    EM.audio.play(); EM.playing=true;
+    if(btn){ btn.textContent='❙❙ PAUSE'; btn.style.background='linear-gradient(180deg,#2a3a00,#141e00)'; btn.style.borderColor='#6a8a00'; btn.style.color='#ccff40'; }
+  }
+}
+function emStop(){
+  if(!EM.audio) return;
+  EM.audio.pause(); EM.audio.currentTime=0; EM.playing=false;
+  emUpdatePlayBtn();
+}
+function emUpdatePlayBtn(){
+  const btn = document.getElementById('em-play-btn'); if(!btn) return;
+  btn.textContent='▶ PLAY'; btn.style.background='linear-gradient(180deg,#0a4a1a,#052810)'; btn.style.borderColor='#1a8a40'; btn.style.color='#60ff90';
+}
+function emGoTo(type){
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t||!EM.audio) return;
+  if(type==='start') EM.audio.currentTime=cueStart(t);
+  if(type==='end')   EM.audio.currentTime=cueEnd(t);
+  if(type==='next')  EM.audio.currentTime=cueNext(t);
+  if(type==='intro'&&t.introCue!=null) EM.audio.currentTime=t.introCue;
+}
+function emSetHere(type){
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t||!EM.audio) return;
+  const pos=EM.audio.currentTime;
+  if(type==='start') t.inCue    = pos;
+  if(type==='end')   t.outCue   = pos;
+  if(type==='next')  t.nextCue  = pos;
+  if(type==='intro') t.introCue = pos;
+  emUpdateHandles(); emUpdateZones(); emUpdateTimecodes();
+  pazUpdateMarkers();
+}
+
+// ── Clic sur waveform → déplacer le curseur ──
+function emWvClick(e){
+  if(EM.drag) return; // ignorer si on drag
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const rect=cv.getBoundingClientRect();
+  const x=(e.clientX-rect.left)*(cv.width/rect.width);
+  if(!EM.audio) return;
+  EM.audio.currentTime = emXToSec(x);
+}
+
+// ── Drag des poignées ──
+function emStartDrag(e, type){
+  e.preventDefault(); e.stopPropagation();
+  EM.drag = type;
+}
+document.addEventListener('mousemove', e=>{
+  if(!EM.drag) return;
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const rect=cv.getBoundingClientRect();
+  const x=(e.clientX-rect.left)*(cv.width/rect.width);
+  const pos=emXToSec(x);
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t) return;
+  if(EM.drag==='start') t.inCue    = pos;
+  if(EM.drag==='end')   t.outCue   = pos;
+  if(EM.drag==='next')  t.nextCue  = pos;
+  if(EM.drag==='intro') t.introCue = pos;
+  emUpdateHandles(); emUpdateZones(); emUpdateTimecodes();
+});
+document.addEventListener('mouseup',  ()=>{ if(EM.drag){ EM.drag=null; pazUpdateMarkers(); } });
+document.addEventListener('touchmove', e=>{
+  if(!EM.drag) return;
+  e.preventDefault();
+  const cv=document.getElementById('em-cv'); if(!cv) return;
+  const rect=cv.getBoundingClientRect();
+  const x=(e.touches[0].clientX-rect.left)*(cv.width/rect.width);
+  const pos=emXToSec(x);
+  const t=EM.trackIdx!==null?D[0].tracks[EM.trackIdx]:null; if(!t) return;
+  if(EM.drag==='start') t.inCue    = pos;
+  if(EM.drag==='end')   t.outCue   = pos;
+  if(EM.drag==='next')  t.nextCue  = pos;
+  if(EM.drag==='intro') t.introCue = pos;
+  emUpdateHandles(); emUpdateZones(); emUpdateTimecodes();
+},{passive:false});
+document.addEventListener('touchend', ()=>{ if(EM.drag){ EM.drag=null; pazUpdateMarkers(); } });
+
+// Fermer avec Échap
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && document.getElementById('edit-modal').style.display!=='none') closeEditModal();
+});
+</script>
 </body>
 </html>
