@@ -1307,7 +1307,7 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:
       <div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:right;">DURÉE</div>
       <div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;text-align:right;padding-right:12px;">DÉCOMPTE</div>
       <div style="width:5px;flex-shrink:0;"></div>
-      <div style="width:30px;flex-shrink:0;"></div>
+      <div style="width:54px;flex-shrink:0;"></div>
     </div>
 
     <!-- ══ LISTE PLAYLIST ══ -->
@@ -2384,44 +2384,20 @@ function pazTick(){
   const tEl=document.getElementById('paz-title');
   if(tEl) tEl.style.color=(introT!=null&&pos<introT)?'#f5c400':'#ffffff';
 
-  // Playhead
-  const ph=document.getElementById('paz-ph');
-  if(ph){
-    const span=_pazZoom.on?(_pazZoom.e-_pazZoom.s):1;
-    const pct=_pazZoom.on?(((pos/dur)-_pazZoom.s)/span*100):((pos/dur)*100);
-    if(pct>=0&&pct<=100){ ph.style.display='block'; ph.style.left=pct.toFixed(2)+'%'; }
-    else ph.style.display='none';
-  }
+  // (playhead, progression rouge et décomptes gérés par le rAF dédié)
 
-  // Décompte
-  const cd=document.getElementById('paz-cd'), lb=document.getElementById('paz-cd-lbl');
-  if(cd){
-    const isIntro=introT!=null&&pos<introT;
-    if(isIntro){
-      const r=Math.max(0,introT-pos);
-      cd.textContent=fmtFull(r); cd.style.color='#f5c400';
-      if(lb) lb.textContent='INTRO';
-    } else {
-      const r=Math.max(0,nextT-pos);
-      cd.textContent=fmtFull(r);
-      cd.style.color=r<10?'#e03020':r<30?'#f5c400':'#ff4040';
-      if(lb) lb.textContent='NEXT';
-    }
-  }
-
-  // Décompte dans la liste
-  const cdR=document.getElementById('paz-row-cd-active');
-  if(cdR) cdR.textContent=fmtFull(Math.max(0,nextT-pos));
-
-  // ── ZOOM : approche INTRO (±12s) et NEXT (±20s) ──
-  const ZI=12, ZN=20;
+  // ── ZOOM : approche INTRO (±10s centrés sur INTRO) et NEXT (±20s) ──
+  const ZI=10, ZN=20;
   let wantOn=false, wS=0, wE=1, wKey='';
   if(introT!=null&&pos<introT&&(introT-pos)<=ZI){
-    wantOn=true; wS=Math.max(0,(introT-ZI)/dur); wE=Math.min(1,(introT+ZI*.5)/dur); wKey='intro';
-  } else if(introT!=null&&pos>=introT&&(pos-introT)<=4){
-    wantOn=true; wS=Math.max(0,(introT-ZI*.5)/dur); wE=Math.min(1,(introT+ZI)/dur); wKey='intro+';
+    // Centrer exactement sur introT : [introT-ZI, introT+ZI]
+    wantOn=true; wS=Math.max(0,(introT-ZI)/dur); wE=Math.min(1,(introT+ZI)/dur); wKey='intro';
+  } else if(introT!=null&&pos>=introT&&(pos-introT)<=ZI){
+    // Juste après le point INTRO : garder la même fenêtre
+    wantOn=true; wS=Math.max(0,(introT-ZI)/dur); wE=Math.min(1,(introT+ZI)/dur); wKey='intro+';
   } else if(nextT>0&&pos<nextT&&(nextT-pos)<=ZN){
-    wantOn=true; wS=Math.max(0,(nextT-ZN)/dur); wE=Math.min(1,(nextT+ZN*.5)/dur); wKey='next';
+    // Centrer sur nextT
+    wantOn=true; wS=Math.max(0,(nextT-ZN)/dur); wE=Math.min(1,(nextT+ZN)/dur); wKey='next';
   }
   if(wantOn!==_pazZoom.on||wKey!==_pazZoom.key){
     _pazZoom={on:wantOn,s:wS,e:wE,key:wKey};
@@ -2495,7 +2471,7 @@ function pazRenderList(){
       const numCol=isAct?'color:var(--red)':isNxt?'color:var(--green)':'color:var(--txt-mute)';
       // icône autoNext
       const aIcon=`<span onclick="event.stopPropagation();pazToggleAutoFor(${i})" title="${autoOn?'Enchaînement ON':'Enchaînement OFF'}" style="margin-right:5px;cursor:pointer;font-size:10px;opacity:${autoOn?1:.25};user-select:none;">⛓</span>`;
-      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;${numCol};text-align:center;">${isAct?'▶':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);padding-left:4px;">${hhmm}</div><div style="flex:1;font-family:var(--display);font-size:17px;font-weight:700;${titleCol};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${aIcon}${t.title}</div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;">${dur}</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;${cdCol};text-align:right;padding-right:12px;" ${cdId}>${cd}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;"></div><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:30px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
+      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;${numCol};text-align:center;">${isAct?'▶':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);padding-left:4px;">${hhmm}</div><div style="flex:1;font-family:var(--display);font-size:17px;font-weight:700;${titleCol};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${aIcon}${t.title}</div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;">${dur}</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;${cdCol};text-align:right;padding-right:12px;" ${cdId}>${cd}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;"></div><button onclick="event.stopPropagation();openEditModal(${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#4a3a70;cursor:pointer;font-size:11px;padding:0;text-align:center;transition:color .1s;" onmouseover="this.style.color='#9b6de5'" onmouseout="this.style.color='#4a3a70'" title="Éditer les points">✦</button><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
     }
     row.appendChild(inner);
     list.appendChild(row);
@@ -2568,6 +2544,64 @@ D[0]._outOf=function(i){
 
 // Redimensionner la waveform si la fenêtre change
 window.addEventListener('resize',()=>{ _pazWvFile=null; pazDrawBg(true); });
+
+// ── RAF dédié au playhead (60fps, indépendant du setInterval 80ms) ──
+(function pazPhRaf(){
+  requestAnimationFrame(pazPhRaf);
+  const d=D[0]; if(!d.playing) return;
+  const a=D[0].audios[D[0].ci]; if(!a||a.paused) return;
+  const pos=a.currentTime, dur=D[0].durs[D[0].ci]||1;
+  const t=pazT(); if(!t) return;
+
+  // Playhead dans la zone active PAZ
+  const ph=document.getElementById('paz-ph');
+  if(ph){
+    const span=_pazZoom.on?(_pazZoom.e-_pazZoom.s):1;
+    const pct=_pazZoom.on?(((pos/dur)-_pazZoom.s)/span*100):((pos/dur)*100);
+    if(pct>=0&&pct<=100.5){ ph.style.display='block'; ph.style.left=pct.toFixed(3)+'%'; }
+    else ph.style.display='none';
+  }
+
+  // Progression rouge (fluide)
+  const rEl=document.getElementById('paz-red');
+  if(rEl){
+    const inT=cStart(t);
+    const span=_pazZoom.on?(_pazZoom.e-_pazZoom.s):1;
+    const lPct=_pazZoom.on?(((inT/dur)-_pazZoom.s)/span*100):((inT/dur)*100);
+    const wPct=Math.max(0,pos-inT)/dur/span*100;
+    rEl.style.left=lPct.toFixed(3)+'%'; rEl.style.width=wPct.toFixed(3)+'%';
+  }
+
+  // Barre de progression dans la liste
+  const prog=document.getElementById('paz-row-prog');
+  if(prog){
+    const inT=cStart(t), nextT=cNext(t), span2=nextT-inT||1;
+    const ratio=Math.min(1,Math.max(0,(pos-inT)/span2));
+    prog.style.transform='scaleX('+ratio.toFixed(4)+')';
+  }
+
+  // Décompte (fluide, pas seulement au tick 80ms)
+  const cd=document.getElementById('paz-cd');
+  const lb=document.getElementById('paz-cd-lbl');
+  const introT=cIntro(t), nextT2=cNext(t);
+  if(cd){
+    const isIntro=introT!=null&&pos<introT;
+    if(isIntro){
+      const r=Math.max(0,introT-pos);
+      cd.textContent=fmtFull(r); cd.style.color='#f5c400';
+      if(lb) lb.textContent='INTRO';
+    } else {
+      const r=Math.max(0,nextT2-pos);
+      cd.textContent=fmtFull(r);
+      cd.style.color=r<10?'#e03020':r<30?'#f5c400':'#ff4040';
+      if(lb) lb.textContent='NEXT';
+    }
+  }
+
+  // Décompte dans la liste
+  const cdR=document.getElementById('paz-row-cd-active');
+  if(cdR) cdR.textContent=fmtFull(Math.max(0,nextT2-pos));
+})();
 
 // Init
 setTimeout(()=>{ pazRender(); },200);
@@ -3245,7 +3279,7 @@ document.addEventListener('click',function initBipOnce(){
   document.removeEventListener('click',initBipOnce);
 },{once:true});
 
-setInterval(()=>{document.getElementById('global-clock').textContent=nowClock();D.forEach(d=>d.tick());rdvTick();pazTick();pazUpdateRowProg();},80);
+setInterval(()=>{document.getElementById('global-clock').textContent=nowClock();D.forEach(d=>d.tick());rdvTick();pazTick();},80);
 
 // ══════════════════════════════════════
 // ONGLETS
