@@ -1673,6 +1673,7 @@ class Diffuser{
       const idx=offset+i;
       const a=new Audio();
       a.src=this.tracks[idx].file;
+      a.preload='metadata';
       // Précharger les métadonnées
       a.preload='metadata';
       a.addEventListener('loadedmetadata',()=>{
@@ -2560,8 +2561,17 @@ D[0].addTracks=function(newTracks){
 const _out0=D[0]._outOf.bind(D[0]);
 D[0]._outOf=function(i){
   const t=this.tracks[i]; if(!t) return 0;
-  if(t.nextCue!=null) return t.nextCue;
-  return _out0(i);
+  // Point d'enchaînement : nextCue > outCue > audio.duration > durs[i]
+  if(t.nextCue!=null && t.nextCue>0) return t.nextCue;
+  if(t.outCue!=null  && t.outCue>0)  return t.outCue;
+  // Utiliser audio.duration si disponible (plus fiable que durs[i] au démarrage)
+  const audio=this.audios[i];
+  if(audio && audio.duration && !isNaN(audio.duration) && audio.duration>0){
+    this.durs[i]=audio.duration; // mettre à jour le cache
+    t.outCue=audio.duration;
+    return audio.duration;
+  }
+  return this.durs[i]||0;
 };
 
 // Redimensionner la waveform si la fenêtre change
