@@ -1666,9 +1666,11 @@ class Diffuser{
       a.src=this.tracks[idx].file;
       a.addEventListener('loadedmetadata',()=>{
         this.durs[idx]=a.duration||0;
-        if(this.tracks[idx].outCue===null||this.tracks[idx].outCue===undefined)
+        if(this.tracks[idx] && (this.tracks[idx].outCue===null||this.tracks[idx].outCue===undefined))
           this.tracks[idx].outCue=a.duration;
-        this.render();
+        this.render(); // met à jour la durée dans la liste
+        // Waveform fond PAZ si c'est la piste en tête
+        if(this.idx===0 && idx===this.ci){ _pazWvFile=null; pazDrawBg(false); }
         const cv=document.getElementById(`wv-${this.idx}-${idx}`);
         if(cv){cv.width=800;cv.height=80;drawWaveform(cv,this.tracks[idx].file);}
       });
@@ -2002,8 +2004,7 @@ class Diffuser{
     document.getElementById(this.ids.micros).textContent = fmtSec(pos-inCue);
   }
 
-  // Lance la piste en tête (index 0)
-  // OUT = point d'enchaînement : la suivante démarre, le son continue jusqu'à sa fin naturelle
+  // Lance la piste i
   _startTrack(i){
     const t=this.tracks[i];
     if(!t) return;
@@ -2011,20 +2012,12 @@ class Diffuser{
     // ── MACRO ──
     if(t.isMacro){
       if(typeof fireMacroTrack==='function') fireMacroTrack(t.macroKey, this.idx);
-      this.tracks.splice(i,1);
-      this.durs.splice(i,1);
-      this.audios.splice(i,1);
-      this.ci=0;
-      this._updateFdzCount();
-      if(this.playing){
-        if(this.tracks.length) this._startTrack(0);
-        else this.playing=false;
-      }
-      this.render();
-      return;
+      this.tracks.splice(i,1); this.durs.splice(i,1); this.audios.splice(i,1);
+      this.ci=0; this._updateFdzCount();
+      if(this.playing){ if(this.tracks.length) this._startTrack(0); else this.playing=false; }
+      this.render(); return;
     }
 
-    // ── SON AUDIO ──
     const audio=this.audios[i];
     if(!audio) return;
 
@@ -2032,84 +2025,65 @@ class Diffuser{
     audio.onended=null;
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
 
-    const inCue  = this._inOf(i);
-    // Utiliser audio.duration si durs[i] pas encore chargé
-    const realDur = audio.duration && !isNaN(audio.duration) ? audio.duration : (this.durs[i]||0);
-    if(realDur > 0 && (!this.durs[i] || this.durs[i] !== realDur)){
-      this.durs[i] = realDur;
-      if(this.tracks[i] && (this.tracks[i].outCue===null||this.tracks[i].outCue===undefined))
-        this.tracks[i].outCue = realDur;
+    // ── Fonction qui pose le timer d'enchaînement ──
+    const armTimer = ()=>{
+      if(token!==this._playToken||!this.playing) return;
+      const inCue  = this._inOf(i);
+      const outCue = this._outOf(i);   // nextCue si défini, sinon outCue/durée
+      const elapsed = Math.max(0, audio.currentTime - inCue);
+      const remaining = Math.max(0, (outCue - inCue) - elapsed);
+      if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
+      this._outTimer = setTimeout(()=>{
+        if(token!==this._playToken||!this.playing) return;
+        this.ci=0; this.render();
+        if(t.autoNext!==false && this.tracks.length>1){
+          this._startNextAfterChain(i, token);
+        }
+      }, remaining*1000);
+    };
+
+    // ── Mettre à jour la durée si déjà connue ──
+    if(audio.duration && !isNaN(audio.duration) && audio.duration>0){
+      this.durs[i]=audio.duration;
+      if(t.outCue===null||t.outCue===undefined) t.outCue=audio.duration;
     }
-    const outCue = this._outOf(i);
-    const chainDelay = Math.max(0, outCue - inCue);
 
-    audio.currentTime = inCue;
+    audio.currentTime = this._inOf(i);
 
-    // Au point NEXT : enchaîner si autoNext activé
-    this._outTimer = setTimeout(()=>{
-      if(token !== this._playToken || !this.playing) return;
-      this.ci = 0;
-      this.render();
-      // Vérifier autoNext sur la piste courante
-      const autoOn = (t.autoNext !== false);
-      if(autoOn && this.tracks.length > 1){
-        this._startNextAfterChain(i, token);
-      }
-      // Si autoNext OFF ou piste unique : le son finit naturellement, rien de plus
-    }, chainDelay * 1000);
-
-    // À la fin naturelle du son : supprimer la piste de la liste
-    audio.onended = ()=>{
-      // Invalider seulement si c'est toujours ce token (pas déjà supplanté)
-      audio.onended = null;
+    // ── onended : supprimer la piste quand elle finit naturellement ──
+    audio.onended=()=>{
+      audio.onended=null;
       if(!this.playing) return;
-      // Supprimer cette piste de la liste
-      const idx = this.tracks.indexOf(t);
-      if(idx !== -1){
+      const idx=this.tracks.indexOf(t);
+      if(idx!==-1){
         if(t.file?.startsWith('blob:')) URL.revokeObjectURL(t.file);
-        this.tracks.splice(idx, 1);
-        this.durs.splice(idx, 1);
-        this.audios.splice(idx, 1);
+        this.tracks.splice(idx,1); this.durs.splice(idx,1); this.audios.splice(idx,1);
       }
-      this.ci = 0;
-      this._updateFdzCount();
-      // Si plus rien ne joue, s'arrêter
-      if(!this.tracks.length && !this.audios.some(a=>a&&!a.paused)){
-        this.playing = false;
-      }
+      this.ci=0; this._updateFdzCount();
+      if(!this.tracks.length && !this.audios.some(a=>a&&!a.paused)) this.playing=false;
       this.render();
     };
 
     audio.play().catch(e=>{
-      audio.onended = null;
+      audio.onended=null;
       if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
-      console.warn('play() error:', e);
+      console.warn('play() error:',e);
     });
 
-    // Si la durée n'était pas encore connue, recalculer le timer dès loadedmetadata
-    if(!realDur || realDur <= 0){
-      const onMeta = ()=>{
-        audio.removeEventListener('loadedmetadata', onMeta);
-        if(token !== this._playToken || !this.playing) return;
-        // Mettre à jour la durée
-        this.durs[i] = audio.duration;
-        if(this.tracks[i] && (this.tracks[i].outCue===null||this.tracks[i].outCue===undefined))
-          this.tracks[i].outCue = audio.duration;
-        // Recalculer et relancer le timer
-        if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
-        const newOut = this._outOf(i);
-        const newIn  = this._inOf(i);
-        const elapsed = audio.currentTime - newIn;
-        const remaining = Math.max(0, (newOut - newIn) - elapsed);
-        const autoOn2 = (t.autoNext !== false);
-        this._outTimer = setTimeout(()=>{
-          if(token !== this._playToken || !this.playing) return;
-          this.ci = 0; this.render();
-          if(autoOn2 && this.tracks.length > 1) this._startNextAfterChain(i, token);
-        }, remaining * 1000);
+    // ── Poser le timer : si durée connue → immédiat, sinon attendre loadedmetadata ──
+    if(this.durs[i]>0){
+      armTimer();
+    } else {
+      // Durée inconnue : attendre loadedmetadata puis armer
+      const onMeta=()=>{
+        audio.removeEventListener('loadedmetadata',onMeta);
+        if(token!==this._playToken||!this.playing) return;
+        this.durs[i]=audio.duration||0;
+        if(t.outCue===null||t.outCue===undefined) t.outCue=audio.duration;
         this.render();
+        armTimer();
       };
-      audio.addEventListener('loadedmetadata', onMeta);
+      audio.addEventListener('loadedmetadata',onMeta);
     }
   }
 
@@ -2608,10 +2582,14 @@ const _add0=D[0].addTracks.bind(D[0]);
 D[0].addTracks=function(newTracks){
   _pazWvFile=null;
   _add0(newTracks);
-  // Afficher la liste immédiatement (sans attendre loadedmetadata)
+  // 1. Titre immédiat
+  const d2=D[0]; const t0=d2.tracks[d2.ci]||d2.tracks[0];
+  const tEl=document.getElementById('paz-title');
+  if(tEl && t0 && !t0.isMacro){ tEl.textContent=t0.title; tEl.style.color='rgba(200,220,255,.6)'; }
+  // 2. Liste immédiate (DOM pur, synchrone)
   pazRenderList();
-  // Puis mettre à jour titre + waveform une fois les métadonnées chargées
-  setTimeout(()=>{ pazRender(); },80);
+  // 3. Waveform en arrière-plan (async, ne bloque rien)
+  requestAnimationFrame(()=>{ pazDrawBg(false); });
 };
 
 // Patch autoNext dans _startTrack original
