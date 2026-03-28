@@ -1194,6 +1194,7 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:
 <div class="tab-bar" style="display:flex;">
   <button class="tab-btn active" id="tab-btn-diffusion" onclick="switchTab('diffusion')">⬤ DIFFUSION</button>
   <button class="tab-btn" id="tab-btn-cartwall" onclick="switchTab('cartwall')">▦ CARTWALL</button>
+  <button class="tab-btn" id="tab-btn-diff2" onclick="switchTab('diff2')">⬡ DIFF 2</button>
 </div>
 
 <!-- Panneau Diffusion -->
@@ -1368,6 +1369,26 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:
   <div id="cw-grid" style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,minmax(80px,1fr));gap:8px;min-height:0;overflow:hidden;"></div>
 
 </div><!-- /tab-cartwall -->
+
+<!-- ══ ONGLET DIFF 2 ══ -->
+<div id="tab-diff2" class="tab-panel" style="background:var(--bg);overflow:hidden;flex-direction:column;">
+
+  <!-- Barre statut ON AIR DIFF A -->
+  <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:var(--s1);border-bottom:1px solid var(--border);">
+    <span style="font-family:var(--display);font-size:11px;font-weight:700;color:var(--txt-mute);letter-spacing:3px;">DIFF 2 · CARTWALL</span>
+    <div id="d2-onair-badge" style="display:flex;align-items:center;gap:8px;font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:2px;padding:3px 12px;border-radius:3px;border:1px solid #1e3060;background:transparent;color:var(--txt-mute);transition:all .3s;">
+      <div id="d2-onair-dot" style="width:7px;height:7px;border-radius:50%;background:#3a5070;flex-shrink:0;transition:all .3s;"></div>
+      <span>DIFF A</span>
+      <span id="d2-onair-title" style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+    </div>
+  </div>
+
+  <!-- Grille cartwall DIFF 2 -->
+  <div style="flex:1;display:flex;flex-direction:column;min-height:0;padding:10px;gap:8px;overflow:hidden;">
+    <div id="d2-grid" style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,minmax(80px,1fr));gap:8px;min-height:0;overflow:hidden;"></div>
+  </div>
+
+</div><!-- /tab-diff2 -->
 
 
 <!-- VU MÈTRES STICKY : DIFF 1 + DIFF 2 — toujours visible -->
@@ -2499,14 +2520,14 @@ function pazRenderList(){
     return;
   }
 
-  // ── Calcul des horaires en temps réel ──
-  // Base : si en lecture, utilise la position actuelle pour le #1
-  // Sinon : heure actuelle
+  // ── Calcul des horaires ──
+  // La piste playing utilise son heure de lancement réelle (_launchTime)
+  // Les pistes pending utilisent un curseur cumulatif
   const now = new Date();
-  let cursor = new Date(now); // horaire de départ du prochain élément
-  const schedules = []; // horaire calculé pour chaque piste allTracks
+  let cursor = new Date(now);
+  const schedules = [];
 
-  // Si en lecture, la piste 0 (playing) a déjà commencé — son prochain horaire est dans le futur
+  // Si une piste joue, le curseur part de la fin estimée de cette piste
   const playingTrack = d.allTracks.find(t=>t._status==='playing');
   if(playingTrack && d.playing){
     const ti = d.tracks.indexOf(playingTrack);
@@ -2516,18 +2537,20 @@ function pazRenderList(){
                   : (playingTrack.outCue!=null ? playingTrack.outCue : (d.durs[ti]||0));
     const elapsed = audio ? Math.max(0, audio.currentTime - inCue) : 0;
     const remaining = Math.max(0, nextCue - inCue - elapsed);
-    // La piste playing se termine dans `remaining` secondes
     cursor = new Date(now.getTime() + remaining*1000);
   }
 
   d.allTracks.forEach((t, i) => {
     const isDone = t._status==='done';
     const isPlay = t._status==='playing';
-    if(isDone || isPlay){
-      schedules.push(isPlay ? now : null); // playing = maintenant, done = passé
+    if(isDone){
+      // Piste terminée : affiche l'heure de lancement mémorisée
+      schedules.push(t._launchTime ? new Date(t._launchTime) : null);
+    } else if(isPlay){
+      // Piste en cours : affiche l'heure de lancement mémorisée (ou now)
+      schedules.push(t._launchTime ? new Date(t._launchTime) : now);
     } else {
       schedules.push(new Date(cursor));
-      // Calculer la durée de cette piste pour avancer le curseur
       const ti = d.tracks.indexOf(t);
       const inCue = t.inCue||0;
       const nextCue = t.nextCue!=null ? t.nextCue
@@ -2559,11 +2582,12 @@ function pazRenderList(){
     const schedStr = fmtHHMMSS(schedules[i]);
 
     if(isDone){
-      html += `<div style="display:flex;align-items:center;height:40px;border-bottom:1px solid #0a0f1a;opacity:.3;filter:saturate(0.2);">
+      const doneSchedStr = t._launchTime ? fmtHHMMSS(new Date(t._launchTime)) : '—:—:—';
+      html += `<div style="display:flex;align-items:center;height:40px;border-bottom:1px solid #0a0f1a;opacity:.28;filter:saturate(0.15);">
         <div style="width:40px;flex-shrink:0;text-align:center;font-family:var(--mono);font-size:11px;color:#3a4050;">✓</div>
-        <div style="width:80px;flex-shrink:0;font-family:var(--mono);font-size:10px;color:#2a3040;padding-left:6px;">—</div>
+        <div style="width:80px;flex-shrink:0;font-family:var(--mono);font-size:10px;color:#2a3040;padding-left:6px;">${doneSchedStr}</div>
         <div style="width:60px;flex-shrink:0;"></div>
-        <div style="flex:1;font-family:var(--display);font-size:15px;font-weight:700;color:#4a5060;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:line-through;padding:0 8px;">${t.title}</div>
+        <div style="flex:1;font-family:var(--display);font-size:15px;font-weight:700;color:#4a5060;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;">${t.title}</div>
         <div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#3a4050;text-align:right;">${durStr}</div>
         <div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#3a4050;text-align:right;padding-right:10px;">—</div>
         <div style="width:52px;flex-shrink:0;"></div>
@@ -2659,19 +2683,24 @@ function _pazSyncGlobal(){
 }
 
 // Réarme le timer d'enchaînement pour la piste en cours (après changement d'état NEXT)
+// NE redémarre JAMAIS le son — repart juste de la position courante
 function _pazRearmTimer(){
   const d = D[0];
   if(!d.playing) return;
   const t = d.tracks[d.ci]; if(!t) return;
-  const audio = d.audios[d.ci]; if(!audio) return;
-  // Recalculer le délai selon le nouvel état autoNext
+  const audio = d.audios[d.ci]; if(!audio || audio.paused) return;
   if(d._outTimer){ clearTimeout(d._outTimer); d._outTimer=null; }
   const tok = d._playToken;
   const inCue = d._inOf(d.ci);
-  // Point cible selon autoNext : nextCue si ON, outCue/fin si OFF
   const targetCue = _getTargetCue(t, d.durs[d.ci]||0);
+  // Délai calculé depuis la position ACTUELLE de l'audio — jamais depuis 0
   const elapsed = Math.max(0, audio.currentTime - inCue);
   const delay = Math.max(0, (targetCue - inCue) - elapsed);
+  if(delay <= 0){
+    // Déjà dépassé — déclencher immédiatement mais sans redémarrer
+    _pazHandleTimerFired(d, t, tok);
+    return;
+  }
   d._outTimer = setTimeout(()=>{
     if(tok !== d._playToken || !d.playing) return;
     _pazHandleTimerFired(d, t, tok);
@@ -2746,15 +2775,14 @@ D[0].render=function(){ _r0(); pazRender(); pazRenderList(); };
 
 const _s0=D[0]._startTrack.bind(D[0]);
 D[0]._startTrack=function(i){
-  // Reset waveform et zoom pour la nouvelle piste
   _pazWvFile=null;
   _pazZoom={on:false,s:0,e:1,key:''};
-  // Heure de lancement
   _pazLaunchTime=nowClock();
   const lEl=document.getElementById('paz-launch');
   if(lEl) lEl.textContent=_pazLaunchTime;
-  // Mettre à jour le titre immédiatement (avant _s0 qui est async)
   const newT = D[0].tracks[i];
+  // ── Mémoriser l'heure de lancement sur la piste ──
+  if(newT) newT._launchTime = Date.now();
   const tEl  = document.getElementById('paz-title');
   if(tEl && newT && !newT.isMacro){
     tEl.textContent = newT.title;
@@ -4647,6 +4675,134 @@ plInit();
 
 // Initialiser le cartwall au chargement (les cases existent dès le départ)
 cwInit();
+
+// ── DIFF 2 : cartwall + indicateur ON AIR ──
+const d2Cells = [];
+let d2CtxTarget = null;
+
+function d2BuildEmpty(i){ return `<div class="cw-num">${String(i+1).padStart(2,'0')}</div><div class="cw-empty-icon">⊕</div><div class="cw-empty-lbl">Glisser un son</div><div class="cw-progress"><div class="cw-progress-bar" id="d2p-${i}"></div></div>`; }
+function d2BuildLoaded(i){ const c=d2Cells[i]; const d=c.dur>0?cwFmtDur(c.dur):'--:--'; return `<div class="cw-num">${String(i+1).padStart(2,'0')}</div><div class="cw-play-indicator" id="d2pi-${i}">● AIR</div><div class="cw-title">${c.title}</div><div class="cw-timing" id="d2t-${i}">${d}</div><div class="cw-dur" id="d2d-${i}">${d}</div><div class="cw-progress"><div class="cw-progress-bar" id="d2p-${i}"></div></div>`; }
+
+(function d2Init(){
+  const grid = document.getElementById('d2-grid'); if(!grid) return;
+  for(let i=0;i<16;i++){
+    const c={idx:i,el:null,audio:null,file:null,title:null,dur:0,playing:false,raf:null};
+    const el=document.createElement('div');
+    el.className='cw-cell empty'; el.dataset.idx=i;
+    el.innerHTML=d2BuildEmpty(i);
+    grid.appendChild(el);
+    c.el=el; d2Cells.push(c);
+    d2Rebind(i);
+  }
+})();
+
+function d2Rebind(idx){
+  const c=d2Cells[idx], el=c.el;
+  el.ondragover=e=>{e.preventDefault();el.classList.add('drag-over');};
+  el.ondragleave=()=>el.classList.remove('drag-over');
+  el.ondrop=e=>{e.preventDefault();el.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('audio/'))d2Load(idx,f);};
+  el.onclick=e=>{if(e.button!==0)return;if(c.audio)d2Toggle(idx);else d2OpenPicker(idx);};
+  el.oncontextmenu=e=>{e.preventDefault();d2ShowCtx(idx,e.clientX,e.clientY);};
+}
+
+function d2Load(idx,file){
+  const c=d2Cells[idx];
+  if(c.audio){c.audio.pause();c.audio=null;}
+  if(c.raf){cancelAnimationFrame(c.raf);c.raf=null;}
+  if(c.file&&c.file.startsWith('blob:'))URL.revokeObjectURL(c.file);
+  c.file=URL.createObjectURL(file);c.title=file.name.replace(/\.[^/.]+$/,'');c.playing=false;c.dur=0;
+  c.el.className='cw-cell loaded';c.el.innerHTML=d2BuildLoaded(idx);d2Rebind(idx);
+  const a=new Audio(c.file);a.preload='metadata';c.audio=a;
+  a.addEventListener('loadedmetadata',()=>{c.dur=a.duration||0;const t=document.getElementById('d2t-'+idx);if(t)t.textContent=cwFmtDur(c.dur);const d=document.getElementById('d2d-'+idx);if(d)d.textContent=cwFmtDur(c.dur);});
+  a.addEventListener('ended',()=>{c.playing=false;c.el.classList.remove('playing');c.el.classList.add('loaded');if(c.raf){cancelAnimationFrame(c.raf);c.raf=null;}a.currentTime=0;d2UpdateTiming(idx);});
+}
+
+function d2Toggle(idx){
+  const c=d2Cells[idx];if(!c.audio)return;
+  if(c.playing){c.audio.pause();c.audio.currentTime=0;c.playing=false;c.el.classList.remove('playing');c.el.classList.add('loaded');if(c.raf){cancelAnimationFrame(c.raf);c.raf=null;}d2UpdateTiming(idx);}
+  else{c.audio.currentTime=0;c.audio.play().catch(()=>{});c.playing=true;c.el.classList.add('playing');c.el.classList.remove('loaded');d2StartRaf(idx);}
+}
+
+function d2StartRaf(idx){
+  const c=d2Cells[idx];if(c.raf)cancelAnimationFrame(c.raf);
+  const tick=()=>{if(!c.playing||!c.audio)return;d2UpdateTiming(idx);c.raf=requestAnimationFrame(tick);};
+  c.raf=requestAnimationFrame(tick);
+}
+
+function d2UpdateTiming(idx){
+  const c=d2Cells[idx];if(!c.audio)return;
+  const pos=c.audio.currentTime,dur=c.dur||0,rem=Math.max(0,dur-pos);
+  const t=document.getElementById('d2t-'+idx);if(t)t.textContent=cwFmtTime(c.playing?rem:dur);
+  const p=document.getElementById('d2p-'+idx);if(p)p.style.width=dur>0?((pos/dur)*100).toFixed(2)+'%':'0%';
+}
+
+function d2DeleteSound(idx){
+  const c=d2Cells[idx];
+  if(c.audio){c.audio.pause();c.audio=null;}
+  if(c.raf){cancelAnimationFrame(c.raf);c.raf=null;}
+  if(c.file&&c.file.startsWith('blob:'))URL.revokeObjectURL(c.file);
+  c.file=null;c.title=null;c.dur=0;c.playing=false;
+  c.el.className='cw-cell empty';c.el.innerHTML=d2BuildEmpty(idx);d2Rebind(idx);
+}
+
+// File picker DIFF 2
+if(!document.getElementById('d2-file-input')){
+  const inp=document.createElement('input');inp.type='file';inp.id='d2-file-input';inp.accept='audio/*';inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.addEventListener('change',()=>{if(window._d2Pick!==undefined&&inp.files[0]){d2Load(window._d2Pick,inp.files[0]);window._d2Pick=undefined;}});
+}
+function d2OpenPicker(idx){window._d2Pick=idx;const inp=document.getElementById('d2-file-input');if(inp){inp.value='';inp.click();}}
+
+// Context menu DIFF 2
+if(!document.getElementById('d2-ctx')){
+  const ctx=document.createElement('div');ctx.id='d2-ctx';ctx.innerHTML='<div class="cw-ctx-item" id="d2-ctx-load">⊕ Charger un son</div><div class="cw-ctx-item danger" id="d2-ctx-del">✕ Supprimer le son</div>';
+  document.body.appendChild(ctx);
+  // Réutiliser les styles cw-ctx déjà injectés
+  ctx.style.cssText='display:none;position:fixed;background:#02040e;border:1px solid var(--border);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.6);z-index:9999;min-width:160px;overflow:hidden;';
+  document.getElementById('d2-ctx-load').onclick=()=>{if(d2CtxTarget!==null)d2OpenPicker(d2CtxTarget);ctx.classList.remove('open');ctx.style.display='none';};
+  document.getElementById('d2-ctx-del').onclick=()=>{if(d2CtxTarget!==null)d2DeleteSound(d2CtxTarget);ctx.classList.remove('open');ctx.style.display='none';};
+  document.addEventListener('click',e=>{if(!ctx.contains(e.target)){ctx.classList.remove('open');ctx.style.display='none';}});
+}
+function d2ShowCtx(idx,x,y){
+  d2CtxTarget=idx;const ctx=document.getElementById('d2-ctx');if(!ctx)return;
+  const del=document.getElementById('d2-ctx-del');if(del)del.style.display=d2Cells[idx].audio?'block':'none';
+  ctx.style.left=Math.min(x,window.innerWidth-180)+'px';ctx.style.top=Math.min(y,window.innerHeight-100)+'px';
+  ctx.style.display='block';ctx.classList.add('open');
+}
+
+// ── Indicateur ON AIR DIFF A dans l'onglet DIFF 2 ──
+let _d2OnairTimeout = null;
+function _d2UpdateOnAir(state){
+  const badge=document.getElementById('d2-onair-badge');
+  const dot=document.getElementById('d2-onair-dot');
+  const title=document.getElementById('d2-onair-title');
+  if(!badge) return;
+  if(state && state.playing){
+    badge.style.borderColor='#8a1010';badge.style.background='rgba(120,8,8,.25)';badge.style.color='#ff5050';badge.style.boxShadow='0 0 12px rgba(220,30,30,.2)';
+    if(dot){dot.style.background='#ff3030';dot.style.animation='blink .8s ease-in-out infinite';}
+    if(title){title.style.color='#ff8080';title.textContent=state.title?'· '+state.title:'';}
+  } else {
+    badge.style.borderColor='#1e3060';badge.style.background='transparent';badge.style.color='var(--txt-mute)';badge.style.boxShadow='none';
+    if(dot){dot.style.background='#3a5070';dot.style.animation='none';}
+    if(title){title.style.color='var(--txt-mute)';title.textContent='—';}
+  }
+  clearTimeout(_d2OnairTimeout);
+  if(state&&state.playing) _d2OnairTimeout=setTimeout(()=>_d2UpdateOnAir({playing:false}),5000);
+}
+
+// Écouter le BroadcastChannel (même origine/onglet)
+try{
+  const bc2=new BroadcastChannel('radio_onair');
+  bc2.onmessage=e=>_d2UpdateOnAir(e.data);
+}catch(e){}
+
+// Polling localStorage (cross-onglets)
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem('radio_onair');
+    if(raw){const state=JSON.parse(raw);if(Date.now()-state.ts<5000)_d2UpdateOnAir(state);else _d2UpdateOnAir({playing:false});}
+  }catch(e){}
+},1000);
 
 // ══════════════════════════════════════════════════════════════
 // NAVIGATION ONGLETS
