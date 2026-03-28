@@ -18,7 +18,7 @@
     --s3:#1a1c22;        /* sous-headers */
     --border:#38404e;    /* bordures */
     /* ── Accents ── */
-    --cyan:#00c8e0;      --cyan-dim:#0088a8;
+    --cyan:#ffffff;      --cyan-dim:#aab8c8;
     --green:#00c85a;     --green-dk:#005828;
     --yellow:#e8b800;    --orange:#e07000;
     --red:#d42818;
@@ -1323,7 +1323,7 @@
           <span style="font-family:var(--display);font-size:11px;font-weight:700;color:var(--txt-mute);letter-spacing:3px;">CARTWALL</span>
           <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);letter-spacing:1px;">clic = play/stop · clic droit = supprimer</span>
         </div>
-        <div id="cw-grid" style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,90px);gap:6px;padding:8px;"></div>
+        <div id="cw-grid" style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:90px 90px;gap:6px;padding:8px;height:196px;box-sizing:border-box;"></div>
       </div>
 
     </div><!-- /bloc PLAYLIST -->
@@ -4724,8 +4724,8 @@ function plInit(){
 }
 plInit();
 
-// Initialiser le cartwall au chargement (les cases existent dès le départ)
-cwInit();
+// Initialiser le cartwall après que le DOM est complètement rendu
+window.addEventListener('load', cwInit);
 
 // ── DIFF 2 : cartwall + indicateur ON AIR ──
 const d2Cells = [];
@@ -4892,25 +4892,25 @@ const cwFmtDur  = s => { s=Math.max(0,Math.round(s||0)); return cwFmt2(Math.floo
   if(document.getElementById('cw-style')) return;
   const s=document.createElement('style'); s.id='cw-style';
   s.textContent=`
-    .cw-cell{background:#22252d;border:1px solid #38404e;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .12s,background .1s;user-select:none;padding:6px 4px;}
+    .cw-cell{background:#22252d;border:1px solid #38404e;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .12s,background .1s;user-select:none;padding:6px 4px;height:100%;box-sizing:border-box;}
     .cw-cell.empty{border-style:dashed;border-color:#30353f;}
-    .cw-cell.empty:hover{border-color:#00c8e0;background:#1e2230;}
+    .cw-cell.empty:hover{border-color:#e8ecf4;background:#1e2230;}
     .cw-cell.loaded{border-color:#404858;}
-    .cw-cell.loaded:hover{border-color:#00c8e0;background:#1e2230;}
+    .cw-cell.loaded:hover{border-color:#e8ecf4;background:#1e2230;}
     .cw-cell.playing{background:linear-gradient(160deg,#200606,#1a0404);border-color:#d42818;box-shadow:0 0 14px rgba(212,40,24,.25),inset 0 0 18px rgba(212,40,24,.08);}
-    .cw-cell.drag-over{border-color:#00c8e0!important;background:#1a2230!important;border-style:solid!important;}
+    .cw-cell.drag-over{border-color:#e8ecf4!important;background:#1e2230!important;border-style:solid!important;}
     .cw-num{position:absolute;top:5px;left:8px;font-family:var(--mono);font-size:9px;color:#4a5468;}
     .cw-cell.playing .cw-num{color:#d42818;}
     .cw-air{position:absolute;top:5px;right:8px;font-family:var(--mono);font-size:8px;color:#d42818;display:none;letter-spacing:1px;}
     .cw-cell.playing .cw-air{display:block;animation:blink .5s step-start infinite;}
     .cw-title{font-family:var(--display);font-size:15px;font-weight:700;color:#e8ecf4;letter-spacing:1px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;padding:0 6px;line-height:1.2;}
     .cw-cell.playing .cw-title{color:#ff8888;}
-    .cw-time{font-family:var(--mono);font-size:22px;font-weight:700;color:#00c8e0;letter-spacing:1px;line-height:1;}
+    .cw-time{font-family:var(--mono);font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;line-height:1;}
     .cw-cell.playing .cw-time{color:#e03020;}
     .cw-prog{position:absolute;bottom:0;left:0;right:0;height:3px;background:#38404e;}
     .cw-prog-bar{height:100%;width:0%;background:#d42818;transition:width .08s linear;}
     .cw-empty-icon{font-size:22px;color:#2e333d;transition:color .12s;}
-    .cw-cell.empty:hover .cw-empty-icon{color:#00c8e0;}
+    .cw-cell.empty:hover .cw-empty-icon{color:#e8ecf4;}
     .cw-empty-lbl{font-family:var(--mono);font-size:8px;color:#2e333d;letter-spacing:2px;text-transform:uppercase;transition:color .12s;}
     .cw-cell.empty:hover .cw-empty-lbl{color:#5a6880;}
     #cw-ctx{display:none;position:fixed;background:#1e2028;border:1px solid #38404e;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.55);z-index:9999;min-width:170px;overflow:hidden;}
