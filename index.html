@@ -1269,20 +1269,20 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:
       </div>
 
       <!-- Centre : titre + cues -->
-      <div style="position:absolute;top:0;bottom:0;left:110px;right:160px;display:flex;flex-direction:column;justify-content:center;padding:12px 18px;gap:6px;z-index:6;overflow:hidden;">
+      <div style="position:absolute;top:0;bottom:0;left:110px;right:220px;display:flex;flex-direction:column;justify-content:center;padding:12px 18px;gap:6px;z-index:6;overflow:hidden;">
         <div id="paz-title" style="font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 18px rgba(0,0,0,.95);color:rgba(180,200,230,.55);transition:color .2s;">AUCUNE PISTE</div>
         <div id="paz-cues" style="font-family:var(--mono);font-size:9px;color:rgba(0,212,240,.45);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
       </div>
 
       <!-- Colonne droite : décompte + boutons -->
-      <div style="position:absolute;top:0;bottom:0;right:0;width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-left:1px solid rgba(255,255,255,.07);padding:0 12px;z-index:6;">
-        <span id="paz-cd-lbl" style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;">NEXT</span>
-        <span id="paz-cd" style="font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:2px;line-height:1;color:var(--cyan);">--:--</span>
-        <div style="display:flex;gap:6px;margin-top:2px;">
+      <div style="position:absolute;top:0;bottom:0;right:0;width:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-left:1px solid rgba(255,255,255,.07);padding:0 16px;z-index:6;">
+        <span id="paz-cd-lbl" style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:3px;text-transform:uppercase;">NEXT</span>
+        <span id="paz-cd" style="font-family:var(--mono);font-size:52px;font-weight:700;letter-spacing:2px;line-height:1;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,240,.4);">--:--</span>
+        <div style="display:flex;gap:6px;margin-top:6px;">
           <button id="paz-next-btn" onclick="pazToggleNext()" title="Enchaînement automatique ON/OFF"
-            style="background:rgba(0,40,10,.5);border:1px solid rgba(0,217,106,.5);border-radius:2px;color:var(--green);font-family:var(--mono);font-size:9px;padding:3px 10px;cursor:pointer;letter-spacing:2px;transition:all .15s;font-weight:700;">⬥ NEXT</button>
+            style="background:rgba(0,40,10,.5);border:1px solid rgba(0,217,106,.5);border-radius:2px;color:var(--green);font-family:var(--mono);font-size:9px;padding:4px 12px;cursor:pointer;letter-spacing:2px;transition:all .15s;font-weight:700;">⬥ NEXT</button>
           <button onclick="openEditModal()" title="Éditer les points"
-            style="background:rgba(20,10,40,.5);border:1px solid rgba(100,70,180,.4);border-radius:2px;color:#7060a0;font-family:var(--mono);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;transition:all .15s;" onmouseover="this.style.color='#9b6de5';this.style.borderColor='#9b6de5'" onmouseout="this.style.color='#7060a0';this.style.borderColor='rgba(100,70,180,.4)'">✦ EDIT</button>
+            style="background:rgba(20,10,40,.5);border:1px solid rgba(100,70,180,.4);border-radius:2px;color:#7060a0;font-family:var(--mono);font-size:9px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .15s;" onmouseover="this.style.color='#9b6de5';this.style.borderColor='#9b6de5'" onmouseout="this.style.color='#7060a0';this.style.borderColor='rgba(100,70,180,.4)'">✦ EDIT</button>
         </div>
       </div>
     </div>
@@ -1661,6 +1661,7 @@ class Diffuser{
     this.playing=false;
     this.ci=0;
     this.auto=false;
+    this._playedTracks=[]; // pistes terminées — affichées grisées
     this._chainDone=new Set(); // pistes dont l'enchainement a été déclenché
     this._playToken=0;         // token unique par session de lecture
     this._outTimer=null;       // timer précis pour le point OUT
@@ -2065,13 +2066,13 @@ class Diffuser{
     const inCue = this._inOf(idx);
     try{ audio.currentTime = inCue; }catch(e){}
 
-    // ── Quand le son finit naturellement : supprimer et s'arrêter ──
+    // ── Quand le son finit naturellement : déplacer dans _playedTracks et s'arrêter ──
     audio.onended = ()=>{
       audio.onended = null;
-      if(tok !== this._playToken) return; // déjà remplacé
-      // Supprimer la piste
+      if(tok !== this._playToken) return;
       const pos = this.tracks.indexOf(t);
       if(pos !== -1){
+        this._playedTracks.push({...t, _done:true});
         this.tracks.splice(pos,1); this.durs.splice(pos,1); this.audios.splice(pos,1);
       }
       this.ci=0; this._updateFdzCount();
@@ -2082,31 +2083,16 @@ class Diffuser{
     // ── Lancer la lecture ──
     audio.play().catch(e=>{ console.warn('play error:',e); });
 
-    // ── Armer le timer d'enchaînement au point NEXT ──
-    // Attend que la durée soit connue si nécessaire
+    // ── Armer le timer au point cible (NEXT si autoNext ON, END sinon) ──
     const arm = ()=>{
       if(tok !== this._playToken || !this.playing) return;
-      const outCue = this._outOf(idx); // nextCue ou outCue ou durée
+      const totalDur = this.durs[idx]||0;
+      const targetCue = _getTargetCue(t, totalDur);
       const elapsed = Math.max(0, audio.currentTime - inCue);
-      const delay   = Math.max(0, (outCue - inCue) - elapsed);
+      const delay   = Math.max(0, (targetCue - inCue) - elapsed);
       if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
       this._outTimer = setTimeout(()=>{
-        if(tok !== this._playToken || !this.playing) return;
-        // Enchaîner si NEXT global activé ET piste suivante disponible
-        if(this.auto && this.tracks.length > 1){
-          // Supprimer la piste courante de la liste (sans arrêter son audio)
-          const pos = this.tracks.indexOf(t);
-          if(pos !== -1){
-            this.tracks.splice(pos,1); this.durs.splice(pos,1); this.audios.splice(pos,1);
-            this._updateFdzCount();
-          }
-          this.ci=0;
-          // Lancer la nouvelle piste 0 (token déjà incrémenté dans _startTrack)
-          this._startTrack(0);
-        } else {
-          // Pas d'enchaînement : juste mettre à jour l'UI
-          this.render();
-        }
+        _pazHandleTimerFired(this, t, tok);
       }, delay * 1000);
     };
 
@@ -2170,12 +2156,12 @@ class Diffuser{
   stopAll(){
     this._playToken++;
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
-    // Arrêter tous les audios (y compris ceux en queue naturelle)
     this.audios.forEach(a=>{
       if(a){ a.onended=null; if(!a.paused) a.pause(); a.currentTime=0; }
     });
     this.playing=false;
     this.ci=0;
+    this._playedTracks=[];
     this._chainDone.clear();
     const pb=document.getElementById(this.ids.progress);if(pb)pb.value=0;
     this.render();
@@ -2447,10 +2433,25 @@ function pazRenderList(){
   const starts=d.tracks.map((_,i)=>{ const ts=new Date(cur); cur=new Date(cur.getTime()+d._playDur(i)*1000); return ts; });
 
   list.innerHTML='';
-  if(!d.tracks.length){
+
+  // ── Pistes déjà jouées (grisées, en haut) ──
+  if(d._playedTracks && d._playedTracks.length){
+    const section = document.createElement('div');
+    section.style.cssText='border-bottom:1px solid rgba(255,255,255,.06);';
+    d._playedTracks.forEach((t,i)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;height:40px;border-bottom:1px solid rgba(255,255,255,.04);opacity:.32;filter:saturate(0.3);pointer-events:none;position:relative;overflow:hidden;';
+      row.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#4a5060;text-align:center;">✓</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:10px;color:#3a4050;padding-left:4px;">—</div><div style="flex:1;font-family:var(--display);font-size:14px;font-weight:700;color:#4a5060;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;text-decoration:line-through;">${t.title}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;opacity:.3;"></div><div style="width:52px;flex-shrink:0;"></div>`;
+      section.appendChild(row);
+    });
+    list.appendChild(section);
+  }
+
+  if(!d.tracks.length && !d._playedTracks.length){
     list.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);letter-spacing:2px;padding:2rem;text-align:center;">— Glisse des fichiers audio ci-dessus —</div>';
     return;
   }
+
   d.tracks.forEach((t,i)=>{
     const isAct=i===d.ci&&d.playing, isNxt=i===d.ci+(d.playing?1:0)&&!isAct;
     const st=starts[i];
@@ -2481,7 +2482,14 @@ function pazRenderList(){
       const cdCol=isAct?'color:#ff4040':'color:#7a9ab8';
       const titleCol=isAct?'color:#ff6060':isNxt?'color:#40d870':'color:var(--txt)';
       const numCol=isAct?'color:var(--red)':isNxt?'color:var(--green)':'color:var(--txt-mute)';
-      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;${numCol};text-align:center;">${isAct?'▶':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);padding-left:4px;">${hhmm}</div><div style="flex:1;font-family:var(--display);font-size:17px;font-weight:700;${titleCol};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${t.title}</div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;">${dur}</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;${cdCol};text-align:right;padding-right:12px;" ${cdId}>${cd}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;"></div><button onclick="event.stopPropagation();openEditModal(${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#4a3a70;cursor:pointer;font-size:11px;padding:0;text-align:center;transition:color .1s;" onmouseover="this.style.color='#9b6de5'" onmouseout="this.style.color='#4a3a70'" title="Éditer les points">✦</button><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
+      // Badge NEXT par piste
+      const nOn = t.autoNext!==false;
+      const nColor = nOn ? 'var(--green)' : '#2a3a2a';
+      const nBg = nOn ? 'rgba(0,60,15,.6)' : 'rgba(0,0,0,.2)';
+      const nBorder = nOn ? 'var(--green)' : '#2a3a2a';
+      const nOpacity = nOn ? '1' : '.4';
+      const nextBadge=`<span onclick="event.stopPropagation();pazToggleAutoFor(${i})" title="${nOn?'NEXT ON — cliquer pour désactiver':'NEXT OFF — cliquer pour activer'}" style="flex-shrink:0;margin-right:8px;cursor:pointer;font-family:var(--mono);font-size:8px;font-weight:700;color:${nColor};opacity:${nOpacity};background:${nBg};border:1px solid ${nBorder};border-radius:2px;padding:2px 6px;letter-spacing:1px;transition:all .12s;user-select:none;">NEXT</span>`;
+      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;${numCol};text-align:center;">${isAct?'▶':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);padding-left:4px;">${hhmm}</div><div style="flex:1;display:flex;align-items:center;min-width:0;overflow:hidden;">${nextBadge}<span style="font-family:var(--display);font-size:17px;font-weight:700;${titleCol};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</span></div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;">${dur}</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;${cdCol};text-align:right;padding-right:12px;" ${cdId}>${cd}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;"></div><button onclick="event.stopPropagation();openEditModal(${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#4a3a70;cursor:pointer;font-size:11px;padding:0;text-align:center;transition:color .1s;" onmouseover="this.style.color='#9b6de5'" onmouseout="this.style.color='#4a3a70'" title="Éditer les points">✦</button><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
     }
     row.appendChild(inner);
     list.appendChild(row);
@@ -2499,41 +2507,123 @@ function pazUpdateRowProg(){
   if(prog) prog.style.transform='scaleX('+ratio.toFixed(4)+')';
 }
 
-// ── AUTO NEXT — état global du diffuseur ──
-// _pazNextOn = true  → enchaînement auto quand le point NEXT est atteint
-// _pazNextOn = false → enchaînement manuel uniquement (PLAY à la main)
-let _pazNextOn = false;
+// ── AUTO NEXT — état global + par piste ──
+// Chaque piste t a t.autoNext (bool).
+// Le bouton global ⬥ NEXT active/désactive toutes les pistes.
+// Si t.autoNext=true  → au point NEXT on enchaîne automatiquement
+// Si t.autoNext=false → la lecture continue jusqu'au point END (outCue), puis s'arrête
+
+let _pazNextGlobal = false; // état global (reflète si toutes les pistes sont ON)
 
 function pazToggleNext(){
-  _pazNextOn = !_pazNextOn;
-  // Synchroniser avec this.auto du Diffuser (utilisé dans _startTrack)
-  D[0].auto = _pazNextOn;
+  // Inverser l'état global
+  _pazNextGlobal = !_pazNextGlobal;
+  // Appliquer à toutes les pistes
+  D[0].tracks.forEach(t=>{ if(!t.isMacro) t.autoNext = _pazNextGlobal; });
+  // Réarmer le timer si en cours de lecture
+  if(D[0].playing) _pazRearmTimer();
   _pazUpdateNextBtn();
   pazRenderList();
 }
 
+function pazToggleAutoFor(idx){
+  const t = D[0].tracks[idx]; if(!t||t.isMacro) return;
+  t.autoNext = !t.autoNext;
+  // Mettre à jour l'état global : ON si toutes les pistes non-macro sont ON
+  _pazSyncGlobal();
+  // Réarmer le timer si c'est la piste active
+  if(D[0].playing && idx === D[0].ci) _pazRearmTimer();
+  _pazUpdateNextBtn();
+  pazRenderList();
+}
+
+function _pazSyncGlobal(){
+  const nonMacro = D[0].tracks.filter(t=>!t.isMacro);
+  if(!nonMacro.length){ _pazNextGlobal=false; return; }
+  _pazNextGlobal = nonMacro.every(t=>t.autoNext!==false);
+}
+
+// Réarme le timer d'enchaînement pour la piste en cours (après changement d'état NEXT)
+function _pazRearmTimer(){
+  const d = D[0];
+  if(!d.playing) return;
+  const t = d.tracks[d.ci]; if(!t) return;
+  const audio = d.audios[d.ci]; if(!audio) return;
+  // Recalculer le délai selon le nouvel état autoNext
+  if(d._outTimer){ clearTimeout(d._outTimer); d._outTimer=null; }
+  const tok = d._playToken;
+  const inCue = d._inOf(d.ci);
+  // Point cible selon autoNext : nextCue si ON, outCue/fin si OFF
+  const targetCue = _getTargetCue(t, d.durs[d.ci]||0);
+  const elapsed = Math.max(0, audio.currentTime - inCue);
+  const delay = Math.max(0, (targetCue - inCue) - elapsed);
+  d._outTimer = setTimeout(()=>{
+    if(tok !== d._playToken || !d.playing) return;
+    _pazHandleTimerFired(d, t, tok);
+  }, delay * 1000);
+}
+
+// Calcule le point cible selon l'état autoNext de la piste
+function _getTargetCue(t, totalDur){
+  if(t.autoNext !== false){
+    // NEXT ON → point nextCue si défini, sinon outCue, sinon fin
+    if(t.nextCue!=null && t.nextCue>0) return t.nextCue;
+  }
+  // NEXT OFF ou pas de nextCue → point END (outCue ou fin totale)
+  if(t.outCue!=null && t.outCue>0) return t.outCue;
+  return totalDur||0;
+}
+
+// Ce qui se passe quand le timer se déclenche
+function _pazHandleTimerFired(d, t, tok){
+  if(tok !== d._playToken || !d.playing) return;
+  if(t.autoNext !== false && d.tracks.length > 1){
+    // Enchaîner : archiver la piste courante puis lancer la suivante
+    const pos = d.tracks.indexOf(t);
+    if(pos !== -1){
+      d._playedTracks.push({...t, _done:true});
+      d.tracks.splice(pos,1); d.durs.splice(pos,1); d.audios.splice(pos,1);
+      d._updateFdzCount();
+    }
+    d.ci=0;
+    d._startTrack(0);
+  } else {
+    // NEXT OFF : juste rendre l'UI, la lecture continue naturellement jusqu'à onended
+    d.render();
+  }
+}
+
 function _pazUpdateNextBtn(){
   const btn = document.getElementById('paz-next-btn'); if(!btn) return;
-  if(_pazNextOn){
+  const nonMacro = D[0].tracks.filter(t=>!t.isMacro);
+  const allOn = nonMacro.length > 0 && nonMacro.every(t=>t.autoNext!==false);
+  const someOn = nonMacro.some(t=>t.autoNext!==false);
+  if(allOn){
     btn.textContent = '⬥ NEXT ON';
     btn.style.color = 'var(--green)';
     btn.style.borderColor = 'var(--green)';
     btn.style.background = 'rgba(0,80,20,.55)';
     btn.style.opacity = '1';
-    btn.style.boxShadow = '0 0 6px rgba(0,217,106,.3)';
+    btn.style.boxShadow = '0 0 8px rgba(0,217,106,.35)';
+  } else if(someOn){
+    btn.textContent = '⬥ NEXT ~';
+    btn.style.color = '#a0d070';
+    btn.style.borderColor = '#507030';
+    btn.style.background = 'rgba(0,40,10,.4)';
+    btn.style.opacity = '0.85';
+    btn.style.boxShadow = 'none';
   } else {
     btn.textContent = '⬥ NEXT';
     btn.style.color = '#3a4a3a';
     btn.style.borderColor = 'rgba(40,60,40,.5)';
     btn.style.background = 'rgba(0,10,4,.4)';
-    btn.style.opacity = '.6';
+    btn.style.opacity = '.55';
     btn.style.boxShadow = 'none';
   }
 }
 
-// Supprimer l'ancienne fonction pazToggleAuto et pazToggleAutoFor — remplacées
-function pazToggleAuto(){ pazToggleNext(); } // compat
-function pazToggleAutoFor(){ /* supprimé */ }
+// Compat (ancienne ref dans pazRender)
+function pazToggleAuto(){ pazToggleNext(); }
 
 // ── Patches D[0] ──
 const _r0=D[0].render.bind(D[0]);
@@ -2562,26 +2652,28 @@ const _add0=D[0].addTracks.bind(D[0]);
 D[0].addTracks=function(newTracks){
   _pazWvFile=null;
   _add0(newTracks);
-  // Rafraîchir la liste (handleFiles s'en occupe déjà pour idx=0,
-  // mais ce patch sert aussi aux playlists et autres appels)
+  // Titre immédiat dans la PAZ
+  const tEl=document.getElementById('paz-title');
+  const t0=D[0].tracks[D[0].ci]||D[0].tracks[0];
+  if(tEl && t0 && !t0.isMacro){
+    tEl.textContent=t0.title;
+    tEl.style.color=D[0].playing?'#ffffff':'rgba(200,220,255,.6)';
+  }
+  _pazUpdateNextBtn();
   pazRenderList();
 };
 
-// Patch autoNext dans _startTrack original
+// Patch _outOf : retourne le point cible selon autoNext de la piste
 const _out0=D[0]._outOf.bind(D[0]);
 D[0]._outOf=function(i){
   const t=this.tracks[i]; if(!t) return 0;
-  // Point d'enchaînement : nextCue > outCue > audio.duration > durs[i]
-  if(t.nextCue!=null && t.nextCue>0) return t.nextCue;
-  if(t.outCue!=null  && t.outCue>0)  return t.outCue;
-  // Utiliser audio.duration si disponible (plus fiable que durs[i] au démarrage)
   const audio=this.audios[i];
-  if(audio && audio.duration && !isNaN(audio.duration) && audio.duration>0){
-    this.durs[i]=audio.duration; // mettre à jour le cache
-    t.outCue=audio.duration;
-    return audio.duration;
+  let totalDur=this.durs[i]||0;
+  if(!totalDur && audio && audio.duration && !isNaN(audio.duration) && audio.duration>0){
+    this.durs[i]=audio.duration; totalDur=audio.duration;
+    if(t.outCue==null) t.outCue=audio.duration;
   }
-  return this.durs[i]||0;
+  return _getTargetCue(t, totalDur);
 };
 
 // Redimensionner la waveform si la fenêtre change
@@ -2629,6 +2721,8 @@ _pazUpdateNextBtn();
   const cd=document.getElementById('paz-cd');
   const lb=document.getElementById('paz-cd-lbl');
   const introT=cIntro(t), nextT2=cNext(t);
+  const totalDur2=D[0].durs[D[0].ci]||0;
+  const targetCue2 = (typeof _getTargetCue==='function') ? _getTargetCue(t, totalDur2) : nextT2;
   if(cd){
     const isIntro=introT!=null&&pos<introT;
     if(isIntro){
@@ -2636,16 +2730,16 @@ _pazUpdateNextBtn();
       cd.textContent=fmtFull(r); cd.style.color='#f5c400';
       if(lb) lb.textContent='INTRO';
     } else {
-      const r=Math.max(0,nextT2-pos);
+      const r=Math.max(0,targetCue2-pos);
       cd.textContent=fmtFull(r);
-      cd.style.color=r<10?'#e03020':r<30?'#f5c400':'#ff4040';
-      if(lb) lb.textContent='NEXT';
+      cd.style.color=r<10?'#e03020':r<30?'#f5c400':'var(--cyan)';
+      if(lb) lb.textContent=t.autoNext!==false?'NEXT':'END';
     }
   }
 
   // Décompte dans la liste
   const cdR=document.getElementById('paz-row-cd-active');
-  if(cdR) cdR.textContent=fmtFull(Math.max(0,nextT2-pos));
+  if(cdR) cdR.textContent=fmtFull(Math.max(0,targetCue2-pos));
 })();
 
 // Init
