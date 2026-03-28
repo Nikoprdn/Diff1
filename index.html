@@ -1656,13 +1656,12 @@ class Diffuser{
     this.ids=cfg.ids;
     this.tracks=[];
     this.durs=[];
-    // Mix : plusieurs Audio() peuvent jouer simultanément
-    // audios[i] = HTMLAudioElement pour la piste i
     this.audios=[];
     this.playing=false;
     this.ci=0;
     this.auto=false;
-    this._playedTracks=[]; // pistes terminées — affichées grisées
+    this.allTracks=[];      // TABLEAU PERMANENT — jamais vidé, status: 'pending'|'playing'|'done'
+    this._playedTracks=[];
     this._chainDone=new Set(); // pistes dont l'enchainement a été déclenché
     this._playToken=0;         // token unique par session de lecture
     this._outTimer=null;       // timer précis pour le point OUT
@@ -1672,6 +1671,8 @@ class Diffuser{
     const offset=this.tracks.length;
     this.tracks.push(...newTracks);
     this.durs.push(...newTracks.map(()=>0));
+    // Ajouter dans allTracks avec statut pending — immédiatement visible dans la liste
+    newTracks.forEach(t=>{ t._status='pending'; this.allTracks.push(t); });
     // Créer un Audio() par nouvelle piste — PAS de listener 'ended' ici,
     // c'est _startTrack qui pose audio.onended avec le token de session
     newTracks.forEach((_,i)=>{
@@ -2058,6 +2059,9 @@ class Diffuser{
     const audio = this.audios[idx];
     if(!audio){ this.playing=false; this.render(); return; }
 
+    // Marquer la piste comme en cours dans allTracks
+    t._status = 'playing';
+
     // Annuler tout timer précédent
     if(this._outTimer){ clearTimeout(this._outTimer); this._outTimer=null; }
     // Token unique pour cette session de lecture
@@ -2067,10 +2071,11 @@ class Diffuser{
     const inCue = this._inOf(idx);
     try{ audio.currentTime = inCue; }catch(e){}
 
-    // ── Quand le son finit naturellement : déplacer dans _playedTracks et s'arrêter ──
+    // ── Quand le son finit naturellement : marquer done et retirer de tracks ──
     audio.onended = ()=>{
       audio.onended = null;
       if(tok !== this._playToken) return;
+      t._status = 'done';
       const pos = this.tracks.indexOf(t);
       if(pos !== -1){
         this._playedTracks.push({...t, _done:true});
@@ -2163,6 +2168,8 @@ class Diffuser{
     this.playing=false;
     this.ci=0;
     this._playedTracks=[];
+    // Remettre toutes les pistes allTracks en pending (sauf done)
+    this.allTracks.forEach(t=>{ if(t._status==='playing') t._status='pending'; });
     this._chainDone.clear();
     const pb=document.getElementById(this.ids.progress);if(pb)pb.value=0;
     this.render();
@@ -2427,72 +2434,113 @@ function pazMarkers(){
   }
 }
 
-// ── Liste des pistes ──
+// ── Liste des pistes — source unique : allTracks ──
 function pazRenderList(){
   const d=D[0], list=document.getElementById('paz-list'); if(!list) return;
-  const now=new Date(); let cur=new Date(now);
-  const starts=d.tracks.map((_,i)=>{ const ts=new Date(cur); cur=new Date(cur.getTime()+d._playDur(i)*1000); return ts; });
 
-  list.innerHTML='';
-
-  // ── Pistes déjà jouées (grisées, en haut) ──
-  if(d._playedTracks && d._playedTracks.length){
-    const section = document.createElement('div');
-    section.style.cssText='border-bottom:1px solid rgba(255,255,255,.06);';
-    d._playedTracks.forEach((t,i)=>{
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;height:40px;border-bottom:1px solid rgba(255,255,255,.04);opacity:.32;filter:saturate(0.3);pointer-events:none;position:relative;overflow:hidden;';
-      row.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#4a5060;text-align:center;">✓</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:10px;color:#3a4050;padding-left:4px;">—</div><div style="flex:1;font-family:var(--display);font-size:14px;font-weight:700;color:#4a5060;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;text-decoration:line-through;">${t.title}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;opacity:.3;"></div><div style="width:52px;flex-shrink:0;"></div>`;
-      section.appendChild(row);
-    });
-    list.appendChild(section);
-  }
-
-  if(!d.tracks.length && !d._playedTracks.length){
+  if(!d.allTracks.length){
     list.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);letter-spacing:2px;padding:2rem;text-align:center;">— Glisse des fichiers audio ci-dessus —</div>';
     return;
   }
 
-  d.tracks.forEach((t,i)=>{
-    const isAct=i===d.ci&&d.playing, isNxt=i===d.ci+(d.playing?1:0)&&!isAct;
-    const st=starts[i];
-    const hhmm=fmt2(st.getHours())+':'+fmt2(st.getMinutes())+':'+fmt2(st.getSeconds());
+  // Calcul des horaires uniquement sur les pistes pending/playing
+  const activeTracks = d.allTracks.filter(t=>t._status!=='done');
+  const now=new Date(); let cur=new Date(now);
+  const timeMap=new Map();
+  activeTracks.forEach(t=>{
+    timeMap.set(t, new Date(cur));
+    const inCue=t.inCue||0;
+    const outCue=t.outCue!=null?t.outCue:(d.durs[d.tracks.indexOf(t)]||0);
+    cur=new Date(cur.getTime()+Math.max(0,outCue-inCue)*1000);
+  });
+
+  list.innerHTML='';
+
+  let playingIdx=0;
+  d.allTracks.forEach((t, globalIdx)=>{
+    const isDone = t._status==='done';
+    const isPlay = t._status==='playing';
+    // "next" = première piste pending après la playing
+    const isNext = !isDone && !isPlay && d.playing &&
+      d.allTracks.findIndex(x=>x._status==='playing') !== -1 &&
+      d.allTracks.filter(x=>x._status==='pending').indexOf(t)===0;
 
     const row=document.createElement('div');
-    row.style.cssText=`display:flex;align-items:center;height:52px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;transition:background .08s;${isAct?'background:#0e0408;border-left:3px solid var(--red);':isNxt?'background:#071408;border-left:3px solid var(--green-dk);':''}`;
-    if(isAct){ row.id='paz-row-active'; }
-    row.onclick=()=>d.jumpTo(i);
 
-    // Barre progression rouge sur la ligne active
-    if(isAct){
-      const prog=document.createElement('div');
-      prog.style.cssText='position:absolute;inset:0;background:linear-gradient(90deg,rgba(120,6,6,.65),rgba(60,2,2,.45));transform-origin:left;transform:scaleX(0);transition:transform .1s linear;z-index:0;pointer-events:none;';
-      prog.id='paz-row-prog';
-      row.appendChild(prog);
-    }
-
-    const inner=document.createElement('div');
-    inner.style.cssText='display:flex;align-items:center;width:100%;position:relative;z-index:1;';
-
-    if(t.isMacro){
-      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;color:var(--yellow);text-align:center;">${isAct?'⚡':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--yellow);padding-left:4px;">MACRO</div><div style="flex:1;font-family:var(--display);font-size:14px;font-weight:700;color:var(--yellow);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:10px;color:var(--txt-mute);text-align:right;">—</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--yellow);text-align:right;padding-right:12px;">ACTION</div><div style="width:5px;flex-shrink:0;background:#6a5a00;align-self:stretch;"></div><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:30px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
+    if(isDone){
+      // ── GRISÉ ──
+      row.style.cssText='display:flex;align-items:center;height:44px;border-bottom:1px solid rgba(255,255,255,.03);position:relative;overflow:hidden;opacity:.28;filter:saturate(0.2);';
+      row.innerHTML=`
+        <div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#3a4050;text-align:center;">✓</div>
+        <div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:10px;color:#2a3040;padding-left:4px;">—</div>
+        <div style="flex:1;font-family:var(--display);font-size:15px;font-weight:700;color:#4a5060;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;text-decoration:line-through;padding:0 8px;">${t.title}</div>
+        <div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;opacity:.2;"></div>
+        <div style="width:52px;flex-shrink:0;"></div>`;
     } else {
-      const dur=fmtFull(d.durs[i]||0);
-      const cd=fmtFull(d._playDur(i));
-      const cdId=isAct?'id="paz-row-cd-active"':'';
-      const cdCol=isAct?'color:#ff4040':'color:#7a9ab8';
-      const titleCol=isAct?'color:#ff6060':isNxt?'color:#40d870':'color:var(--txt)';
-      const numCol=isAct?'color:var(--red)':isNxt?'color:var(--green)':'color:var(--txt-mute)';
-      // Badge NEXT par piste
-      const nOn = t.autoNext!==false;
-      const nColor = nOn ? 'var(--green)' : '#2a3a2a';
-      const nBg = nOn ? 'rgba(0,60,15,.6)' : 'rgba(0,0,0,.2)';
-      const nBorder = nOn ? 'var(--green)' : '#2a3a2a';
-      const nOpacity = nOn ? '1' : '.4';
-      const nextBadge=`<span onclick="event.stopPropagation();pazToggleAutoFor(${i})" title="${nOn?'NEXT ON — cliquer pour désactiver':'NEXT OFF — cliquer pour activer'}" style="flex-shrink:0;margin-right:8px;cursor:pointer;font-family:var(--mono);font-size:8px;font-weight:700;color:${nColor};opacity:${nOpacity};background:${nBg};border:1px solid ${nBorder};border-radius:2px;padding:2px 6px;letter-spacing:1px;transition:all .12s;user-select:none;">NEXT</span>`;
-      inner.innerHTML=`<div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;${numCol};text-align:center;">${isAct?'▶':(i+1)}</div><div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);padding-left:4px;">${hhmm}</div><div style="flex:1;display:flex;align-items:center;min-width:0;overflow:hidden;">${nextBadge}<span style="font-family:var(--display);font-size:17px;font-weight:700;${titleCol};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</span></div><div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;">${dur}</div><div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;${cdCol};text-align:right;padding-right:12px;" ${cdId}>${cd}</div><div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;"></div><button onclick="event.stopPropagation();openEditModal(${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#4a3a70;cursor:pointer;font-size:11px;padding:0;text-align:center;transition:color .1s;" onmouseover="this.style.color='#9b6de5'" onmouseout="this.style.color='#4a3a70'" title="Éditer les points">✦</button><button onclick="event.stopPropagation();diffRemoveTrack(0,${i})" style="width:26px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`;
+      // ── ACTIVE OU EN ATTENTE ──
+      const bgStyle = isPlay
+        ? 'background:#0e0408;border-left:3px solid var(--red);'
+        : isNext
+        ? 'background:#071408;border-left:3px solid var(--green-dk);'
+        : '';
+      row.style.cssText=`display:flex;align-items:center;height:52px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;transition:background .08s;${bgStyle}`;
+      if(isPlay){ row.id='paz-row-active'; }
+      // Trouver l'index dans d.tracks pour jumpTo
+      const trackIdx=d.tracks.indexOf(t);
+      if(trackIdx>=0) row.onclick=()=>d.jumpTo(trackIdx);
+
+      // Barre de progression sur la ligne active
+      if(isPlay){
+        const prog=document.createElement('div');
+        prog.style.cssText='position:absolute;inset:0;background:linear-gradient(90deg,rgba(120,6,6,.65),rgba(60,2,2,.45));transform-origin:left;transform:scaleX(0);transition:transform .1s linear;z-index:0;pointer-events:none;';
+        prog.id='paz-row-prog';
+        row.appendChild(prog);
+      }
+
+      const inner=document.createElement('div');
+      inner.style.cssText='display:flex;align-items:center;width:100%;position:relative;z-index:1;';
+
+      const st=timeMap.get(t);
+      const hhmm=st?fmt2(st.getHours())+':'+fmt2(st.getMinutes())+':'+fmt2(st.getSeconds()):'—:—:—';
+      const ti=d.tracks.indexOf(t);
+      const durSec=ti>=0?(d.durs[ti]||0):0;
+      const durStr=fmtFull(durSec);
+      const inCue=t.inCue||0;
+      const outCue=t.outCue!=null?t.outCue:durSec;
+      const playDur=Math.max(0,outCue-inCue);
+      const cdStr=fmtFull(playDur);
+
+      const numCol=isPlay?'color:var(--red)':isNext?'color:var(--green)':'color:var(--txt-mute)';
+      const titleCol=isPlay?'color:#ff6060':isNext?'color:#40d870':'color:var(--txt)';
+      const cdCol=isPlay?'color:#ff4040':'color:#7a9ab8';
+      const numDisp=isPlay?'▶':isNext?'▷':(globalIdx+1);
+
+      const nOn=t.autoNext!==false;
+      const nColor=nOn?'var(--green)':'#2a3a2a';
+      const nBg=nOn?'rgba(0,60,15,.6)':'rgba(0,0,0,.2)';
+      const nBorder=nOn?'var(--green)':'#2a3a2a';
+      const nOp=nOn?'1':'.38';
+      const nextBadge=ti>=0
+        ?`<span onclick="event.stopPropagation();pazToggleAutoFor(${ti})" style="flex-shrink:0;margin-right:8px;cursor:pointer;font-family:var(--mono);font-size:8px;font-weight:700;color:${nColor};opacity:${nOp};background:${nBg};border:1px solid ${nBorder};border-radius:2px;padding:2px 6px;letter-spacing:1px;transition:all .12s;user-select:none;" title="${nOn?'NEXT ON':'NEXT OFF'}">NEXT</span>`
+        :'';
+
+      const cdId=isPlay?'id="paz-row-cd-active"':'';
+      const editBtn=ti>=0?`<button onclick="event.stopPropagation();openEditModal(${ti})" style="width:26px;flex-shrink:0;background:none;border:none;color:#4a3a70;cursor:pointer;font-size:11px;padding:0;text-align:center;transition:color .1s;" onmouseover="this.style.color='#9b6de5'" onmouseout="this.style.color='#4a3a70'" title="Éditer">✦</button>`:'';
+      const delBtn=ti>=0?`<button onclick="event.stopPropagation();diffRemoveTrack(0,${ti})" style="width:26px;flex-shrink:0;background:none;border:none;color:#2a3040;cursor:pointer;font-size:12px;padding:0;text-align:center;" onmouseover="this.style.color='#e03020'" onmouseout="this.style.color='#2a3040'">✕</button>`:'';
+
+      inner.innerHTML=`
+        <div style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:13px;${numCol};text-align:center;">${numDisp}</div>
+        <div style="width:88px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:var(--cyan-dim);padding-left:4px;">${hhmm}</div>
+        <div style="flex:1;display:flex;align-items:center;min-width:0;overflow:hidden;padding:0 4px;">
+          ${nextBadge}
+          <span style="font-family:var(--display);font-size:17px;font-weight:700;${titleCol};letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</span>
+        </div>
+        <div style="width:72px;flex-shrink:0;font-family:var(--mono);font-size:11px;color:#7a9ab8;text-align:right;">${durStr}</div>
+        <div style="width:90px;flex-shrink:0;font-family:var(--mono);font-size:13px;${cdCol};text-align:right;padding-right:12px;" ${cdId}>${cdStr}</div>
+        <div style="width:5px;flex-shrink:0;background:${t.color};align-self:stretch;"></div>
+        ${editBtn}${delBtn}`;
+      row.appendChild(inner);
     }
-    row.appendChild(inner);
     list.appendChild(row);
   });
 }
@@ -2579,7 +2627,7 @@ function _getTargetCue(t, totalDur){
 function _pazHandleTimerFired(d, t, tok){
   if(tok !== d._playToken || !d.playing) return;
   if(t.autoNext !== false && d.tracks.length > 1){
-    // Enchaîner : archiver la piste courante puis lancer la suivante
+    t._status = 'done';
     const pos = d.tracks.indexOf(t);
     if(pos !== -1){
       d._playedTracks.push({...t, _done:true});
@@ -2628,7 +2676,7 @@ function pazToggleAuto(){ pazToggleNext(); }
 
 // ── Patches D[0] ──
 const _r0=D[0].render.bind(D[0]);
-D[0].render=function(){ _r0(); pazRender(); };
+D[0].render=function(){ _r0(); pazRender(); pazRenderList(); };
 
 const _s0=D[0]._startTrack.bind(D[0]);
 D[0]._startTrack=function(i){
@@ -3035,26 +3083,28 @@ function _emDrawMinimap(data, W){
 function diffRemoveTrack(diffIdx, trackIdx){
   const d=D[diffIdx];
   if(!d||!d.tracks.length) return;
-  // Si la piste est en cours, stopper d'abord
   if(d.ci===trackIdx && d.playing){ d.stopAll(); }
-  // Libérer l'URL objet
   const t=d.tracks[trackIdx];
   if(t && t.file && t.file.startsWith('blob:')) URL.revokeObjectURL(t.file);
-  // Retirer du tableau
+  // Retirer de allTracks aussi
+  if(t){
+    const ai=d.allTracks.indexOf(t);
+    if(ai!==-1) d.allTracks.splice(ai,1);
+  }
   d.tracks.splice(trackIdx, 1);
   d.durs.splice(trackIdx, 1);
   d.audios.splice(trackIdx, 1);
-  // Ajuster l'index courant
   if(d.ci >= d.tracks.length) d.ci = Math.max(0, d.tracks.length-1);
-  // Mettre à jour le compte fichiers
   const cfg=CONFIGS[diffIdx];
   if(cfg){ cfg.tracks=d.tracks; }
   const fdzId=cfg?cfg.fdzCount:null;
   if(fdzId){
     const n=d.tracks.length;
-    document.getElementById(fdzId).textContent=n?n+' fichier'+(n>1?'s':''):'Aucun fichier';
+    const el=document.getElementById(fdzId);
+    if(el) el.textContent=n?n+' fichier'+(n>1?'s':''):'Aucun fichier';
   }
   d.render();
+  if(diffIdx===0) pazRenderList();
 }
 
 // ── VU Mètre ──
