@@ -66,7 +66,28 @@
   .onair-track-name{font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:2px;color:var(--yellow);margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;transition:opacity .3s;}
   .dot-live{display:inline-block;width:8px;height:8px;background:var(--red);border-radius:50%;animation:blink 1s step-start infinite;vertical-align:middle;margin-right:6px;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-  @keyframes cd-blink{0%,100%{opacity:1;transform:scale(1.02);}50%{opacity:.55;transform:scale(1);}}
+  /* ══ MODULATION ══ */
+  .mod-chan-card{background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:border-color .15s,background .12s;user-select:none;}
+  .mod-chan-card:hover{background:var(--s2);border-color:var(--txt-mute);}
+  .mod-chan-card.selected{border-color:#9b6de5!important;background:#1a1428!important;}
+  .mod-chan-header{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--txt-mute);font-weight:700;}
+  .mod-vu-wrap{display:flex;gap:3px;height:60px;align-items:flex-end;}
+  .mod-vu-wrap.mod-vu-mini{height:36px;}
+  .mod-vu-bar-wrap{width:10px;height:100%;background:#0a0c10;border-radius:2px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
+  .mod-vu-bar{width:100%;height:0%;background:linear-gradient(to top,#00c85a 0%,#e8b800 75%,#d42818 100%);border-radius:2px;transition:height .05s;}
+  .mod-chan-db{font-family:var(--mono);font-size:9px;color:var(--txt-mute);}
+  .mod-chan-info{font-family:var(--mono);font-size:8px;color:#4a3a70;letter-spacing:1px;}
+  .mod-cart-card{padding:6px;}
+  /* DSP Editor */
+  .mod-dsp-block{background:var(--s2);border-radius:5px;padding:12px;display:flex;flex-direction:column;gap:8px;}
+  .mod-dsp-label{font-family:var(--mono);font-size:8px;color:#9b6de5;letter-spacing:3px;font-weight:700;}
+  .mod-dsp-row{display:flex;align-items:center;gap:8px;}
+  .mod-dsp-name{font-family:var(--mono);font-size:9px;color:var(--txt-mute);width:56px;flex-shrink:0;}
+  .mod-dsp-slider{flex:1;height:3px;accent-color:#9b6de5;cursor:pointer;}
+  .mod-dsp-val{font-family:var(--mono);font-size:9px;color:var(--txt);width:52px;text-align:right;flex-shrink:0;}
+  .mod-bypass-btn{font-family:var(--mono);font-size:8px;padding:3px 8px;background:transparent;border:1px solid var(--border);color:var(--txt-mute);border-radius:3px;cursor:pointer;letter-spacing:1px;transition:all .12s;}
+  .mod-bypass-btn.active{background:#1a0a30;border-color:#9b6de5;color:#9b6de5;}
+  @keyframes vu-anim{to{height:0%;}}
   .timer-group{display:flex;gap:1rem;align-items:center;margin-left:auto;padding-right:1rem;}
   .timer-box{text-align:center;}
   .timer-box .label-txt{font-family:var(--mono);font-size:8px;color:var(--txt-dim);letter-spacing:1px;text-transform:uppercase;display:block;}
@@ -1264,6 +1285,7 @@
 <div class="tab-bar" style="display:flex;">
   <button class="tab-btn active" id="tab-btn-diffusion" onclick="switchTab('diffusion')">⬤ DIFFUSION</button>
   <button class="tab-btn" id="tab-btn-diff2" onclick="switchTab('diff2')">⬡ DIFF 2</button>
+  <button class="tab-btn" id="tab-btn-modulation" onclick="switchTab('modulation')">⚙ MODULATION</button>
 </div>
 
 <!-- Panneau Diffusion -->
@@ -1404,14 +1426,17 @@
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px;background:#1e2028;">
           <div class="cart-slot" id="cart-0" oncontextmenu="cartRightClick(event,0)" ondragover="cartDragOver(event,0)" ondragleave="cartDragLeave(0)" ondrop="cartDrop(event,0)">
             <div class="cart-num">01</div>
-            <!-- Case vide : label natif → ouvre file picker directement -->
-            <label class="cart-body" for="cart-inp-0" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <input type="file" id="cart-inp-0" accept="audio/*" style="display:none" onchange="cartFileChosen(0,this)">
+            <!-- Input transparent pleine case — toujours cliquable quand vide -->
+            <input type="file" id="cart-inp-0" accept="audio/*"
+              style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:10;width:100%;height:100%;"
+              onchange="cartFileChosen(0,this)">
+            <!-- Corps vide affiché par dessus (pointer-events:none pour laisser passer le clic vers l'input) -->
+            <div class="cart-body" id="cart-body-0" style="pointer-events:none;">
               <span class="cart-icon">⊕</span>
               <span class="cart-hint">Glisser un son</span>
-            </label>
-            <!-- Case chargée : clic = play/stop -->
-            <div class="cart-info" style="display:none" onclick="cartToggle(0)">
+            </div>
+            <!-- Case chargée : clic = play/stop — par dessus tout -->
+            <div class="cart-info" id="cart-info-0" style="display:none;position:relative;z-index:11;cursor:pointer;width:100%;flex-direction:column;align-items:center;gap:4px;" onclick="cartToggle(0)">
               <div class="cart-title" id="cart-title-0"></div>
               <div class="cart-cd" id="cart-cd-0">--:--</div>
             </div>
@@ -1420,14 +1445,17 @@
           </div>
           <div class="cart-slot" id="cart-1" oncontextmenu="cartRightClick(event,1)" ondragover="cartDragOver(event,1)" ondragleave="cartDragLeave(1)" ondrop="cartDrop(event,1)">
             <div class="cart-num">02</div>
-            <!-- Case vide : label natif → ouvre file picker directement -->
-            <label class="cart-body" for="cart-inp-1" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <input type="file" id="cart-inp-1" accept="audio/*" style="display:none" onchange="cartFileChosen(1,this)">
+            <!-- Input transparent pleine case — toujours cliquable quand vide -->
+            <input type="file" id="cart-inp-1" accept="audio/*"
+              style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:10;width:100%;height:100%;"
+              onchange="cartFileChosen(1,this)">
+            <!-- Corps vide affiché par dessus (pointer-events:none pour laisser passer le clic vers l'input) -->
+            <div class="cart-body" id="cart-body-1" style="pointer-events:none;">
               <span class="cart-icon">⊕</span>
               <span class="cart-hint">Glisser un son</span>
-            </label>
-            <!-- Case chargée : clic = play/stop -->
-            <div class="cart-info" style="display:none" onclick="cartToggle(1)">
+            </div>
+            <!-- Case chargée : clic = play/stop — par dessus tout -->
+            <div class="cart-info" id="cart-info-1" style="display:none;position:relative;z-index:11;cursor:pointer;width:100%;flex-direction:column;align-items:center;gap:4px;" onclick="cartToggle(1)">
               <div class="cart-title" id="cart-title-1"></div>
               <div class="cart-cd" id="cart-cd-1">--:--</div>
             </div>
@@ -1436,14 +1464,17 @@
           </div>
           <div class="cart-slot" id="cart-2" oncontextmenu="cartRightClick(event,2)" ondragover="cartDragOver(event,2)" ondragleave="cartDragLeave(2)" ondrop="cartDrop(event,2)">
             <div class="cart-num">03</div>
-            <!-- Case vide : label natif → ouvre file picker directement -->
-            <label class="cart-body" for="cart-inp-2" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <input type="file" id="cart-inp-2" accept="audio/*" style="display:none" onchange="cartFileChosen(2,this)">
+            <!-- Input transparent pleine case — toujours cliquable quand vide -->
+            <input type="file" id="cart-inp-2" accept="audio/*"
+              style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:10;width:100%;height:100%;"
+              onchange="cartFileChosen(2,this)">
+            <!-- Corps vide affiché par dessus (pointer-events:none pour laisser passer le clic vers l'input) -->
+            <div class="cart-body" id="cart-body-2" style="pointer-events:none;">
               <span class="cart-icon">⊕</span>
               <span class="cart-hint">Glisser un son</span>
-            </label>
-            <!-- Case chargée : clic = play/stop -->
-            <div class="cart-info" style="display:none" onclick="cartToggle(2)">
+            </div>
+            <!-- Case chargée : clic = play/stop — par dessus tout -->
+            <div class="cart-info" id="cart-info-2" style="display:none;position:relative;z-index:11;cursor:pointer;width:100%;flex-direction:column;align-items:center;gap:4px;" onclick="cartToggle(2)">
               <div class="cart-title" id="cart-title-2"></div>
               <div class="cart-cd" id="cart-cd-2">--:--</div>
             </div>
@@ -1452,14 +1483,17 @@
           </div>
           <div class="cart-slot" id="cart-3" oncontextmenu="cartRightClick(event,3)" ondragover="cartDragOver(event,3)" ondragleave="cartDragLeave(3)" ondrop="cartDrop(event,3)">
             <div class="cart-num">04</div>
-            <!-- Case vide : label natif → ouvre file picker directement -->
-            <label class="cart-body" for="cart-inp-3" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <input type="file" id="cart-inp-3" accept="audio/*" style="display:none" onchange="cartFileChosen(3,this)">
+            <!-- Input transparent pleine case — toujours cliquable quand vide -->
+            <input type="file" id="cart-inp-3" accept="audio/*"
+              style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:10;width:100%;height:100%;"
+              onchange="cartFileChosen(3,this)">
+            <!-- Corps vide affiché par dessus (pointer-events:none pour laisser passer le clic vers l'input) -->
+            <div class="cart-body" id="cart-body-3" style="pointer-events:none;">
               <span class="cart-icon">⊕</span>
               <span class="cart-hint">Glisser un son</span>
-            </label>
-            <!-- Case chargée : clic = play/stop -->
-            <div class="cart-info" style="display:none" onclick="cartToggle(3)">
+            </div>
+            <!-- Case chargée : clic = play/stop — par dessus tout -->
+            <div class="cart-info" id="cart-info-3" style="display:none;position:relative;z-index:11;cursor:pointer;width:100%;flex-direction:column;align-items:center;gap:4px;" onclick="cartToggle(3)">
               <div class="cart-title" id="cart-title-3"></div>
               <div class="cart-cd" id="cart-cd-3">--:--</div>
             </div>
@@ -1468,14 +1502,17 @@
           </div>
           <div class="cart-slot" id="cart-4" oncontextmenu="cartRightClick(event,4)" ondragover="cartDragOver(event,4)" ondragleave="cartDragLeave(4)" ondrop="cartDrop(event,4)">
             <div class="cart-num">05</div>
-            <!-- Case vide : label natif → ouvre file picker directement -->
-            <label class="cart-body" for="cart-inp-4" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <input type="file" id="cart-inp-4" accept="audio/*" style="display:none" onchange="cartFileChosen(4,this)">
+            <!-- Input transparent pleine case — toujours cliquable quand vide -->
+            <input type="file" id="cart-inp-4" accept="audio/*"
+              style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:10;width:100%;height:100%;"
+              onchange="cartFileChosen(4,this)">
+            <!-- Corps vide affiché par dessus (pointer-events:none pour laisser passer le clic vers l'input) -->
+            <div class="cart-body" id="cart-body-4" style="pointer-events:none;">
               <span class="cart-icon">⊕</span>
               <span class="cart-hint">Glisser un son</span>
-            </label>
-            <!-- Case chargée : clic = play/stop -->
-            <div class="cart-info" style="display:none" onclick="cartToggle(4)">
+            </div>
+            <!-- Case chargée : clic = play/stop — par dessus tout -->
+            <div class="cart-info" id="cart-info-4" style="display:none;position:relative;z-index:11;cursor:pointer;width:100%;flex-direction:column;align-items:center;gap:4px;" onclick="cartToggle(4)">
               <div class="cart-title" id="cart-title-4"></div>
               <div class="cart-cd" id="cart-cd-4">--:--</div>
             </div>
@@ -1484,14 +1521,17 @@
           </div>
           <div class="cart-slot" id="cart-5" oncontextmenu="cartRightClick(event,5)" ondragover="cartDragOver(event,5)" ondragleave="cartDragLeave(5)" ondrop="cartDrop(event,5)">
             <div class="cart-num">06</div>
-            <!-- Case vide : label natif → ouvre file picker directement -->
-            <label class="cart-body" for="cart-inp-5" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <input type="file" id="cart-inp-5" accept="audio/*" style="display:none" onchange="cartFileChosen(5,this)">
+            <!-- Input transparent pleine case — toujours cliquable quand vide -->
+            <input type="file" id="cart-inp-5" accept="audio/*"
+              style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:10;width:100%;height:100%;"
+              onchange="cartFileChosen(5,this)">
+            <!-- Corps vide affiché par dessus (pointer-events:none pour laisser passer le clic vers l'input) -->
+            <div class="cart-body" id="cart-body-5" style="pointer-events:none;">
               <span class="cart-icon">⊕</span>
               <span class="cart-hint">Glisser un son</span>
-            </label>
-            <!-- Case chargée : clic = play/stop -->
-            <div class="cart-info" style="display:none" onclick="cartToggle(5)">
+            </div>
+            <!-- Case chargée : clic = play/stop — par dessus tout -->
+            <div class="cart-info" id="cart-info-5" style="display:none;position:relative;z-index:11;cursor:pointer;width:100%;flex-direction:column;align-items:center;gap:4px;" onclick="cartToggle(5)">
               <div class="cart-title" id="cart-title-5"></div>
               <div class="cart-cd" id="cart-cd-5">--:--</div>
             </div>
@@ -1555,6 +1595,199 @@
   </div>
 
 </div><!-- /tab-diff2 -->
+
+<!-- ══ ONGLET MODULATION ══ -->
+<div id="tab-modulation" class="tab-panel" style="background:var(--bg);overflow:hidden;flex-direction:column;gap:0;">
+
+  <!-- Barre titre -->
+  <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:var(--s2);border-bottom:1px solid var(--border);">
+    <span style="font-family:var(--display);font-size:11px;font-weight:700;color:var(--txt-mute);letter-spacing:3px;">MODULATION · DSP & VU-MÈTRES</span>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--txt-mute);">Sélectionner un canal pour éditer son DSP</span>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto;padding:12px;gap:12px;">
+
+    <!-- ── VU-MÈTRES ── -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex-shrink:0;">
+
+      <!-- DIFF A -->
+      <div class="mod-chan-card" id="mod-chan-diffA" onclick="modSelectChan('diffA')" style="border-color:#d42818;">
+        <div class="mod-chan-header" style="color:#d42818;">● DIFF A</div>
+        <div class="mod-vu-wrap">
+          <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-diffA-L"></div></div>
+          <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-diffA-R"></div></div>
+        </div>
+        <div class="mod-chan-db" id="mod-db-diffA">—∞ dB</div>
+        <div class="mod-chan-info" id="mod-info-diffA">EQ · COMP · LIM</div>
+      </div>
+
+      <!-- CART 1-3 -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);letter-spacing:2px;text-align:center;">CARTWALL 1–3</div>
+        <div style="display:flex;gap:6px;">
+          <div class="mod-chan-card mod-cart-card" id="mod-chan-cart0" onclick="modSelectChan('cart0')" style="flex:1;">
+            <div class="mod-chan-header" style="font-size:8px;">01</div>
+            <div class="mod-vu-wrap mod-vu-mini">
+              <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-cart0"></div></div>
+            </div>
+            <div class="mod-chan-db" style="font-size:8px;" id="mod-db-cart0">—∞</div>
+          </div>
+          <div class="mod-chan-card mod-cart-card" id="mod-chan-cart1" onclick="modSelectChan('cart1')" style="flex:1;">
+            <div class="mod-chan-header" style="font-size:8px;">02</div>
+            <div class="mod-vu-wrap mod-vu-mini">
+              <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-cart1"></div></div>
+            </div>
+            <div class="mod-chan-db" style="font-size:8px;" id="mod-db-cart1">—∞</div>
+          </div>
+          <div class="mod-chan-card mod-cart-card" id="mod-chan-cart2" onclick="modSelectChan('cart2')" style="flex:1;">
+            <div class="mod-chan-header" style="font-size:8px;">03</div>
+            <div class="mod-vu-wrap mod-vu-mini">
+              <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-cart2"></div></div>
+            </div>
+            <div class="mod-chan-db" style="font-size:8px;" id="mod-db-cart2">—∞</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CART 4-6 -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--txt-mute);letter-spacing:2px;text-align:center;">CARTWALL 4–6</div>
+        <div style="display:flex;gap:6px;">
+          <div class="mod-chan-card mod-cart-card" id="mod-chan-cart3" onclick="modSelectChan('cart3')" style="flex:1;">
+            <div class="mod-chan-header" style="font-size:8px;">04</div>
+            <div class="mod-vu-wrap mod-vu-mini">
+              <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-cart3"></div></div>
+            </div>
+            <div class="mod-chan-db" style="font-size:8px;" id="mod-db-cart3">—∞</div>
+          </div>
+          <div class="mod-chan-card mod-cart-card" id="mod-chan-cart4" onclick="modSelectChan('cart4')" style="flex:1;">
+            <div class="mod-chan-header" style="font-size:8px;">05</div>
+            <div class="mod-vu-wrap mod-vu-mini">
+              <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-cart4"></div></div>
+            </div>
+            <div class="mod-chan-db" style="font-size:8px;" id="mod-db-cart4">—∞</div>
+          </div>
+          <div class="mod-chan-card mod-cart-card" id="mod-chan-cart5" onclick="modSelectChan('cart5')" style="flex:1;">
+            <div class="mod-chan-header" style="font-size:8px;">06</div>
+            <div class="mod-vu-wrap mod-vu-mini">
+              <div class="mod-vu-bar-wrap"><div class="mod-vu-bar" id="mod-vu-cart5"></div></div>
+            </div>
+            <div class="mod-chan-db" style="font-size:8px;" id="mod-db-cart5">—∞</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── DSP EDITOR ── -->
+    <div id="mod-dsp-editor" style="flex-shrink:0;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:14px;">
+      <div style="font-family:var(--display);font-size:11px;color:var(--txt-mute);letter-spacing:3px;margin-bottom:12px;">
+        DSP — <span id="mod-dsp-title" style="color:var(--txt);">Sélectionner un canal</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+
+        <!-- EQ 4 bandes -->
+        <div class="mod-dsp-block">
+          <div class="mod-dsp-label">ÉGALISEUR 4 BANDES</div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">HPF</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-hpf-freq" min="20" max="500" value="80" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-hpf-freq-val">80 Hz</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">LO SHELF</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-lo-gain" min="-12" max="12" value="0" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-lo-gain-val">0 dB</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">MID PEAK</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-mid-gain" min="-12" max="12" value="0" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-mid-gain-val">0 dB</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">HI SHELF</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-hi-gain" min="-12" max="12" value="0" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-hi-gain-val">0 dB</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">LPF</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-lpf-freq" min="2000" max="20000" value="18000" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-lpf-freq-val">18k Hz</span>
+          </div>
+        </div>
+
+        <!-- COMPRESSEUR -->
+        <div class="mod-dsp-block">
+          <div class="mod-dsp-label">COMPRESSEUR</div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Seuil</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-comp-thresh" min="-60" max="0" value="-18" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-comp-thresh-val">-18 dB</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Ratio</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-comp-ratio" min="1" max="20" value="4" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-comp-ratio-val">4:1</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Attack</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-comp-attack" min="0" max="200" value="20" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-comp-attack-val">20 ms</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Release</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-comp-release" min="50" max="1000" value="250" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-comp-release-val">250 ms</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Makeup</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-comp-makeup" min="0" max="20" value="0" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-comp-makeup-val">0 dB</span>
+          </div>
+          <!-- Réduction de gain -->
+          <div class="mod-dsp-row" style="margin-top:4px;">
+            <span class="mod-dsp-name">GR</span>
+            <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin:0 8px;">
+              <div id="dsp-comp-gr-bar" style="height:100%;width:0%;background:#d42818;transition:width .1s;float:right;"></div>
+            </div>
+            <span class="mod-dsp-val" id="dsp-comp-gr-val">0 dB</span>
+          </div>
+        </div>
+
+        <!-- LIMITEUR + GAIN -->
+        <div class="mod-dsp-block">
+          <div class="mod-dsp-label">LIMITEUR</div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Seuil</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-lim-thresh" min="-20" max="0" value="-1" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-lim-thresh-val">-1 dB</span>
+          </div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Release</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-lim-release" min="10" max="500" value="50" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-lim-release-val">50 ms</span>
+          </div>
+          <div class="mod-dsp-label" style="margin-top:12px;">GAIN SORTIE</div>
+          <div class="mod-dsp-row">
+            <span class="mod-dsp-name">Gain</span>
+            <input type="range" class="mod-dsp-slider" id="dsp-out-gain" min="-20" max="6" value="0" oninput="modDspUpdate()">
+            <span class="mod-dsp-val" id="dsp-out-gain-val">0 dB</span>
+          </div>
+          <div class="mod-dsp-label" style="margin-top:12px;">BYPASS</div>
+          <div class="mod-dsp-row" style="gap:6px;">
+            <button class="mod-bypass-btn" id="dsp-bypass-eq" onclick="modToggleBypass('eq',this)">EQ</button>
+            <button class="mod-bypass-btn" id="dsp-bypass-comp" onclick="modToggleBypass('comp',this)">COMP</button>
+            <button class="mod-bypass-btn" id="dsp-bypass-lim" onclick="modToggleBypass('lim',this)">LIM</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /tab-modulation -->
 
 
 <!-- VU MÈTRES STICKY : DIFF 1 + DIFF 2 — toujours visible -->
@@ -3175,6 +3408,266 @@ setInterval(_broadcastState, 2000); // heartbeat toutes les 2s
 // Patch stopAll pour émettre
 const _origStopAll0 = D[0].stopAll.bind(D[0]);
 D[0].stopAll = function(){ _origStopAll0(); _broadcastState(); };
+
+// ════════════════════════════════════════════════════════════════
+// MODULATION — DSP (EQ / Comp / Lim) + VU-mètres
+// ════════════════════════════════════════════════════════════════
+
+// ── Chaîne DSP par canal ──
+// Structure : { audioCtx, source, hpf, lo, mid, hi, lpf, comp, lim, outGain, analyser, audio }
+const DSP_CHAINS = {}; // key → { nodes... }
+
+// ── Canal sélectionné dans l'éditeur ──
+let _modSelChan = null;
+
+// Paramètres sauvegardés par canal
+const DSP_PARAMS = {};
+function _dspDefaultParams() {
+  return {
+    hpfFreq:80, loGain:0, midGain:0, hiGain:0, lpfFreq:18000,
+    compThresh:-18, compRatio:4, compAttack:20, compRelease:250, compMakeup:0,
+    limThresh:-1, limRelease:50, outGain:0,
+    bypassEq:false, bypassComp:false, bypassLim:false
+  };
+}
+
+// ── Créer une chaîne DSP pour un élément audio ──
+function dspCreateChain(audioEl, key) {
+  const ctx = getCtx();
+  if(DSP_CHAINS[key]) {
+    // Déjà câblé — juste mettre à jour l'analyser
+    return DSP_CHAINS[key];
+  }
+  let src;
+  try { src = ctx.createMediaElementSource(audioEl); }
+  catch(e) { console.warn('[DSP] createMediaElementSource:', e); return null; }
+
+  const params = DSP_PARAMS[key] || _dspDefaultParams();
+  DSP_PARAMS[key] = params;
+
+  // EQ
+  const hpf = ctx.createBiquadFilter(); hpf.type='highpass'; hpf.frequency.value=params.hpfFreq; hpf.Q.value=0.7;
+  const lo  = ctx.createBiquadFilter(); lo.type='lowshelf';  lo.frequency.value=200;  lo.gain.value=params.loGain;
+  const mid = ctx.createBiquadFilter(); mid.type='peaking';  mid.frequency.value=1000; mid.Q.value=1; mid.gain.value=params.midGain;
+  const hi  = ctx.createBiquadFilter(); hi.type='highshelf'; hi.frequency.value=8000; hi.gain.value=params.hiGain;
+  const lpf = ctx.createBiquadFilter(); lpf.type='lowpass';  lpf.frequency.value=params.lpfFreq; lpf.Q.value=0.7;
+
+  // Compresseur
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = params.compThresh;
+  comp.ratio.value     = params.compRatio;
+  comp.attack.value    = params.compAttack / 1000;
+  comp.release.value   = params.compRelease / 1000;
+  comp.knee.value      = 6;
+
+  // Limiteur (compresseur ratio max)
+  const lim = ctx.createDynamicsCompressor();
+  lim.threshold.value = params.limThresh;
+  lim.ratio.value     = 20;
+  lim.attack.value    = 0.001;
+  lim.release.value   = params.limRelease / 1000;
+  lim.knee.value      = 0;
+
+  // Gain sortie + analyser
+  const outGain  = ctx.createGain(); outGain.gain.value = Math.pow(10, params.outGain/20);
+  const analyser = ctx.createAnalyser(); analyser.fftSize=512; analyser.smoothingTimeConstant=0.7;
+  const makeup   = ctx.createGain(); makeup.gain.value = Math.pow(10, params.compMakeup/20);
+
+  // Câblage : src → hpf → lo → mid → hi → lpf → comp → makeup → lim → outGain → analyser → destination
+  src.connect(hpf); hpf.connect(lo); lo.connect(mid); mid.connect(hi); hi.connect(lpf);
+  lpf.connect(comp); comp.connect(makeup); makeup.connect(lim); lim.connect(outGain);
+  outGain.connect(analyser); analyser.connect(ctx.destination);
+
+  const chain = { src, hpf, lo, mid, hi, lpf, comp, makeup, lim, outGain, analyser, audio:audioEl, params };
+  DSP_CHAINS[key] = chain;
+  return chain;
+}
+
+// ── Appliquer les paramètres de l'éditeur sur la chaîne sélectionnée ──
+function modDspUpdate() {
+  if(!_modSelChan) return;
+  const chain = DSP_CHAINS[_modSelChan];
+  const p = DSP_PARAMS[_modSelChan] || _dspDefaultParams();
+
+  const hpfFreq = +document.getElementById('dsp-hpf-freq').value;
+  const loGain  = +document.getElementById('dsp-lo-gain').value;
+  const midGain = +document.getElementById('dsp-mid-gain').value;
+  const hiGain  = +document.getElementById('dsp-hi-gain').value;
+  const lpfFreq = +document.getElementById('dsp-lpf-freq').value;
+  const compT   = +document.getElementById('dsp-comp-thresh').value;
+  const compR   = +document.getElementById('dsp-comp-ratio').value;
+  const compA   = +document.getElementById('dsp-comp-attack').value;
+  const compRel = +document.getElementById('dsp-comp-release').value;
+  const compMk  = +document.getElementById('dsp-comp-makeup').value;
+  const limT    = +document.getElementById('dsp-lim-thresh').value;
+  const limRel  = +document.getElementById('dsp-lim-release').value;
+  const outG    = +document.getElementById('dsp-out-gain').value;
+
+  // Labels
+  document.getElementById('dsp-hpf-freq-val').textContent = hpfFreq < 1000 ? hpfFreq+' Hz' : (hpfFreq/1000).toFixed(1)+'k';
+  document.getElementById('dsp-lo-gain-val').textContent  = (loGain>0?'+':'')+loGain+' dB';
+  document.getElementById('dsp-mid-gain-val').textContent = (midGain>0?'+':'')+midGain+' dB';
+  document.getElementById('dsp-hi-gain-val').textContent  = (hiGain>0?'+':'')+hiGain+' dB';
+  document.getElementById('dsp-lpf-freq-val').textContent = lpfFreq < 1000 ? lpfFreq+' Hz' : (lpfFreq/1000).toFixed(0)+'k Hz';
+  document.getElementById('dsp-comp-thresh-val').textContent = compT+' dB';
+  document.getElementById('dsp-comp-ratio-val').textContent  = compR+':1';
+  document.getElementById('dsp-comp-attack-val').textContent = compA+' ms';
+  document.getElementById('dsp-comp-release-val').textContent= compRel+' ms';
+  document.getElementById('dsp-comp-makeup-val').textContent = (compMk>0?'+':'')+compMk+' dB';
+  document.getElementById('dsp-lim-thresh-val').textContent  = limT+' dB';
+  document.getElementById('dsp-lim-release-val').textContent = limRel+' ms';
+  document.getElementById('dsp-out-gain-val').textContent    = (outG>0?'+':'')+outG+' dB';
+
+  // Sauvegarder
+  Object.assign(p, {hpfFreq,loGain,midGain,hiGain,lpfFreq,compThresh:compT,compRatio:compR,compAttack:compA,compRelease:compRel,compMakeup:compMk,limThresh:limT,limRelease:limRel,outGain:outG});
+
+  // Appliquer sur la chaîne si elle existe
+  if(chain) {
+    const ctx = getCtx();
+    const t = ctx.currentTime;
+    if(!p.bypassEq) {
+      chain.hpf.frequency.setTargetAtTime(hpfFreq, t, 0.01);
+      chain.lo.gain.setTargetAtTime(loGain, t, 0.01);
+      chain.mid.gain.setTargetAtTime(midGain, t, 0.01);
+      chain.hi.gain.setTargetAtTime(hiGain, t, 0.01);
+      chain.lpf.frequency.setTargetAtTime(lpfFreq, t, 0.01);
+    }
+    if(!p.bypassComp) {
+      chain.comp.threshold.setTargetAtTime(compT, t, 0.01);
+      chain.comp.ratio.setTargetAtTime(compR, t, 0.01);
+      chain.comp.attack.setTargetAtTime(compA/1000, t, 0.01);
+      chain.comp.release.setTargetAtTime(compRel/1000, t, 0.01);
+      chain.makeup.gain.setTargetAtTime(Math.pow(10,compMk/20), t, 0.01);
+    }
+    if(!p.bypassLim) {
+      chain.lim.threshold.setTargetAtTime(limT, t, 0.01);
+      chain.lim.release.setTargetAtTime(limRel/1000, t, 0.01);
+    }
+    chain.outGain.gain.setTargetAtTime(Math.pow(10,outG/20), t, 0.01);
+  }
+}
+
+function modToggleBypass(type, btn) {
+  if(!_modSelChan) return;
+  const p = DSP_PARAMS[_modSelChan] || _dspDefaultParams();
+  const key = 'bypass'+type.charAt(0).toUpperCase()+type.slice(1);
+  p[key] = !p[key];
+  btn.classList.toggle('active', p[key]);
+  const chain = DSP_CHAINS[_modSelChan]; if(!chain) return;
+  const ctx = getCtx(), t = ctx.currentTime;
+  if(type === 'eq') {
+    const bypass = p[key];
+    chain.hpf.frequency.setTargetAtTime(bypass ? 20 : p.hpfFreq, t, 0.01);
+    chain.lo.gain.setTargetAtTime(bypass ? 0 : p.loGain, t, 0.01);
+    chain.mid.gain.setTargetAtTime(bypass ? 0 : p.midGain, t, 0.01);
+    chain.hi.gain.setTargetAtTime(bypass ? 0 : p.hiGain, t, 0.01);
+    chain.lpf.frequency.setTargetAtTime(bypass ? 20000 : p.lpfFreq, t, 0.01);
+  } else if(type === 'comp') {
+    chain.comp.ratio.setTargetAtTime(p[key] ? 1 : p.compRatio, t, 0.01);
+  } else if(type === 'lim') {
+    chain.lim.ratio.setTargetAtTime(p[key] ? 1 : 20, t, 0.01);
+  }
+}
+
+// ── Sélectionner un canal dans l'éditeur ──
+function modSelectChan(key) {
+  _modSelChan = key;
+  document.querySelectorAll('.mod-chan-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('mod-chan-'+key)?.classList.add('selected');
+  const titles = {diffA:'DIFF A', cart0:'CART 01', cart1:'CART 02', cart2:'CART 03', cart3:'CART 04', cart4:'CART 05', cart5:'CART 06'};
+  document.getElementById('mod-dsp-title').textContent = titles[key] || key;
+  // Charger les paramètres sauvegardés
+  const p = DSP_PARAMS[key] || _dspDefaultParams();
+  document.getElementById('dsp-hpf-freq').value = p.hpfFreq;
+  document.getElementById('dsp-lo-gain').value  = p.loGain;
+  document.getElementById('dsp-mid-gain').value = p.midGain;
+  document.getElementById('dsp-hi-gain').value  = p.hiGain;
+  document.getElementById('dsp-lpf-freq').value = p.lpfFreq;
+  document.getElementById('dsp-comp-thresh').value  = p.compThresh;
+  document.getElementById('dsp-comp-ratio').value   = p.compRatio;
+  document.getElementById('dsp-comp-attack').value  = p.compAttack;
+  document.getElementById('dsp-comp-release').value = p.compRelease;
+  document.getElementById('dsp-comp-makeup').value  = p.compMakeup;
+  document.getElementById('dsp-lim-thresh').value   = p.limThresh;
+  document.getElementById('dsp-lim-release').value  = p.limRelease;
+  document.getElementById('dsp-out-gain').value     = p.outGain;
+  ['eq','comp','lim'].forEach(t => {
+    const btn = document.getElementById('dsp-bypass-'+t);
+    if(btn) btn.classList.toggle('active', p['bypass'+t.charAt(0).toUpperCase()+t.slice(1)]);
+  });
+  modDspUpdate();
+}
+
+// ── VU-mètres de la page MODULATION ──
+const _modVuBuf = new Float32Array(512);
+function _modVuPaint(id, analyser) {
+  if(!analyser) return;
+  analyser.getFloatTimeDomainData(_modVuBuf);
+  let sum=0; for(const v of _modVuBuf) sum+=v*v;
+  const rms = Math.sqrt(sum/_modVuBuf.length);
+  const db  = rms>0 ? Math.max(-60, 20*Math.log10(rms)) : -60;
+  const pct = Math.max(0, (db+60)/60*100);
+  const bar = document.getElementById('mod-vu-'+id);
+  if(bar) bar.style.height = pct.toFixed(1)+'%';
+  const dbEl = document.getElementById('mod-db-'+id);
+  if(dbEl) dbEl.textContent = db > -60 ? db.toFixed(1)+' dB' : '—∞';
+}
+
+(function modVuLoop() {
+  requestAnimationFrame(modVuLoop);
+  // DIFF A
+  if(DSP_CHAINS['diffA']) _modVuPaint('diffA', DSP_CHAINS['diffA'].analyser);
+  else if(vu1) {
+    const buf=new Float32Array(vu1.aL.fftSize); vu1.aL.getFloatTimeDomainData(buf);
+    let s=0; for(const v of buf) s+=v*v; const r=Math.sqrt(s/buf.length);
+    const db=r>0?Math.max(-60,20*Math.log10(r)):-60;
+    const bar=document.getElementById('mod-vu-diffA-L'); if(bar) bar.style.height=Math.max(0,(db+60)/60*100).toFixed(1)+'%';
+    const bar2=document.getElementById('mod-vu-diffA-R'); if(bar2) bar2.style.height=Math.max(0,(db+60)/60*100).toFixed(1)+'%';
+    const dbEl=document.getElementById('mod-db-diffA'); if(dbEl) dbEl.textContent=db>-60?db.toFixed(1)+' dB':'—∞';
+  }
+  // Cartwall
+  for(let i=0;i<6;i++) {
+    const key='cart'+i;
+    if(DSP_CHAINS[key]) _modVuPaint(key, DSP_CHAINS[key].analyser);
+    else {
+      const c=CART[i]; if(!c.audio||!c.playing) continue;
+      // Créer la chaîne DSP automatiquement quand un cartwall joue
+      dspCreateChain(c.audio, key);
+    }
+  }
+  // GR compresseur si canal sélectionné
+  if(_modSelChan && DSP_CHAINS[_modSelChan]) {
+    const gr = DSP_CHAINS[_modSelChan].comp.reduction;
+    const grAbs = Math.abs(gr||0);
+    const grBar = document.getElementById('dsp-comp-gr-bar');
+    if(grBar) grBar.style.width = Math.min(100, grAbs/20*100).toFixed(1)+'%';
+    const grVal = document.getElementById('dsp-comp-gr-val');
+    if(grVal) grVal.textContent = grAbs.toFixed(1)+' dB';
+  }
+})();
+
+// ── Wirer DIFF A dans DSP automatiquement au premier play ──
+const _origS0Mod = D[0]._startTrack.bind(D[0]);
+// (le patch existe déjà — on étend via un post-hook)
+const _existingStartTrack = D[0]._startTrack;
+D[0]._startTrack = function(i) {
+  _existingStartTrack.call(this, i);
+  // Câbler dans DSP si possible
+  const audio = this.audios?.[i];
+  if(audio && !DSP_CHAINS['diffA']) {
+    setTimeout(()=>{ if(this.audios?.[i]) dspCreateChain(this.audios[i], 'diffA'); }, 100);
+  }
+};
+
+// ── Câbler cartwall dans DSP au play ──
+const _origCartPlaySlot = cartPlaySlot;
+window.cartPlaySlot = function(i) {
+  _origCartPlaySlot(i);
+  const c = CART[i];
+  if(c.audio && !DSP_CHAINS['cart'+i]) {
+    setTimeout(()=>{ if(CART[i].audio) dspCreateChain(CART[i].audio, 'cart'+i); }, 100);
+  }
+};
 
 // Rafraîchir les horaires de la playlist toutes les secondes
 setInterval(()=>{ if(D[0].allTracks.length) pazRenderList(); }, 1000);
@@ -5092,11 +5585,14 @@ const cartFmtMs = s => {
 function cartRenderEmpty(i) {
   const slot = document.getElementById('cart-'+i); if(!slot) return;
   slot.classList.remove('loaded','playing');
-  // Montrer le label (zone d'import) - cacher la zone info
-  const body = slot.querySelector('.cart-body');
-  if(body) { body.style.display = 'flex'; body.style.pointerEvents = 'auto'; }
-  const info = slot.querySelector('.cart-info');
+  // Montrer le corps vide, cacher l'info
+  const body = document.getElementById('cart-body-'+i);
+  if(body) body.style.display = 'flex';
+  const info = document.getElementById('cart-info-'+i);
   if(info) info.style.display = 'none';
+  // Remettre l'input transparent (z-index élevé pour capter les clics)
+  const inp = document.getElementById('cart-inp-'+i);
+  if(inp) inp.style.zIndex = '10';
   const btn = document.getElementById('cart-edit-'+i);
   if(btn) btn.remove();
   const fill = document.getElementById('cart-bar-'+i);
@@ -5110,11 +5606,14 @@ function cartRenderLoaded(i) {
   const c = CART[i];
   const slot = document.getElementById('cart-'+i); if(!slot) return;
   slot.classList.add('loaded');
-  // Cacher le label, montrer la zone info (clic = play/stop)
-  const body = slot.querySelector('.cart-body');
+  // Cacher le corps vide et repasser l'input sous z-index (cart-info prend le dessus)
+  const body = document.getElementById('cart-body-'+i);
   if(body) body.style.display = 'none';
-  const info = slot.querySelector('.cart-info');
-  if(info) { info.style.display = 'flex'; info.style.cursor = 'pointer'; }
+  const inp = document.getElementById('cart-inp-'+i);
+  if(inp) inp.style.zIndex = '-1'; // derrière cart-info
+  // Montrer l'info (clic = play/stop)
+  const info = document.getElementById('cart-info-'+i);
+  if(info) info.style.display = 'flex';
   const tEl = document.getElementById('cart-title-'+i);
   if(tEl) tEl.textContent = c.title;
   // Bouton EDIT
