@@ -41,16 +41,26 @@
   .diff-badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2px;padding:2px 10px;border-radius:4px;}
   .notification.is-onair{background:var(--s2);border:1px solid var(--border);border-top:none;border-radius:0;padding:.4rem 1rem;margin:0;display:flex;align-items:center;justify-content:space-between;transition:background .2s,border-color .2s;flex-shrink:0;}
 
-  /* ── État EN DIRECT — rouge fort sur tout le diffuseur ── */
-  .diff-card-header.is-live{background:linear-gradient(90deg,#2a0a0a 0%,#1e0a0a 100%)!important;border-bottom-color:#6a1010!important;transition:background .3s,border-color .3s;}
+  /* ── État EN DIRECT — rouge sur TOUT le module ── */
+  .card.is-dark-card.is-live-card { border-color:#6a1010 !important; }
+  .diff-card-header.is-live{
+    background:linear-gradient(90deg,#2e0808 0%,#220606 100%) !important;
+    border-bottom-color:#7a1010 !important;
+    transition:background .3s,border-color .3s;
+  }
   .diff-card-header.is-live .diff-badge{background:#5a0000!important;color:#ff6060!important;border-color:#991818!important;box-shadow:0 0 8px rgba(200,30,30,.4);}
-  /* Zone PAZ rouge en lecture */
-  #paz.is-playing{ background:#120204 !important; }
-  #paz.is-playing .paz-right-col{ background:rgba(28,4,4,.85) !important; }
-  .diff-card-header.is-live .diff-badge{background:#5a0000!important;color:#ff6060!important;border-color:#991818!important;box-shadow:0 0 8px rgba(200,30,30,.4);}
-  .diff-onair-bar.is-live{background:linear-gradient(90deg,#2e0808 0%,#200606 100%)!important;border-color:#6a1010!important;transition:background .2s,border-color .2s;}
+  .diff-onair-bar.is-live{
+    background:linear-gradient(90deg,#2e0808 0%,#200606 100%) !important;
+    border-color:#6a1010 !important;
+  }
   .diff-onair-bar.is-live .onair-title{color:#ff5050!important;}
   .diff-onair-bar.is-live .dot-live{background:#ff3030!important;box-shadow:0 0 6px #ff3030,0 0 12px rgba(255,30,30,.6)!important;animation:live-pulse .8s ease-in-out infinite!important;}
+  /* Zone PAZ rouge */
+  #paz.is-playing { background:linear-gradient(180deg,#1a0404 0%,#120202 100%) !important; }
+  /* Progress bar rouge */
+  .progress.is-elapsed.is-live { background:#3a0808 !important; }
+  .progress.is-elapsed.is-live::-webkit-progress-value { background:#d42818 !important; }
+  .progress.is-elapsed.is-live::-moz-progress-bar { background:#d42818 !important; }
   @keyframes live-pulse{0%,100%{opacity:1;box-shadow:0 0 6px #ff3030,0 0 14px rgba(255,30,30,.5);}50%{opacity:.6;box-shadow:0 0 3px #ff3030;}}
   .onair-title{font-family:var(--display);font-size:22px;font-weight:700;color:var(--txt);letter-spacing:3px;}
   .onair-track-name{font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:2px;color:var(--yellow);margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;transition:opacity .3s;}
@@ -1407,7 +1417,6 @@
           </div>
         </div>
         <!-- Input fichier caché + menu contextuel -->
-        <input type="file" id="cart-file-input" accept="audio/*" style="display:none" onchange="cartFileChosen(this)">
         <div id="cart-ctx-menu" style="display:none;position:fixed;background:#1e2028;border:1px solid #38404e;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.6);z-index:9999;min-width:160px;overflow:hidden;font-family:'Share Tech Mono',monospace;">
           <div onclick="cartCtxEdit()" style="padding:9px 16px;font-size:10px;letter-spacing:1px;color:#8090a8;cursor:pointer;border-bottom:1px solid #2e333d;" onmouseover="this.style.background='#252830';this.style.color='#e8ecf4'" onmouseout="this.style.background='';this.style.color='#8090a8'">✦ Éditer les points</div>
           <div onclick="cartCtxDelete()" style="padding:9px 16px;font-size:10px;letter-spacing:1px;color:#8090a8;cursor:pointer;" onmouseover="this.style.background='#2a1010';this.style.color='#e03020'" onmouseout="this.style.background='';this.style.color='#8090a8'">✕ Supprimer le son</div>
@@ -2491,8 +2500,10 @@ function pazTick(){
     if(lb){lb.textContent='NEXT';lb.style.color='rgba(255,255,255,.3)';}
     const pazEl=document.getElementById('paz');
     if(pazEl){pazEl.classList.remove('is-playing');pazEl.style.background='';}
-    const hdr=document.getElementById('diff-header-0');
-    if(hdr) hdr.classList.remove('is-live');
+    document.getElementById('diff-header-0')?.classList.remove('is-live');
+    document.getElementById('diff-onair-0')?.classList.remove('is-live');
+    document.querySelector('.card.is-dark-card')?.classList.remove('is-live-card');
+    document.getElementById('c1-progress')?.classList.remove('is-live');
     return;
   }
 
@@ -2502,6 +2513,10 @@ function pazTick(){
   // Maintenir rouge en lecture
   const pazEl=document.getElementById('paz');
   if(pazEl&&!pazEl.classList.contains('is-playing')) pazEl.classList.add('is-playing');
+  const card=document.querySelector('.card.is-dark-card');
+  if(card&&!card.classList.contains('is-live-card')) card.classList.add('is-live-card');
+  const prog=document.getElementById('c1-progress');
+  if(prog&&!prog.classList.contains('is-live')) prog.classList.add('is-live');
 
   // Progression rouge (inT → pos)
   const rEl=document.getElementById('paz-red');
@@ -2937,11 +2952,12 @@ D[0]._startTrack=function(i){
     pazRenderList();
   });
   _s0(i);
-  // Diffuseur rouge
-  const paz=document.getElementById('paz');
-  if(paz) paz.style.background='#120204';
-  const hdr=document.getElementById('diff-header-0');
-  if(hdr) hdr.classList.add('is-live');
+  // Tout le module devient rouge
+  document.getElementById('paz')?.classList.add('is-playing');
+  document.getElementById('diff-header-0')?.classList.add('is-live');
+  document.getElementById('diff-onair-0')?.classList.add('is-live');
+  document.querySelector('.card.is-dark-card')?.classList.add('is-live-card');
+  document.getElementById('c1-progress')?.classList.add('is-live');
 };
 
 const _add0=D[0].addTracks.bind(D[0]);
@@ -5144,6 +5160,28 @@ window.closeEditModal = function() {
   if(typeof _origCloseEM === 'function') _origCloseEM();
 };
 
+// ════════════════════════════════════════════════════════════════
+// RACCOURCIS CLAVIER
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('keydown', function(e) {
+  // Ignorer si focus sur un input/textarea/select
+  const tag = document.activeElement?.tagName?.toLowerCase();
+  if(tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  // Ignorer si modale ouverte
+  const modal = document.getElementById('edit-modal');
+  if(modal && modal.style.display !== 'none') return;
+
+  switch(e.key) {
+    case '1': e.preventDefault(); cartClick(0); break; // Cart 01
+    case '2': e.preventDefault(); cartClick(1); break; // Cart 02
+    case '3': e.preventDefault(); cartClick(2); break; // Cart 03
+    case '4': e.preventDefault(); cartClick(3); break; // Cart 04
+    case '5': e.preventDefault(); cartClick(4); break; // Cart 05
+    case '6': e.preventDefault(); cartClick(5); break; // Cart 06
+    case '0': e.preventDefault(); D[0].togglePlay(); break; // DIFF A play/stop
+  }
+});
+
 
 
 </script>
@@ -5227,5 +5265,8 @@ window.closeEditModal = function() {
 
   </div>
 </div>
+<!-- Input fichier cartwall au niveau body (pas dans overflow:hidden) -->
+<input type="file" id="cart-file-input" accept="audio/*" style="position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px;" onchange="cartFileChosen(this)">
+
 </body>
 </html>
