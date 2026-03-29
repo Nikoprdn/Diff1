@@ -1214,6 +1214,29 @@
     </a>
   </div>
   <div class="navbar-end">
+    <!-- ── Sélecteurs sortie audio PROG / PFL ── -->
+    <div class="navbar-item" style="display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid var(--border);">
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:var(--mono);font-size:8px;color:#d42818;letter-spacing:2px;font-weight:700;width:28px;">PROG</span>
+          <select id="prog-output-select" onchange="audioSetOutput('prog',this.value)"
+            style="font-family:var(--mono);font-size:9px;color:var(--txt);background:#252830;border:1px solid #d42818;border-radius:3px;padding:2px 6px;cursor:pointer;max-width:160px;outline:none;">
+            <option value="">— Sortie par défaut —</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:var(--mono);font-size:8px;color:#9b6de5;letter-spacing:2px;font-weight:700;width:28px;">PFL</span>
+          <select id="pfl-output-select" onchange="audioSetOutput('pfl',this.value)"
+            style="font-family:var(--mono);font-size:9px;color:var(--txt);background:#252830;border:1px solid #9b6de5;border-radius:3px;padding:2px 6px;cursor:pointer;max-width:160px;outline:none;">
+            <option value="">— Sortie par défaut —</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="audioEnumerateDevices()" title="Rafraîchir les sorties audio"
+        style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);background:none;border:1px solid var(--border);border-radius:3px;padding:2px 6px;cursor:pointer;transition:all .12s;"
+        onmouseover="this.style.borderColor='var(--txt)';this.style.color='var(--txt)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt-mute)'">⟳</button>
+    </div>
     <div class="navbar-item" style="gap:8px;display:flex;align-items:center;">
       <a href="https://nikoprdn.github.io/Diff2/" target="_blank" style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);letter-spacing:1px;text-decoration:none;padding:3px 10px;border:1px solid var(--border);border-radius:2px;transition:all .15s;" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt-mute)'">⬡ DIFF 2</a>
       <a href="https://nikoprdn.github.io/Radio-Console/" target="_blank" style="font-family:var(--mono);font-size:10px;color:var(--txt-mute);letter-spacing:1px;text-decoration:none;padding:3px 10px;border:1px solid var(--border);border-radius:2px;transition:all .15s;" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt-mute)'">⬡ CONSOLE</a>
@@ -1724,6 +1747,8 @@ function handleFiles(files,idx){
     const a=new Audio();
     a.src=d.tracks[trackIdx].file;
     a.preload='metadata';
+    // Enregistrer sur la sortie PROG
+    audioRegisterProg(a);
     a.addEventListener('loadedmetadata',()=>{
       const tr=d.tracks[trackIdx]; if(!tr) return;
       d.durs[trackIdx]=a.duration||0;
@@ -3167,8 +3192,9 @@ function openEditModal(idx){
   const ti=(idx!==undefined)?idx:d.ci;
   const t=d.tracks[ti]; if(!t||t.isMacro) return;
   EM.trackIdx=ti; EM.dur=d.durs[ti]||0; EM.vs=0; EM.ve=1;
-  if(EM.audio){EM.audio.pause();}
+  if(EM.audio){audioUnregister(EM.audio);EM.audio.pause();}
   EM.audio=new Audio(t.file); EM.playing=false;
+  audioRegisterPfl(EM.audio); // pré-écoute sur PFL
   document.getElementById('em-title').textContent=t.title;
   const modal=document.getElementById('edit-modal');
   modal.style.display='flex';
@@ -3456,7 +3482,8 @@ function diffRemoveTrack(diffIdx, trackIdx){
   }
   d.tracks.splice(trackIdx, 1);
   d.durs.splice(trackIdx, 1);
-  d.audios.splice(trackIdx, 1);
+  const removedAudio = d.audios.splice(trackIdx, 1)[0];
+  if(removedAudio) audioUnregister(removedAudio);
   if(d.ci >= d.tracks.length) d.ci = Math.max(0, d.tracks.length-1);
   const cfg=CONFIGS[diffIdx];
   if(cfg){ cfg.tracks=d.tracks; }
@@ -4314,6 +4341,80 @@ function paintStrip(stripId, analyser){
 }
 
 // Analysers dédiés aux strips (séparés des analyseurs VU-mètres)
+// ════════════════════════════════════════════════════════════════
+// ROUTING AUDIO — PROG (antenne) / PFL (pré-écoute / edit)
+// Utilise setSinkId() — Chrome 110+ requis
+// ════════════════════════════════════════════════════════════════
+
+const AUDIO_ROUTING = {
+  progSinkId: '',
+  pflSinkId:  '',
+  progElements: [],
+  pflElements:  [],
+};
+
+async function audioEnumerateDevices() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {});
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const outputs = devices.filter(d => d.kind === 'audiooutput');
+    ['prog-output-select', 'pfl-output-select'].forEach(id => {
+      const sel = document.getElementById(id); if(!sel) return;
+      const current = sel.value;
+      sel.innerHTML = '<option value="">— Sortie par défaut —</option>';
+      outputs.forEach(dev => {
+        const opt = document.createElement('option');
+        opt.value = dev.deviceId;
+        opt.textContent = dev.label || `Sortie audio ${dev.deviceId.slice(0,6)}…`;
+        sel.appendChild(opt);
+      });
+      if(current) sel.value = current;
+    });
+  } catch(err) { console.warn('[AUDIO] Énumération:', err); }
+}
+
+async function audioSetOutput(type, sinkId) {
+  if(!('setSinkId' in HTMLAudioElement.prototype)) {
+    alert('setSinkId non supporté — utilisez Chrome 110+ ou Edge 110+.');
+    return;
+  }
+  AUDIO_ROUTING[type === 'prog' ? 'progSinkId' : 'pflSinkId'] = sinkId;
+  const elements = AUDIO_ROUTING[type === 'prog' ? 'progElements' : 'pflElements'];
+  for(const el of elements) {
+    try { await el.setSinkId(sinkId); } catch(e) { console.warn('[AUDIO] setSinkId:', e); }
+  }
+}
+
+async function audioRegister(el, type) {
+  const key    = type === 'prog' ? 'progElements' : 'pflElements';
+  const sinkKey = type === 'prog' ? 'progSinkId'  : 'pflSinkId';
+  if(!AUDIO_ROUTING[key].includes(el)) AUDIO_ROUTING[key].push(el);
+  const sinkId = AUDIO_ROUTING[sinkKey];
+  if(sinkId && 'setSinkId' in el) { try { await el.setSinkId(sinkId); } catch(e) {} }
+}
+
+function audioUnregister(el) {
+  ['progElements','pflElements'].forEach(k => {
+    const idx = AUDIO_ROUTING[k].indexOf(el);
+    if(idx !== -1) AUDIO_ROUTING[k].splice(idx, 1);
+  });
+}
+
+// Énumérer au chargement
+if('setSinkId' in HTMLAudioElement.prototype) {
+  window.addEventListener('load', audioEnumerateDevices);
+} else {
+  window.addEventListener('load', () => {
+    const row = document.getElementById('prog-output-select')?.closest('[style*="border-right"]');
+    if(row) { row.innerHTML = '<span style="font-family:var(--mono);font-size:8px;color:#e07800;">⚠ setSinkId non supporté</span>'; }
+  });
+}
+
+// ── PROG : éléments audio du diffuseur principal ──
+// Patché après création dans handleFiles / addTracks
+function audioRegisterProg(el) { audioRegister(el, 'prog'); }
+function audioRegisterPfl(el)  { audioRegister(el, 'pfl'); }
+
 const STRIP_ANALYSERS = {}; // {d0, d1, nat, sat, dab, hz}
 
 function wireStrip(key, audioEl){
@@ -4349,7 +4450,7 @@ function stripLoop(){
   if(!STRIP_ANALYSERS.sat && vuSat)    STRIP_ANALYSERS.sat = vuSat.aL;
   if(!STRIP_ANALYSERS.dab && vuDab)    STRIP_ANALYSERS.dab = vuDab.aL;
   if(!STRIP_ANALYSERS.hz  && vuHz)     STRIP_ANALYSERS.hz  = vuHz.aL;
-  if(!STRIP_ANALYSERS.tx  && vuTx)     STRIP_ANALYSERS.tx  = vuTx.aL;
+  // vuTx non défini dans cette version — ignoré
   paintStrip('vu-strip-d0',  STRIP_ANALYSERS.d0);
   paintStrip('vu-strip-d1',  STRIP_ANALYSERS.d1);
   paintStrip('vu-strip-nat', STRIP_ANALYSERS.nat);
@@ -4439,7 +4540,7 @@ function _wvModalVULoop(){
     _wvModalUpdateTC();
     // VU depuis l'analyseur du diffuseur si disponible
     const diffIdx=_wvModal.diffIdx;
-    const vuSrc=diffIdx===0?vu1:diffIdx===1?vuD2:diffIdx===6?vuTx:null;
+    const vuSrc=diffIdx===0?vu1:diffIdx===1?vuD2:null;
     const barL=document.getElementById('wvm-vu-L');
     const barR=document.getElementById('wvm-vu-R');
     if(vuSrc&&barL&&barR){
@@ -5056,10 +5157,11 @@ function cartLoadFile(i, file) {
   cartRenderLoaded(i);
 
   // Audio
-  if(c.audio) { c.audio.pause(); c.audio = null; }
+  if(c.audio) { audioUnregister(c.audio); c.audio.pause(); c.audio = null; }
   const a = new Audio(c.url);
   a.preload = 'metadata';
   c.audio = a;
+  audioRegisterProg(a); // sortie PROG
 
   a.addEventListener('loadedmetadata', () => {
     c.dur = a.duration || 0;
